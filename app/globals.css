@@ -8,6 +8,7 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   background-color: #f3f4f6;
   min-height: 100vh;
+  font-size: 16px;
 }
 
 .container {
@@ -20,20 +21,24 @@ body {
   background: white;
   border-radius: 0.5rem;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
 }
 
 .btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
-  padding: 0.5rem 1rem;
+  padding: 0.625rem 1rem;
   border-radius: 0.375rem;
   font-weight: 600;
   cursor: pointer;
   border: none;
   transition: background-color 0.2s;
+  font-size: 0.9rem;
+  min-height: 44px;
+  white-space: nowrap;
 }
 
 .btn-blue { background: #3b82f6; color: white; }
@@ -49,35 +54,45 @@ body {
 .btn-red { background: #ef4444; color: white; }
 .btn-red:hover { background: #dc2626; }
 
-.input {
+.input, .select {
   width: 100%;
-  padding: 0.5rem 0.75rem;
+  padding: 0.625rem 0.75rem;
   border: 1px solid #d1d5db;
   border-radius: 0.375rem;
   font-size: 1rem;
+  min-height: 44px;
 }
 
-.input:focus {
+.input:focus, .select:focus {
   outline: none;
   border-color: #3b82f6;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
 .select {
-  width: 100%;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem;
-  font-size: 1rem;
   background: white;
 }
 
+/* レスポンシブグリッド */
 .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
-.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
-.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; }
 
-@media (max-width: 768px) {
+/* タブレット */
+@media (max-width: 1024px) {
+  .container { padding: 0.75rem; }
+  .card { padding: 1rem; }
+  .grid-4 { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* スマホ */
+@media (max-width: 640px) {
+  body { font-size: 15px; }
+  .container { padding: 0.5rem; }
+  .card { padding: 0.875rem; margin-bottom: 0.75rem; }
   .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+  .btn { padding: 0.75rem 1rem; font-size: 0.95rem; width: 100%; }
+  .input, .select { padding: 0.75rem; font-size: 16px; }
 }
 
 .flex { display: flex; }
@@ -87,6 +102,7 @@ body {
 .justify-center { justify-content: center; }
 .gap-2 { gap: 0.5rem; }
 .gap-4 { gap: 1rem; }
+.flex-wrap { flex-wrap: wrap; }
 
 .text-center { text-align: center; }
 .text-right { text-align: right; }
@@ -140,41 +156,81 @@ body {
 .w-8 { width: 2rem; }
 .h-8 { height: 2rem; }
 
-.overflow-x-auto { overflow-x: auto; }
+.overflow-x-auto { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .space-y-4 > * + * { margin-top: 1rem; }
 .space-y-2 > * + * { margin-top: 0.5rem; }
 
+/* テーブル */
 table { width: 100%; border-collapse: collapse; }
-th, td { padding: 0.5rem 0.75rem; text-align: left; }
-th { background: #f9fafb; font-weight: 600; }
+th, td { padding: 0.625rem 0.5rem; text-align: left; font-size: 0.875rem; }
+th { background: #f9fafb; font-weight: 600; white-space: nowrap; }
 tr { border-bottom: 1px solid #e5e7eb; }
 tr:hover { background: #f9fafb; }
 
-.tabs { display: flex; gap: 0.5rem; border-bottom: 1px solid #e5e7eb; overflow-x: auto; }
-.tab { padding: 0.75rem 1.5rem; font-weight: 600; cursor: pointer; white-space: nowrap; border: none; background: none; color: #4b5563; }
+@media (max-width: 640px) {
+  th, td { padding: 0.5rem 0.375rem; font-size: 0.8rem; }
+}
+
+/* タブ - スクロール対応 */
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+  border-bottom: 1px solid #e5e7eb;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding-bottom: 2px;
+}
+.tabs::-webkit-scrollbar { display: none; }
+
+.tab {
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  border: none;
+  background: none;
+  color: #4b5563;
+  flex-shrink: 0;
+  min-height: 44px;
+  font-size: 0.9rem;
+}
 .tab.active { color: #2563eb; border-bottom: 2px solid #2563eb; }
 
+@media (max-width: 640px) {
+  .tab { padding: 0.625rem 0.75rem; font-size: 0.85rem; }
+}
+
+/* バッジ */
 .badge {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
   padding: 0.25rem 0.5rem;
   border-radius: 0.25rem;
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   font-weight: 500;
+  white-space: nowrap;
 }
 .badge-green { background: #dcfce7; color: #166534; }
 .badge-red { background: #fee2e2; color: #991b1b; }
 .badge-blue { background: #dbeafe; color: #1e40af; }
 .badge-yellow { background: #fef9c3; color: #854d0e; }
 
+/* サマリーカード */
 .summary-card {
   text-align: center;
-  padding: 1rem;
+  padding: 0.75rem;
 }
-.summary-card .label { font-size: 0.875rem; color: #6b7280; }
-.summary-card .value { font-size: 1.5rem; font-weight: 700; }
+.summary-card .label { font-size: 0.8rem; color: #6b7280; }
+.summary-card .value { font-size: 1.25rem; font-weight: 700; }
 
+@media (max-width: 640px) {
+  .summary-card .value { font-size: 1.1rem; }
+}
+
+/* 商品カード */
 .product-card {
   border: 1px solid #e5e7eb;
   border-radius: 0.5rem;
@@ -188,36 +244,41 @@ tr:hover { background: #f9fafb; }
 .product-card .name { font-weight: 500; font-size: 0.875rem; margin-bottom: 0.25rem; }
 .product-card .price { font-size: 0.75rem; color: #6b7280; margin-bottom: 0.5rem; }
 
+/* カウンター */
 .counter {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.375rem;
 }
 .counter button {
-  width: 2rem;
-  height: 2rem;
+  width: 2.25rem;
+  height: 2.25rem;
   border-radius: 0.25rem;
   border: none;
   font-weight: 700;
   cursor: pointer;
+  font-size: 1.1rem;
 }
 .counter .minus { background: #e5e7eb; }
 .counter .plus { background: #22c55e; color: white; }
 .counter input {
-  width: 4rem;
+  width: 3.5rem;
   text-align: center;
   border: 1px solid #e5e7eb;
   border-radius: 0.25rem;
-  padding: 0.25rem;
+  padding: 0.375rem;
+  font-size: 1rem;
 }
 
+/* グラデーションヘッダー */
 .gradient-header {
   background: linear-gradient(to right, #3b82f6, #9333ea);
   color: white;
-  padding: 1.5rem;
+  padding: 1.25rem;
   border-radius: 0.5rem;
 }
 
+/* プログレスバー */
 .progress-bar {
   width: 100%;
   height: 0.75rem;
@@ -231,16 +292,23 @@ tr:hover { background: #f9fafb; }
   border-radius: 9999px;
 }
 
+/* お気に入りボタン */
 .favorite-btn {
   padding: 0.5rem;
   border-radius: 0.25rem;
   background: none;
   border: none;
   cursor: pointer;
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .favorite-btn.active { color: #eab308; }
 .favorite-btn:not(.active) { color: #d1d5db; }
 
+/* クイックカード */
 .quick-card {
   padding: 1rem;
   border-radius: 0.5rem;
@@ -249,7 +317,69 @@ tr:hover { background: #f9fafb; }
   cursor: pointer;
   transition: all 0.2s;
   text-align: left;
+  min-height: 80px;
 }
 .quick-card:hover { background: #fef9c3; }
 .quick-card:active { transform: scale(0.98); }
 .quick-card:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* レスポンシブボタングループ */
+@media (max-width: 640px) {
+  .flex.gap-2 {
+    flex-wrap: wrap;
+  }
+  .flex.gap-2 > .btn {
+    flex: 1 1 calc(50% - 0.25rem);
+    min-width: calc(50% - 0.25rem);
+  }
+  .flex.gap-2 > .btn:only-child {
+    flex: 1 1 100%;
+  }
+}
+
+/* フィルターボタン用 */
+.filter-buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.filter-buttons .btn {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 640px) {
+  .filter-buttons .btn {
+    flex: 1 1 calc(50% - 0.25rem);
+    font-size: 0.8rem;
+    padding: 0.5rem;
+  }
+}
+
+/* ヘッダー */
+h1 { font-size: 1.5rem; }
+h3 { font-size: 1.1rem; }
+h4 { font-size: 1rem; }
+
+@media (max-width: 640px) {
+  h1 { font-size: 1.25rem; }
+  h3 { font-size: 1rem; }
+}
+
+/* スマホでテーブル内の操作ボタン */
+@media (max-width: 640px) {
+  td .text-sm {
+    display: inline-block;
+    padding: 0.375rem 0.5rem;
+    margin: 0.125rem;
+  }
+}
+
+/* モード選択ボタン（使用・入荷） */
+@media (max-width: 640px) {
+  .grid-4 .btn {
+    padding: 0.5rem;
+  }
+  .grid-4 .btn span {
+    font-size: 0.75rem;
+  }
+}
