@@ -262,6 +262,9 @@ function UsageTracking({ products, staff, usage, setUsage, stockIn, setStockIn, 
   const [stockInQty, setStockInQty] = useState(1)
   const [stockInDate, setStockInDate] = useState(new Date().toISOString().split('T')[0])
   const [filterType, setFilterType] = useState('all')
+  const [editingUsageId, setEditingUsageId] = useState(null)
+  const [editUsageData, setEditUsageData] = useState({})
+  const [showHistory, setShowHistory] = useState(false)
 
   const productTypes = [
     { value: 'all', label: '全て' },
@@ -309,6 +312,34 @@ function UsageTracking({ products, staff, usage, setUsage, stockIn, setStockIn, 
     if (!error && data) { setStockIn([...stockIn, { id: data[0].id, productId: product.id, productName: product.name, largeCategory: product.largeCategory, quantity: stockInQty, date: stockInDate }]); alert('入荷を記録しました！'); setStockInQty(1); setStockInProduct('') }
   }
 
+  const deleteUsage = async (id) => {
+    if (!confirm('この使用記録を削除しますか？')) return
+    const { error } = await supabase.from('usage_records').delete().eq('id', id)
+    if (!error) setUsage(usage.filter(u => u.id !== id))
+  }
+  const startEditUsage = (record) => {
+    setEditingUsageId(record.id)
+    setEditUsageData({ staff: record.staff, quantity: record.quantity, date: record.date })
+  }
+  const cancelEditUsage = () => {
+    setEditingUsageId(null)
+    setEditUsageData({})
+  }
+  const saveEditUsage = async (id) => {
+    const { error } = await supabase.from('usage_records').update({ staff_name: editUsageData.staff, quantity: parseInt(editUsageData.quantity) || 1, usage_date: editUsageData.date }).eq('id', id)
+    if (!error) {
+      setUsage(usage.map(u => u.id === id ? { ...u, staff: editUsageData.staff, quantity: parseInt(editUsageData.quantity) || 1, date: editUsageData.date } : u))
+      setEditingUsageId(null)
+      setEditUsageData({})
+    }
+  }
+
+  const deleteStockIn = async (id) => {
+    if (!confirm('この入荷記録を削除しますか？')) return
+    const { error } = await supabase.from('stock_in').delete().eq('id', id)
+    if (!error) setStockIn(stockIn.filter(s => s.id !== id))
+  }
+
   const getTypeLabel = (type) => {
     if (type === 'retail') return '店販'
     if (type === 'both') return '両方'
@@ -325,28 +356,81 @@ function UsageTracking({ products, staff, usage, setUsage, stockIn, setStockIn, 
   const bulkTotal = Object.entries(bulkEntries).reduce((sum, [pid, qty]) => { const product = products.find(p => p.id === parseInt(pid)); return sum + (product ? qty * product.purchasePrice : 0) }, 0)
   const bulkCount = Object.values(bulkEntries).reduce((sum, qty) => sum + qty, 0)
 
+  const recentUsage = [...usage].reverse().slice(0, 50)
+
   return (
     <div className="space-y-4">
       <div className="card">
-        <div className="grid-4">
+        <div className="grid-4 mb-4">
           {[{ key: 'quick', label: 'クイック', icon: <Icons.Star filled={false} />, color: 'btn-yellow' }, { key: 'single', label: '単品入力', icon: <Icons.ShoppingCart />, color: 'btn-blue' }, { key: 'bulk', label: 'まとめて', icon: <Icons.Package />, color: 'btn-green' }, { key: 'stockin', label: '入荷', icon: <Icons.TrendingUp />, color: 'btn-purple' }].map(m => (
-            <button key={m.key} onClick={() => setInputMode(m.key)} className={`btn ${inputMode === m.key ? m.color : 'btn-gray'}`} style={{ flexDirection: 'column', padding: '0.75rem' }}>{m.icon}<span className="text-sm">{m.label}</span></button>
+            <button key={m.key} onClick={() => { setInputMode(m.key); setShowHistory(false) }} className={`btn ${inputMode === m.key && !showHistory ? m.color : 'btn-gray'}`} style={{ flexDirection: 'column', padding: '0.75rem' }}>{m.icon}<span className="text-sm">{m.label}</span></button>
           ))}
         </div>
+        <button onClick={() => setShowHistory(!showHistory)} className={`btn w-full ${showHistory ? 'btn-blue' : 'btn-gray'}`}>
+          {showHistory ? '入力画面に戻る' : '📋 使用履歴を見る・編集する'}
+        </button>
       </div>
 
-      <div className="card">
-        <div className="flex justify-between items-center">
-          <span className="text-sm font-semibold">商品タイプで絞り込み</span>
-          <div className="flex gap-2">
-            {productTypes.map(t => (
-              <button key={t.value} onClick={() => setFilterType(t.value)} className={`btn ${filterType === t.value ? (t.value === 'business' ? 'btn-green' : t.value === 'retail' ? 'btn-blue' : t.value === 'both' ? 'btn-yellow' : 'btn-blue') : 'btn-gray'}`}>{t.label}</button>
-            ))}
+      {!showHistory && (
+        <div className="card">
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-semibold">商品タイプで絞り込み</span>
+            <div className="flex gap-2">
+              {productTypes.map(t => (
+                <button key={t.value} onClick={() => setFilterType(t.value)} className={`btn ${filterType === t.value ? (t.value === 'business' ? 'btn-green' : t.value === 'retail' ? 'btn-blue' : t.value === 'both' ? 'btn-yellow' : 'btn-blue') : 'btn-gray'}`}>{t.label}</button>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {inputMode === 'quick' && (
+      {showHistory && (
+        <div className="card">
+          <h3 className="text-lg font-bold mb-4">使用履歴（直近50件）</h3>
+          {recentUsage.length === 0 ? (
+            <p className="text-gray-500 text-center py-4">まだ使用記録がありません</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="text-sm">
+                <thead>
+                  <tr><th>日付</th><th>スタッフ</th><th>商品</th><th className="text-center">数量</th><th className="text-right">金額</th><th className="text-center">操作</th></tr>
+                </thead>
+                <tbody>
+                  {recentUsage.map(u => (
+                    editingUsageId === u.id ? (
+                      <tr key={u.id} style={{ background: '#fef9c3' }}>
+                        <td><input type="date" value={editUsageData.date} onChange={e => setEditUsageData({...editUsageData, date: e.target.value})} className="input" style={{ width: '130px' }} /></td>
+                        <td><select value={editUsageData.staff} onChange={e => setEditUsageData({...editUsageData, staff: e.target.value})} className="select">{staff.map((s, i) => <option key={i} value={s}>{s}</option>)}</select></td>
+                        <td>{u.productName}</td>
+                        <td className="text-center"><input type="number" value={editUsageData.quantity} onChange={e => setEditUsageData({...editUsageData, quantity: e.target.value})} className="input" style={{ width: '60px', textAlign: 'center' }} min="1" /></td>
+                        <td className="text-right">¥{(u.purchasePrice * (parseInt(editUsageData.quantity) || 1)).toLocaleString()}</td>
+                        <td className="text-center">
+                          <button onClick={() => saveEditUsage(u.id)} className="text-green-600 text-sm mr-2">保存</button>
+                          <button onClick={cancelEditUsage} className="text-gray-500 text-sm">取消</button>
+                        </td>
+                      </tr>
+                    ) : (
+                      <tr key={u.id}>
+                        <td>{u.date}</td>
+                        <td>{u.staff}</td>
+                        <td>{u.productName}</td>
+                        <td className="text-center">{u.quantity}</td>
+                        <td className="text-right">¥{(u.purchasePrice * u.quantity).toLocaleString()}</td>
+                        <td className="text-center">
+                          <button onClick={() => startEditUsage(u)} className="text-blue-500 text-sm mr-2">編集</button>
+                          <button onClick={() => deleteUsage(u.id)} className="text-red-500 text-sm">削除</button>
+                        </td>
+                      </tr>
+                    )
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {!showHistory && inputMode === 'quick' && (
         <div className="space-y-4">
           <div className="card">
             <h3 className="text-lg font-bold mb-2 flex items-center gap-2"><Icons.Star filled={true} className="text-yellow-500" />クイック入力</h3>
@@ -359,7 +443,7 @@ function UsageTracking({ products, staff, usage, setUsage, stockIn, setStockIn, 
         </div>
       )}
 
-      {inputMode === 'single' && (
+      {!showHistory && inputMode === 'single' && (
         <div className="card">
           <h3 className="text-lg font-bold mb-4">使用記録（単品）</h3>
           <div className="space-y-4">
@@ -371,7 +455,7 @@ function UsageTracking({ products, staff, usage, setUsage, stockIn, setStockIn, 
         </div>
       )}
 
-      {inputMode === 'bulk' && (
+      {!showHistory && inputMode === 'bulk' && (
         <div className="space-y-4">
           <div className="card">
             <h3 className="text-lg font-bold mb-4">まとめて入力</h3>
@@ -383,7 +467,7 @@ function UsageTracking({ products, staff, usage, setUsage, stockIn, setStockIn, 
         </div>
       )}
 
-      {inputMode === 'stockin' && (
+      {!showHistory && inputMode === 'stockin' && (
         <div className="space-y-4">
           <div className="card">
             <h3 className="text-lg font-bold mb-2 flex items-center gap-2"><Icons.TrendingUp className="text-purple-600" />入荷記録</h3>
@@ -395,7 +479,22 @@ function UsageTracking({ products, staff, usage, setUsage, stockIn, setStockIn, 
               <button onClick={recordStockIn} className="btn btn-purple w-full py-3" style={{ fontSize: '1.1rem' }}><Icons.TrendingUp />入荷を記録</button>
             </div>
           </div>
-          <div className="card"><h4 className="font-semibold mb-3">最近の入荷履歴</h4>{stockIn.length === 0 ? (<p className="text-gray-500 text-center py-4">まだ入荷記録がありません</p>) : (<div style={{ maxHeight: '250px', overflowY: 'auto' }}>{[...stockIn].reverse().slice(0, 20).map(s => (<div key={s.id} className="flex justify-between items-center p-2 bg-purple-50 rounded mb-2"><div><span className="text-sm font-semibold">{s.productName}</span><span className="text-sm text-gray-500 ml-2">{s.date}</span></div><span className="text-purple-600 font-bold">+{s.quantity}</span></div>))}</div>)}</div>
+          <div className="card">
+            <h4 className="font-semibold mb-3">最近の入荷履歴</h4>
+            {stockIn.length === 0 ? (<p className="text-gray-500 text-center py-4">まだ入荷記録がありません</p>) : (
+              <div style={{ maxHeight: '250px', overflowY: 'auto' }}>
+                {[...stockIn].reverse().slice(0, 20).map(s => (
+                  <div key={s.id} className="flex justify-between items-center p-2 bg-purple-50 rounded mb-2">
+                    <div><span className="text-sm font-semibold">{s.productName}</span><span className="text-sm text-gray-500 ml-2">{s.date}</span></div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-purple-600 font-bold">+{s.quantity}</span>
+                      <button onClick={() => deleteStockIn(s.id)} className="text-red-500 text-sm">削除</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
