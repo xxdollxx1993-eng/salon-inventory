@@ -657,3 +657,194 @@ function DealerSummary({ products, usage }) {
     </div>
   )
 }
+
+function DataExport({ products, staff, usage, stockIn, inventoryHistory }) {
+  const [exporting, setExporting] = useState(false)
+
+  const getTypeLabel = (type) => {
+    if (type === 'retail') return '店販'
+    if (type === 'both') return '両方'
+    return '業務用'
+  }
+
+  const downloadCSV = (filename, headers, rows) => {
+    const BOM = '\uFEFF'
+    const csvContent = BOM + [headers.join(','), ...rows.map(row => row.map(cell => `"${cell}"`).join(','))].join('\n')
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = filename
+    link.click()
+  }
+
+  const exportProductsCSV = () => {
+    const headers = ['タイプ', 'ディーラー', 'カテゴリー', '商品名', '仕入れ価格', '販売価格']
+    const rows = products.map(p => [getTypeLabel(p.productType), p.largeCategory, p.mediumCategory, p.name, p.purchasePrice, p.sellingPrice])
+    downloadCSV('商品一覧.csv', headers, rows)
+  }
+
+  const exportUsageCSV = () => {
+    const headers = ['日付', 'スタッフ', 'ディーラー', 'カテゴリー', '商品名', '数量', '金額']
+    const rows = usage.map(u => [u.date, u.staff, u.largeCategory, u.mediumCategory, u.productName, u.quantity, u.purchasePrice * u.quantity])
+    downloadCSV('使用履歴.csv', headers, rows)
+  }
+
+  const exportStockInCSV = () => {
+    const headers = ['日付', 'ディーラー', '商品名', '入荷数']
+    const rows = stockIn.map(s => [s.date, s.largeCategory, s.productName, s.quantity])
+    downloadCSV('入荷履歴.csv', headers, rows)
+  }
+
+  const exportInventoryCSV = () => {
+    if (inventoryHistory.length === 0) { alert('棚卸履歴がありません'); return }
+    const latest = inventoryHistory[inventoryHistory.length - 1]
+    const headers = ['商品名', '数量', '仕入れ価格', '在庫金額']
+    const rows = latest.data.map(d => [d.name, d.quantity, d.purchasePrice, d.quantity * d.purchasePrice])
+    downloadCSV(`棚卸_${latest.date}.csv`, headers, rows)
+  }
+
+  const exportDealerCSV = () => {
+    const dealerSummary = {}
+    usage.forEach(r => {
+      const dealer = r.largeCategory || '不明'
+      if (!dealerSummary[dealer]) dealerSummary[dealer] = { quantity: 0, amount: 0 }
+      dealerSummary[dealer].quantity += r.quantity
+      dealerSummary[dealer].amount += (r.purchasePrice || 0) * r.quantity
+    })
+    const headers = ['ディーラー', '使用数', '使用金額']
+    const rows = Object.entries(dealerSummary).map(([dealer, data]) => [dealer, data.quantity, data.amount])
+    downloadCSV('ディーラー集計.csv', headers, rows)
+  }
+
+  const printReport = (title, content) => {
+    const printWindow = window.open('', '_blank')
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html><head><title>${title}</title>
+      <style>
+        body { font-family: sans-serif; padding: 20px; }
+        h1 { font-size: 24px; margin-bottom: 10px; }
+        .date { color: #666; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background: #f5f5f5; }
+        .text-right { text-align: right; }
+        .total { font-weight: bold; background: #f0f9ff; }
+      </style>
+      </head><body>
+      <h1>${title}</h1>
+      <div class="date">出力日: ${new Date().toLocaleDateString('ja-JP')}</div>
+      ${content}
+      </body></html>
+    `)
+    printWindow.document.close()
+    printWindow.print()
+  }
+
+  const exportProductsPDF = () => {
+    const content = `
+      <table>
+        <thead><tr><th>タイプ</th><th>ディーラー</th><th>カテゴリー</th><th>商品名</th><th class="text-right">仕入れ</th><th class="text-right">販売</th></tr></thead>
+        <tbody>${products.map(p => `<tr><td>${getTypeLabel(p.productType)}</td><td>${p.largeCategory}</td><td>${p.mediumCategory}</td><td>${p.name}</td><td class="text-right">¥${p.purchasePrice.toLocaleString()}</td><td class="text-right">¥${p.sellingPrice.toLocaleString()}</td></tr>`).join('')}</tbody>
+      </table>
+      <p style="margin-top:20px">合計: ${products.length}件</p>
+    `
+    printReport('商品一覧', content)
+  }
+
+  const exportUsagePDF = () => {
+    const total = usage.reduce((sum, u) => sum + u.purchasePrice * u.quantity, 0)
+    const content = `
+      <table>
+        <thead><tr><th>日付</th><th>スタッフ</th><th>商品名</th><th class="text-right">数量</th><th class="text-right">金額</th></tr></thead>
+        <tbody>${usage.map(u => `<tr><td>${u.date}</td><td>${u.staff}</td><td>${u.productName}</td><td class="text-right">${u.quantity}</td><td class="text-right">¥${(u.purchasePrice * u.quantity).toLocaleString()}</td></tr>`).join('')}
+        <tr class="total"><td colspan="4">合計</td><td class="text-right">¥${total.toLocaleString()}</td></tr></tbody>
+      </table>
+    `
+    printReport('使用履歴', content)
+  }
+
+  const exportStockInPDF = () => {
+    const total = stockIn.reduce((sum, s) => sum + s.quantity, 0)
+    const content = `
+      <table>
+        <thead><tr><th>日付</th><th>ディーラー</th><th>商品名</th><th class="text-right">入荷数</th></tr></thead>
+        <tbody>${stockIn.map(s => `<tr><td>${s.date}</td><td>${s.largeCategory}</td><td>${s.productName}</td><td class="text-right">${s.quantity}</td></tr>`).join('')}
+        <tr class="total"><td colspan="3">合計</td><td class="text-right">${total}</td></tr></tbody>
+      </table>
+    `
+    printReport('入荷履歴', content)
+  }
+
+  const exportInventoryPDF = () => {
+    if (inventoryHistory.length === 0) { alert('棚卸履歴がありません'); return }
+    const latest = inventoryHistory[inventoryHistory.length - 1]
+    const total = latest.data.reduce((sum, d) => sum + d.quantity * d.purchasePrice, 0)
+    const content = `
+      <p><strong>棚卸日:</strong> ${latest.date} / <strong>担当:</strong> ${latest.staff}</p>
+      <table>
+        <thead><tr><th>商品名</th><th class="text-right">数量</th><th class="text-right">単価</th><th class="text-right">在庫金額</th></tr></thead>
+        <tbody>${latest.data.map(d => `<tr><td>${d.name}</td><td class="text-right">${d.quantity}</td><td class="text-right">¥${d.purchasePrice.toLocaleString()}</td><td class="text-right">¥${(d.quantity * d.purchasePrice).toLocaleString()}</td></tr>`).join('')}
+        <tr class="total"><td colspan="3">在庫資産合計</td><td class="text-right">¥${total.toLocaleString()}</td></tr></tbody>
+      </table>
+    `
+    printReport(`棚卸結果 (${latest.date})`, content)
+  }
+
+  const exportDealerPDF = () => {
+    const dealerSummary = {}
+    usage.forEach(r => {
+      const dealer = r.largeCategory || '不明'
+      if (!dealerSummary[dealer]) dealerSummary[dealer] = { quantity: 0, amount: 0 }
+      dealerSummary[dealer].quantity += r.quantity
+      dealerSummary[dealer].amount += (r.purchasePrice || 0) * r.quantity
+    })
+    const grandTotal = Object.values(dealerSummary).reduce((sum, d) => sum + d.amount, 0)
+    const content = `
+      <table>
+        <thead><tr><th>ディーラー</th><th class="text-right">使用数</th><th class="text-right">使用金額</th><th class="text-right">割合</th></tr></thead>
+        <tbody>${Object.entries(dealerSummary).sort((a,b) => b[1].amount - a[1].amount).map(([dealer, data]) => `<tr><td>${dealer}</td><td class="text-right">${data.quantity}</td><td class="text-right">¥${data.amount.toLocaleString()}</td><td class="text-right">${grandTotal > 0 ? ((data.amount / grandTotal) * 100).toFixed(1) : 0}%</td></tr>`).join('')}
+        <tr class="total"><td>合計</td><td></td><td class="text-right">¥${grandTotal.toLocaleString()}</td><td></td></tr></tbody>
+      </table>
+    `
+    printReport('ディーラー別集計', content)
+  }
+
+  const exportItems = [
+    { label: '商品一覧', csv: exportProductsCSV, pdf: exportProductsPDF, count: products.length },
+    { label: '使用履歴', csv: exportUsageCSV, pdf: exportUsagePDF, count: usage.length },
+    { label: '入荷履歴', csv: exportStockInCSV, pdf: exportStockInPDF, count: stockIn.length },
+    { label: '棚卸結果', csv: exportInventoryCSV, pdf: exportInventoryPDF, count: inventoryHistory.length },
+    { label: 'ディーラー集計', csv: exportDealerCSV, pdf: exportDealerPDF, count: usage.length > 0 ? '集計' : 0 },
+  ]
+
+  return (
+    <div className="space-y-4">
+      <div className="card">
+        <h3 className="text-lg font-bold mb-4">📊 データ出力</h3>
+        <p className="text-sm text-gray-600 mb-4">CSV（Excel用）またはPDF（印刷用）で出力できます</p>
+        <div className="space-y-4">
+          {exportItems.map((item, i) => (
+            <div key={i} className="flex justify-between items-center p-4 bg-gray-50 rounded">
+              <div>
+                <span className="font-semibold">{item.label}</span>
+                <span className="text-sm text-gray-500 ml-2">({item.count}件)</span>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={item.csv} className="btn btn-green">CSV</button>
+                <button onClick={item.pdf} className="btn btn-blue">PDF</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="card">
+        <h4 className="font-semibold mb-2">💡 使い方</h4>
+        <ul className="text-sm text-gray-600 space-y-1">
+          <li>• <strong>CSV</strong>：Excelで開いて分析・加工できます</li>
+          <li>• <strong>PDF</strong>：印刷画面が開きます。「PDFとして保存」も可能</li>
+        </ul>
+      </div>
+    </div>
+  )
+}
