@@ -46,7 +46,7 @@ export default function Home() {
         supabase.from('favorites').select('*').order('id'),
         supabase.from('staff_purchases').select('*').order('id'),
       ])
-      if (staffRes.data) setStaff(staffRes.data.map(s => s.name))
+      if (staffRes.data) setStaff(staffRes.data.map(s => ({ id: s.id, name: s.name, dealer: s.dealer || '' })))
       if (productsRes.data) setProducts(productsRes.data.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)).map(p => ({ id: p.id, largeCategory: p.large_category, mediumCategory: p.medium_category, name: p.name, purchasePrice: p.purchase_price, sellingPrice: p.selling_price, productType: p.product_type || 'business', sortOrder: p.sort_order || 0 })))
       if (categoriesRes.data) { setCategories({ large: categoriesRes.data.filter(c => c.type === 'large').map(c => c.name), medium: categoriesRes.data.filter(c => c.type === 'medium').map(c => c.name) }) }
       if (usageRes.data) setUsage(usageRes.data.map(u => ({ id: u.id, staff: u.staff_name, productId: u.product_id, productName: u.product_name, largeCategory: u.large_category, mediumCategory: u.medium_category, purchasePrice: u.purchase_price, quantity: u.quantity, date: u.usage_date })))
@@ -81,41 +81,110 @@ export default function Home() {
   )
 }
 
-function StaffManagement({ staff, setStaff }) {
+function StaffManagement({ staff, setStaff, categories }) {
   const [newStaff, setNewStaff] = useState('')
+  const [newDealer, setNewDealer] = useState('')
+  const [editingId, setEditingId] = useState(null)
+  const [editData, setEditData] = useState({ name: '', dealer: '' })
+
   const addStaff = async () => {
-    if (!newStaff || staff.includes(newStaff)) return
-    const { error } = await supabase.from('staff').insert({ name: newStaff })
-    if (!error) { setStaff([...staff, newStaff]); setNewStaff('') }
+    if (!newStaff || staff.find(s => s.name === newStaff)) return
+    const { data, error } = await supabase.from('staff').insert({ name: newStaff, dealer: newDealer }).select()
+    if (!error && data) { 
+      setStaff([...staff, { id: data[0].id, name: newStaff, dealer: newDealer }])
+      setNewStaff('')
+      setNewDealer('')
+    }
   }
-  const deleteStaff = async (name) => {
+  const deleteStaff = async (id, name) => {
     if (!confirm(`「${name}」を削除しますか？\n※このスタッフの使用履歴は残ります`)) return
-    const { error } = await supabase.from('staff').delete().eq('name', name)
-    if (!error) setStaff(staff.filter(s => s !== name))
+    const { error } = await supabase.from('staff').delete().eq('id', id)
+    if (!error) setStaff(staff.filter(s => s.id !== id))
   }
+  const startEdit = (s) => {
+    setEditingId(s.id)
+    setEditData({ name: s.name, dealer: s.dealer || '' })
+  }
+  const cancelEdit = () => {
+    setEditingId(null)
+    setEditData({ name: '', dealer: '' })
+  }
+  const saveEdit = async (id) => {
+    const { error } = await supabase.from('staff').update({ name: editData.name, dealer: editData.dealer }).eq('id', id)
+    if (!error) {
+      setStaff(staff.map(s => s.id === id ? { ...s, name: editData.name, dealer: editData.dealer } : s))
+      setEditingId(null)
+      setEditData({ name: '', dealer: '' })
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="card">
         <h3 className="text-lg font-bold mb-4">スタッフ追加</h3>
-        <div className="flex gap-2">
-          <input type="text" value={newStaff} onChange={e => setNewStaff(e.target.value)} onKeyPress={e => e.key === 'Enter' && addStaff()} placeholder="スタッフ名" className="input" style={{ flex: 1 }} />
-          <button onClick={addStaff} className="btn btn-blue">追加</button>
+        <div className="grid-2 gap-4 mb-4">
+          <div>
+            <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>スタッフ名</label>
+            <input type="text" value={newStaff} onChange={e => setNewStaff(e.target.value)} placeholder="名前を入力" className="input" />
+          </div>
+          <div>
+            <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>担当ディーラー</label>
+            <select value={newDealer} onChange={e => setNewDealer(e.target.value)} className="select">
+              <option value="">選択（任意）</option>
+              {categories.large.map((c, i) => <option key={i} value={c}>{c}</option>)}
+            </select>
+          </div>
         </div>
+        <button onClick={addStaff} className="btn btn-blue">追加</button>
       </div>
       <div className="card">
         <h3 className="text-lg font-bold mb-4">スタッフ一覧 ({staff.length}名)</h3>
-        <div className="grid-3">
-          {staff.map((s, i) => (
-            <div key={i} className="flex justify-between items-center bg-gray-50 p-3 rounded">
-              <span className="font-semibold">{s}</span>
-              <button onClick={() => deleteStaff(s)} className="text-red-500"><Icons.Trash /></button>
-            </div>
-          ))}
+        <div className="overflow-x-auto">
+          <table>
+            <thead>
+              <tr>
+                <th>スタッフ名</th>
+                <th>担当ディーラー</th>
+                <th className="text-center">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {staff.map(s => (
+                editingId === s.id ? (
+                  <tr key={s.id} style={{ background: '#fef9c3' }}>
+                    <td>
+                      <input type="text" value={editData.name} onChange={e => setEditData({...editData, name: e.target.value})} className="input" />
+                    </td>
+                    <td>
+                      <select value={editData.dealer} onChange={e => setEditData({...editData, dealer: e.target.value})} className="select">
+                        <option value="">なし</option>
+                        {categories.large.map((c, i) => <option key={i} value={c}>{c}</option>)}
+                      </select>
+                    </td>
+                    <td className="text-center">
+                      <button onClick={() => saveEdit(s.id)} className="text-green-600 text-sm mr-2">保存</button>
+                      <button onClick={cancelEdit} className="text-gray-500 text-sm">取消</button>
+                    </td>
+                  </tr>
+                ) : (
+                  <tr key={s.id}>
+                    <td className="font-semibold">{s.name}</td>
+                    <td>{s.dealer ? <span className="badge badge-blue">{s.dealer}</span> : <span className="text-gray-400">-</span>}</td>
+                    <td className="text-center">
+                      <button onClick={() => startEdit(s)} className="text-blue-500 text-sm mr-2">編集</button>
+                      <button onClick={() => deleteStaff(s.id, s.name)} className="text-red-500 text-sm">削除</button>
+                    </td>
+                  </tr>
+                )
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
   )
 }
+
 function ProductManagement({ products, setProducts, categories, setCategories }) {
   const [newLarge, setNewLarge] = useState('')
   const [newMedium, setNewMedium] = useState('')
