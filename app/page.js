@@ -492,9 +492,41 @@ function InventoryInput({ products, staff, usage, stockIn, inventoryHistory, set
 function DealerSummary({ products, usage }) {
   const [periodType, setPeriodType] = useState('all')
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7))
-  const filteredUsage = usage.filter(r => { if (periodType === 'all') return true; if (periodType === 'month') return r.date && r.date.startsWith(selectedMonth); return true })
+  const [filterType, setFilterType] = useState('all')
+
+  const productTypes = [
+    { value: 'all', label: '全て' },
+    { value: 'business', label: '業務用' },
+    { value: 'retail', label: '店販' },
+    { value: 'both', label: '両方' }
+  ]
+
+  const getProductType = (productId) => {
+    const product = products.find(p => p.id === productId)
+    return product ? product.productType : 'business'
+  }
+
+  const filteredUsage = usage.filter(r => {
+    if (periodType === 'month' && (!r.date || !r.date.startsWith(selectedMonth))) return false
+    if (filterType !== 'all') {
+      const pType = getProductType(r.productId)
+      if (pType !== filterType && pType !== 'both') return false
+    }
+    return true
+  })
+
   const dealerSummary = {}
-  filteredUsage.forEach(r => { const dealer = r.largeCategory || '不明'; if (!dealerSummary[dealer]) dealerSummary[dealer] = { totalQuantity: 0, totalAmount: 0, categories: {} }; dealerSummary[dealer].totalQuantity += r.quantity; dealerSummary[dealer].totalAmount += (r.purchasePrice || 0) * r.quantity; const cat = r.mediumCategory || '不明'; if (!dealerSummary[dealer].categories[cat]) dealerSummary[dealer].categories[cat] = { quantity: 0, amount: 0 }; dealerSummary[dealer].categories[cat].quantity += r.quantity; dealerSummary[dealer].categories[cat].amount += (r.purchasePrice || 0) * r.quantity })
+  filteredUsage.forEach(r => { 
+    const dealer = r.largeCategory || '不明'
+    if (!dealerSummary[dealer]) dealerSummary[dealer] = { totalQuantity: 0, totalAmount: 0, categories: {} }
+    dealerSummary[dealer].totalQuantity += r.quantity
+    dealerSummary[dealer].totalAmount += (r.purchasePrice || 0) * r.quantity
+    const cat = r.mediumCategory || '不明'
+    if (!dealerSummary[dealer].categories[cat]) dealerSummary[dealer].categories[cat] = { quantity: 0, amount: 0 }
+    dealerSummary[dealer].categories[cat].quantity += r.quantity
+    dealerSummary[dealer].categories[cat].amount += (r.purchasePrice || 0) * r.quantity 
+  })
+
   const grandTotal = Object.values(dealerSummary).reduce((sum, d) => ({ quantity: sum.quantity + d.totalQuantity, amount: sum.amount + d.totalAmount }), { quantity: 0, amount: 0 })
   const sortedDealers = Object.entries(dealerSummary).sort((a, b) => b[1].totalAmount - a[1].totalAmount)
 
@@ -502,9 +534,25 @@ function DealerSummary({ products, usage }) {
     <div className="space-y-4">
       <div className="card">
         <h3 className="text-lg font-bold mb-4 flex items-center gap-2"><Icons.Building />ディーラー別集計</h3>
-        <div className="mb-4"><div className="flex gap-2 mb-3"><button onClick={() => setPeriodType('all')} className={`btn ${periodType === 'all' ? 'btn-blue' : 'btn-gray'}`}>全期間</button><button onClick={() => setPeriodType('month')} className={`btn ${periodType === 'month' ? 'btn-blue' : 'btn-gray'}`}>月別</button></div>{periodType === 'month' && (<input type="month" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="input" style={{ width: 'auto' }} />)}</div>
+        <div className="mb-4">
+          <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>集計期間</label>
+          <div className="flex gap-2 mb-3">
+            <button onClick={() => setPeriodType('all')} className={`btn ${periodType === 'all' ? 'btn-blue' : 'btn-gray'}`}>全期間</button>
+            <button onClick={() => setPeriodType('month')} className={`btn ${periodType === 'month' ? 'btn-blue' : 'btn-gray'}`}>月別</button>
+          </div>
+          {periodType === 'month' && (<input type="month" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="input" style={{ width: 'auto' }} />)}
+        </div>
+        <div className="mb-4">
+          <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>商品タイプ</label>
+          <div className="flex gap-2">
+            {productTypes.map(t => (
+              <button key={t.value} onClick={() => setFilterType(t.value)} className={`btn ${filterType === t.value ? (t.value === 'business' ? 'btn-green' : t.value === 'retail' ? 'btn-blue' : t.value === 'both' ? 'btn-yellow' : 'btn-blue') : 'btn-gray'}`}>{t.label}</button>
+            ))}
+          </div>
+        </div>
         <div className="gradient-header"><div className="grid-2 text-center"><div><div className="text-sm" style={{ opacity: 0.8 }}>総使用数</div><div className="text-2xl font-bold">{grandTotal.quantity.toLocaleString()}個</div></div><div><div className="text-sm" style={{ opacity: 0.8 }}>総使用金額</div><div className="text-2xl font-bold">¥{grandTotal.amount.toLocaleString()}</div></div></div></div>
       </div>
+
       {sortedDealers.length === 0 ? (<div className="card text-center text-gray-500">使用記録がありません</div>) : (sortedDealers.map(([dealer, data]) => (<div key={dealer} className="card"><div className="flex justify-between items-center mb-4"><h4 className="text-xl font-bold text-blue-600">{dealer}</h4><div className="text-right"><div className="text-sm text-gray-500">使用金額</div><div className="text-xl font-bold text-green-600">¥{data.totalAmount.toLocaleString()}</div></div></div><div className="mb-4"><div className="flex justify-between text-sm text-gray-600 mb-1"><span>全体の {grandTotal.amount > 0 ? ((data.totalAmount / grandTotal.amount) * 100).toFixed(1) : 0}%</span><span>{data.totalQuantity}個</span></div><div className="progress-bar"><div className="fill" style={{ width: `${grandTotal.amount > 0 ? (data.totalAmount / grandTotal.amount) * 100 : 0}%` }}></div></div></div><div className="grid-3">{Object.entries(data.categories).sort((a, b) => b[1].amount - a[1].amount).map(([cat, catData]) => (<div key={cat} className="bg-gray-50 p-3 rounded"><div className="text-sm text-gray-600">{cat}</div><div className="font-bold text-blue-600">{catData.quantity}個</div><div className="text-sm text-green-600">¥{catData.amount.toLocaleString()}</div></div>))}</div></div>)))}
     </div>
   )
