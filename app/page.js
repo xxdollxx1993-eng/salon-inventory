@@ -120,12 +120,18 @@ function ProductManagement({ products, setProducts, categories, setCategories })
     const { error } = await supabase.from('categories').insert({ type, name: value })
     if (!error) { setCategories({ ...categories, [type]: [...categories[type], value] }); setter('') }
   }
+  const deleteCategory = async (type, name) => {
+    if (!confirm(`「${name}」を削除しますか？`)) return
+    const { error } = await supabase.from('categories').delete().eq('type', type).eq('name', name)
+    if (!error) { setCategories({ ...categories, [type]: categories[type].filter(c => c !== name) }) }
+  }
   const addProduct = async () => {
     if (!newProduct.name || !newProduct.largeCategory || !newProduct.mediumCategory) return
     const { data, error } = await supabase.from('products').insert({ large_category: newProduct.largeCategory, medium_category: newProduct.mediumCategory, name: newProduct.name, purchase_price: parseFloat(newProduct.purchasePrice) || 0, selling_price: parseFloat(newProduct.sellingPrice) || 0 }).select()
     if (!error && data) { setProducts([...products, { id: data[0].id, largeCategory: newProduct.largeCategory, mediumCategory: newProduct.mediumCategory, name: newProduct.name, purchasePrice: parseFloat(newProduct.purchasePrice) || 0, sellingPrice: parseFloat(newProduct.sellingPrice) || 0 }]); setNewProduct({ largeCategory: '', mediumCategory: '', name: '', purchasePrice: '', sellingPrice: '' }) }
   }
   const deleteProduct = async (id) => {
+    if (!confirm('この商品を削除しますか？')) return
     const { error } = await supabase.from('products').delete().eq('id', id)
     if (!error) setProducts(products.filter(p => p.id !== id))
   }
@@ -137,12 +143,12 @@ function ProductManagement({ products, setProducts, categories, setCategories })
           <div>
             <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>大カテゴリー（ディーラー）</label>
             <div className="flex gap-2"><input type="text" value={newLarge} onChange={e => setNewLarge(e.target.value)} placeholder="例：〇〇商事" className="input" /><button onClick={() => addCategory('large', newLarge, setNewLarge)} className="btn btn-blue">追加</button></div>
-            <div className="flex gap-2 mt-2" style={{ flexWrap: 'wrap' }}>{categories.large.map((c, i) => <span key={i} className="bg-blue-50 px-3 py-1 rounded text-sm">{c}</span>)}</div>
+            <div className="flex gap-2 mt-2" style={{ flexWrap: 'wrap' }}>{categories.large.map((c, i) => <span key={i} className="bg-blue-50 px-3 py-1 rounded text-sm flex items-center gap-1">{c}<button onClick={() => deleteCategory('large', c)} className="text-red-500 ml-1 hover:text-red-700">×</button></span>)}</div>
           </div>
           <div>
             <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>中カテゴリー（種類）</label>
             <div className="flex gap-2"><input type="text" value={newMedium} onChange={e => setNewMedium(e.target.value)} placeholder="例：シャンプー" className="input" /><button onClick={() => addCategory('medium', newMedium, setNewMedium)} className="btn btn-green">追加</button></div>
-            <div className="flex gap-2 mt-2" style={{ flexWrap: 'wrap' }}>{categories.medium.map((c, i) => <span key={i} className="bg-green-50 px-3 py-1 rounded text-sm">{c}</span>)}</div>
+            <div className="flex gap-2 mt-2" style={{ flexWrap: 'wrap' }}>{categories.medium.map((c, i) => <span key={i} className="bg-green-50 px-3 py-1 rounded text-sm flex items-center gap-1">{c}<button onClick={() => deleteCategory('medium', c)} className="text-red-500 ml-1 hover:text-red-700">×</button></span>)}</div>
           </div>
         </div>
       </div>
