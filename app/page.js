@@ -407,6 +407,16 @@ function InventoryInput({ products, staff, usage, stockIn, inventoryHistory, set
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
   const [currStaff, setCurrStaff] = useState('')
   const [showOnlyDiff, setShowOnlyDiff] = useState(false)
+  const [filterType, setFilterType] = useState('all')
+
+  const productTypes = [
+    { value: 'all', label: '全て' },
+    { value: 'business', label: '業務用' },
+    { value: 'retail', label: '店販' },
+    { value: 'both', label: '両方' }
+  ]
+
+  const filteredProducts = filterType === 'all' ? products : products.filter(p => p.productType === filterType || p.productType === 'both')
 
   useEffect(() => { const init = {}; products.forEach(p => init[p.id] = 0); setInv(init) }, [products])
 
@@ -426,10 +436,29 @@ function InventoryInput({ products, staff, usage, stockIn, inventoryHistory, set
     if (!error && resData) { setInventoryHistory([...inventoryHistory, { id: resData[0].id, date, staff: currStaff, data, totalPurchaseValue, totalUsageValue: 0 }]); alert('保存完了！'); const init = {}; products.forEach(p => init[p.id] = 0); setInv(init); setCurrStaff('') }
   }
 
-  const getFilteredProducts = (productList) => { if (!showOnlyDiff) return productList; return productList.filter(p => { const diff = getDifference(p.id); return diff !== null && diff !== 0 }) }
-  const grouped = products.reduce((acc, p) => { if (!acc[p.largeCategory]) acc[p.largeCategory] = {}; if (!acc[p.largeCategory][p.mediumCategory]) acc[p.largeCategory][p.mediumCategory] = []; acc[p.largeCategory][p.mediumCategory].push(p); return acc }, {})
-  const totP = products.reduce((s, p) => s + ((inv[p.id] || 0) * p.purchasePrice), 0)
-  const productsWithDiff = products.filter(p => { const diff = getDifference(p.id); return diff !== null && diff !== 0 }).length
+  const getTypeLabel = (type) => {
+    if (type === 'retail') return '店販'
+    if (type === 'both') return '両方'
+    return '業務用'
+  }
+  const getTypeBadgeClass = (type) => {
+    if (type === 'retail') return 'badge-blue'
+    if (type === 'both') return 'badge-yellow'
+    return 'badge-green'
+  }
+
+  const getFilteredProducts = (productList) => { 
+    let result = productList
+    if (filterType !== 'all') {
+      result = result.filter(p => p.productType === filterType || p.productType === 'both')
+    }
+    if (!showOnlyDiff) return result
+    return result.filter(p => { const diff = getDifference(p.id); return diff !== null && diff !== 0 }) 
+  }
+  
+  const grouped = filteredProducts.reduce((acc, p) => { if (!acc[p.largeCategory]) acc[p.largeCategory] = {}; if (!acc[p.largeCategory][p.mediumCategory]) acc[p.largeCategory][p.mediumCategory] = []; acc[p.largeCategory][p.mediumCategory].push(p); return acc }, {})
+  const totP = filteredProducts.reduce((s, p) => s + ((inv[p.id] || 0) * p.purchasePrice), 0)
+  const productsWithDiff = filteredProducts.filter(p => { const diff = getDifference(p.id); return diff !== null && diff !== 0 }).length
   const lastDate = getLastInventoryDate()
 
   return (
@@ -439,8 +468,22 @@ function InventoryInput({ products, staff, usage, stockIn, inventoryHistory, set
         {lastDate && (<><div className="bg-gray-50 p-4 rounded mb-4"><div className="text-sm text-gray-600">前回棚卸日：<span className="font-semibold">{lastDate}</span></div></div><button onClick={applyExpectedToAll} className="btn btn-blue w-full py-3 mb-4"><Icons.Calculator />予想在庫を自動入力</button></>)}
         <div className="bg-blue-50 p-4 rounded grid-2"><div className="summary-card"><div className="label">在庫資産</div><div className="value text-blue-600">¥{totP.toLocaleString()}</div></div><div className="summary-card"><div className="label">差異あり</div><div className={`value ${productsWithDiff > 0 ? 'text-orange-600' : 'text-green-600'}`}>{productsWithDiff}件</div></div></div>
       </div>
+
+      <div className="card">
+        <div className="flex justify-between items-center">
+          <span className="text-sm font-semibold">商品タイプで絞り込み</span>
+          <div className="flex gap-2">
+            {productTypes.map(t => (
+              <button key={t.value} onClick={() => setFilterType(t.value)} className={`btn ${filterType === t.value ? (t.value === 'business' ? 'btn-green' : t.value === 'retail' ? 'btn-blue' : t.value === 'both' ? 'btn-yellow' : 'btn-blue') : 'btn-gray'}`}>{t.label}</button>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {lastDate && (<div className="card"><button onClick={() => setShowOnlyDiff(!showOnlyDiff)} className={`btn w-full py-3 ${showOnlyDiff ? 'btn-yellow' : 'btn-gray'}`}><Icons.Filter />{showOnlyDiff ? `差異ありのみ表示中（${productsWithDiff}件）` : '差異ありだけ表示'}</button></div>)}
-      {Object.keys(grouped).map(lg => { const cats = Object.keys(grouped[lg]).filter(md => getFilteredProducts(grouped[lg][md]).length > 0); if (cats.length === 0) return null; return (<div key={lg} className="card"><h3 className="text-xl font-bold mb-4 text-blue-600">{lg}</h3>{cats.map(md => { const filtered = getFilteredProducts(grouped[lg][md]); if (filtered.length === 0) return null; return (<div key={md} className="mb-4"><h4 className="font-semibold mb-2 text-gray-700">{md}</h4><div className="overflow-x-auto"><table className="text-sm"><thead><tr><th>商品</th><th className="text-right">前回</th><th className="text-right text-red-600">使用</th><th className="text-right text-purple-600">入荷</th><th className="text-right text-blue-600">予想</th><th className="text-center">実際</th><th className="text-center">差異</th></tr></thead><tbody>{filtered.map(p => { const q = inv[p.id] || 0; const last = getLastInventory(p.id); const usageQty = getUsageSinceLastInventory(p.id); const stockInQty = getStockInSinceLastInventory(p.id); const expected = getExpectedInventory(p.id); const diff = getDifference(p.id); return (<tr key={p.id} style={{ background: diff !== null && diff !== 0 ? '#fefce8' : '' }}><td>{p.name}</td><td className="text-right text-gray-500">{last !== null ? last : '-'}</td><td className="text-right text-red-600 font-semibold">{last !== null ? `-${usageQty}` : '-'}</td><td className="text-right text-purple-600 font-semibold">{last !== null && stockInQty > 0 ? `+${stockInQty}` : '-'}</td><td className="text-right text-blue-600 font-semibold">{expected !== null ? expected : '-'}</td><td className="text-center"><input type="number" value={q} onChange={e => setInv({...inv, [p.id]: parseInt(e.target.value) || 0})} className="input" style={{ width: '5rem', textAlign: 'center' }} min="0" /></td><td className="text-center">{diff !== null ? (<span className={`badge ${diff === 0 ? 'badge-green' : diff > 0 ? 'badge-blue' : 'badge-red'}`}>{diff === 0 ? <><Icons.Check /> OK</> : <><Icons.Alert /> {diff > 0 ? '+' : ''}{diff}</>}</span>) : '-'}</td></tr>) })}</tbody></table></div></div>) })}</div>) })}
+      
+      {Object.keys(grouped).map(lg => { const cats = Object.keys(grouped[lg]).filter(md => getFilteredProducts(grouped[lg][md]).length > 0); if (cats.length === 0) return null; return (<div key={lg} className="card"><h3 className="text-xl font-bold mb-4 text-blue-600">{lg}</h3>{cats.map(md => { const filtered = getFilteredProducts(grouped[lg][md]); if (filtered.length === 0) return null; return (<div key={md} className="mb-4"><h4 className="font-semibold mb-2 text-gray-700">{md}</h4><div className="overflow-x-auto"><table className="text-sm"><thead><tr><th>タイプ</th><th>商品</th><th className="text-right">前回</th><th className="text-right text-red-600">使用</th><th className="text-right text-purple-600">入荷</th><th className="text-right text-blue-600">予想</th><th className="text-center">実際</th><th className="text-center">差異</th></tr></thead><tbody>{filtered.map(p => { const q = inv[p.id] || 0; const last = getLastInventory(p.id); const usageQty = getUsageSinceLastInventory(p.id); const stockInQty = getStockInSinceLastInventory(p.id); const expected = getExpectedInventory(p.id); const diff = getDifference(p.id); return (<tr key={p.id} style={{ background: diff !== null && diff !== 0 ? '#fefce8' : '' }}><td><span className={`badge ${getTypeBadgeClass(p.productType)}`}>{getTypeLabel(p.productType)}</span></td><td>{p.name}</td><td className="text-right text-gray-500">{last !== null ? last : '-'}</td><td className="text-right text-red-600 font-semibold">{last !== null ? `-${usageQty}` : '-'}</td><td className="text-right text-purple-600 font-semibold">{last !== null && stockInQty > 0 ? `+${stockInQty}` : '-'}</td><td className="text-right text-blue-600 font-semibold">{expected !== null ? expected : '-'}</td><td className="text-center"><input type="number" value={q} onChange={e => setInv({...inv, [p.id]: parseInt(e.target.value) || 0})} className="input" style={{ width: '5rem', textAlign: 'center' }} min="0" /></td><td className="text-center">{diff !== null ? (<span className={`badge ${diff === 0 ? 'badge-green' : diff > 0 ? 'badge-blue' : 'badge-red'}`}>{diff === 0 ? <><Icons.Check /> OK</> : <><Icons.Alert /> {diff > 0 ? '+' : ''}{diff}</>}</span>) : '-'}</td></tr>) })}</tbody></table></div></div>) })}</div>) })}
+      
       <div className="text-center"><button onClick={saveInv} className="btn btn-green py-3 px-4" style={{ fontSize: '1.1rem' }}><Icons.Save />棚卸保存</button></div>
     </div>
   )
