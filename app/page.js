@@ -46,7 +46,7 @@ export default function Home() {
         supabase.from('favorites').select('*').order('id'),
         supabase.from('staff_purchases').select('*').order('id'),
       ])
-      if (staffRes.data) setStaff(staffRes.data.map(s => s.name))
+      if (staffRes.data) setStaff(staffRes.data.map(s => ({ id: s.id, name: s.name, dealer: s.dealer || '' })))
       if (productsRes.data) setProducts(productsRes.data.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)).map(p => ({ id: p.id, largeCategory: p.large_category, mediumCategory: p.medium_category, name: p.name, purchasePrice: p.purchase_price, sellingPrice: p.selling_price, productType: p.product_type || 'business', sortOrder: p.sort_order || 0 })))
       if (categoriesRes.data) { setCategories({ large: categoriesRes.data.filter(c => c.type === 'large').map(c => c.name), medium: categoriesRes.data.filter(c => c.type === 'medium').map(c => c.name) }) }
       if (usageRes.data) setUsage(usageRes.data.map(u => ({ id: u.id, staff: u.staff_name, productId: u.product_id, productName: u.product_name, largeCategory: u.large_category, mediumCategory: u.medium_category, purchasePrice: u.purchase_price, quantity: u.quantity, date: u.usage_date })))
@@ -70,7 +70,7 @@ export default function Home() {
           ))}
         </div>
       </div>
-      {tab === 'staff' && <StaffManagement staff={staff} setStaff={setStaff} />}
+      {tab === 'staff' && <StaffManagement staff={staff} setStaff={setStaff} categories={categories} />}
       {tab === 'products' && <ProductManagement products={products} setProducts={setProducts} categories={categories} setCategories={setCategories} />}
       {tab === 'usage' && <UsageTracking products={products} staff={staff} usage={usage} setUsage={setUsage} stockIn={stockIn} setStockIn={setStockIn} favorites={favorites} setFavorites={setFavorites} />}
       {tab === 'inventory' && <InventoryInput products={products} staff={staff} usage={usage} stockIn={stockIn} inventoryHistory={inventoryHistory} setInventoryHistory={setInventoryHistory} />}
@@ -81,27 +81,141 @@ export default function Home() {
   )
 }
 
-function StaffManagement({ staff, setStaff }) {
+function StaffManagement({ staff, setStaff, categories }) {
   const [newStaff, setNewStaff] = useState('')
+  const [newDealers, setNewDealers] = useState([])
+  const [editingId, setEditingId] = useState(null)
+  const [editData, setEditData] = useState({ name: '', dealers: [] })
+
+  const toggleNewDealer = (dealer) => {
+    if (newDealers.includes(dealer)) {
+      setNewDealers(newDealers.filter(d => d !== dealer))
+    } else {
+      setNewDealers([...newDealers, dealer])
+    }
+  }
+
+  const toggleEditDealer = (dealer) => {
+    if (editData.dealers.includes(dealer)) {
+      setEditData({...editData, dealers: editData.dealers.filter(d => d !== dealer)})
+    } else {
+      setEditData({...editData, dealers: [...editData.dealers, dealer]})
+    }
+  }
+
   const addStaff = async () => {
-    if (!newStaff || staff.includes(newStaff)) return
-    const { error } = await supabase.from('staff').insert({ name: newStaff })
-    if (!error) { setStaff([...staff, newStaff]); setNewStaff('') }
+    if (!newStaff || staff.find(s => s.name === newStaff)) return
+    const dealerStr = newDealers.join(',')
+    const { data, error } = await supabase.from('staff').insert({ name: newStaff, dealer: dealerStr }).select()
+    if (!error && data) { 
+      setStaff([...staff, { id: data[0].id, name: newStaff, dealer: dealerStr }])
+      setNewStaff('')
+      setNewDealers([])
+    }
   }
-  const deleteStaff = async (name) => {
+  const deleteStaff = async (id, name) => {
     if (!confirm(`「${name}」を削除しますか？\n※このスタッフの使用履歴は残ります`)) return
-    const { error } = await supabase.from('staff').delete().eq('name', name)
-    if (!error) setStaff(staff.filter(s => s !== name))
+    const { error } = await supabase.from('staff').delete().eq('id', id)
+    if (!error) setStaff(staff.filter(s => s.id !== id))
   }
+  const startEdit = (s) => {
+    setEditingId(s.id)
+    const dealers = s.dealer ? s.dealer.split(',').filter(d => d) : []
+    setEditData({ name: s.name, dealers })
+  }
+  const cancelEdit = () => {
+    setEditingId(null)
+    setEditData({ name: '', dealers: [] })
+  }
+  const saveEdit = async (id) => {
+    const dealerStr = editData.dealers.join(',')
+    const { error } = await supabase.from('staff').update({ name: editData.name, dealer: dealerStr }).eq('id', id)
+    if (!error) {
+      setStaff(staff.map(s => s.id === id ? { ...s, name: editData.name, dealer: dealerStr } : s))
+      setEditingId(null)
+      setEditData({ name: '', dealers: [] })
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="card">
         <h3 className="text-lg font-bold mb-4">スタッフ追加</h3>
-        <div className="flex gap-2"><input type="text" value={newStaff} onChange={e => setNewStaff(e.target.value)} placeholder="名前を入力" className="input" /><button onClick={addStaff} className="btn btn-blue">追加</button></div>
+        <div className="mb-4">
+          <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>スタッフ名</label>
+          <input type="text" value={newStaff} onChange={e => setNewStaff(e.target.value)} placeholder="名前を入力" className="input" />
+        </div>
+        <div className="mb-4">
+          <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>担当ディーラー（複数選択可）</label>
+          <div className="flex flex-wrap gap-2">
+            {categories.large.map((c, i) => (
+              <label key={i} className={`flex items-center gap-2 px-3 py-2 rounded cursor-pointer border ${newDealers.includes(c) ? 'bg-blue-100 border-blue-500' : 'bg-gray-50 border-gray-200'}`}>
+                <input type="checkbox" checked={newDealers.includes(c)} onChange={() => toggleNewDealer(c)} className="w-4 h-4" />
+                <span className="text-sm">{c}</span>
+              </label>
+            ))}
+          </div>
+          {categories.large.length === 0 && <p className="text-sm text-gray-500">※商品管理でディーラーを登録してください</p>}
+        </div>
+        <button onClick={addStaff} className="btn btn-blue">追加</button>
       </div>
       <div className="card">
         <h3 className="text-lg font-bold mb-4">スタッフ一覧 ({staff.length}名)</h3>
-        <div className="space-y-2">{staff.map((s, i) => (<div key={i} className="flex justify-between items-center p-3 bg-gray-50 rounded"><span className="font-semibold">{s}</span><button onClick={() => deleteStaff(s)} className="text-red-500 hover:text-red-700"><Icons.Trash /></button></div>))}</div>
+        <div className="overflow-x-auto">
+          <table>
+            <thead>
+              <tr>
+                <th>スタッフ名</th>
+                <th>担当ディーラー</th>
+                <th className="text-center">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {staff.map(s => (
+                editingId === s.id ? (
+                  <tr key={s.id} style={{ background: '#fef9c3' }}>
+                    <td>
+                      <input type="text" value={editData.name} onChange={e => setEditData({...editData, name: e.target.value})} className="input" />
+                    </td>
+                    <td>
+                      <div className="flex flex-wrap gap-1">
+                        {categories.large.map((c, i) => (
+                          <label key={i} className={`flex items-center gap-1 px-2 py-1 rounded cursor-pointer text-xs border ${editData.dealers.includes(c) ? 'bg-blue-100 border-blue-500' : 'bg-gray-50 border-gray-200'}`}>
+                            <input type="checkbox" checked={editData.dealers.includes(c)} onChange={() => toggleEditDealer(c)} className="w-3 h-3" />
+                            <span>{c}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="text-center">
+                      <button onClick={() => saveEdit(s.id)} className="text-green-600 text-sm mr-2">保存</button>
+                      <button onClick={cancelEdit} className="text-gray-500 text-sm">取消</button>
+                    </td>
+                  </tr>
+                ) : (
+                  <tr key={s.id}>
+                    <td className="font-semibold">{s.name}</td>
+                    <td>
+                      {s.dealer ? (
+                        <div className="flex flex-wrap gap-1">
+                          {s.dealer.split(',').filter(d => d).map((d, i) => (
+                            <span key={i} className="badge badge-blue">{d}</span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-gray-400">-</span>
+                      )}
+                    </td>
+                    <td className="text-center">
+                      <button onClick={() => startEdit(s)} className="text-blue-500 text-sm mr-2">編集</button>
+                      <button onClick={() => deleteStaff(s.id, s.name)} className="text-red-500 text-sm">削除</button>
+                    </td>
+                  </tr>
+                )
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   )
@@ -502,7 +616,7 @@ function UsageTracking({ products, staff, usage, setUsage, stockIn, setStockIn, 
                     editingUsageId === u.id ? (
                       <tr key={u.id} style={{ background: '#fef9c3' }}>
                         <td><input type="date" value={editUsageData.date} onChange={e => setEditUsageData({...editUsageData, date: e.target.value})} className="input" style={{ width: '130px' }} /></td>
-                        <td><select value={editUsageData.staff} onChange={e => setEditUsageData({...editUsageData, staff: e.target.value})} className="select">{staff.map((s, i) => <option key={i} value={s}>{s}</option>)}</select></td>
+                        <td><select value={editUsageData.staff} onChange={e => setEditUsageData({...editUsageData, staff: e.target.value})} className="select">{staff.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}</select></td>
                         <td>{u.productName}</td>
                         <td className="text-center"><input type="number" value={editUsageData.quantity} onChange={e => setEditUsageData({...editUsageData, quantity: e.target.value})} className="input" style={{ width: '60px', textAlign: 'center' }} min="1" /></td>
                         <td className="text-right">¥{(u.purchasePrice * (parseInt(editUsageData.quantity) || 1)).toLocaleString()}</td>
@@ -581,7 +695,7 @@ function UsageTracking({ products, staff, usage, setUsage, stockIn, setStockIn, 
           <div className="card">
             <h3 className="text-lg font-bold mb-2 flex items-center gap-2"><Icons.Star filled={true} className="text-yellow-500" />クイック入力</h3>
             <p className="text-sm text-gray-600 mb-4">よく使う商品を1タップで記録できます</p>
-            <div className="mb-4"><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>スタッフ選択（必須）</label><select value={selectedStaff} onChange={e => setSelectedStaff(e.target.value)} className="select" style={{ fontSize: '1.1rem', padding: '0.75rem' }}><option value="">選択してください</option>{staff.map((s, i) => <option key={i} value={s}>{s}</option>)}</select></div>
+            <div className="mb-4"><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>スタッフ選択（必須）</label><select value={selectedStaff} onChange={e => setSelectedStaff(e.target.value)} className="select" style={{ fontSize: '1.1rem', padding: '0.75rem' }}><option value="">選択してください</option>{staff.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}</select></div>
             {favoriteProducts.length === 0 ? (<div className="text-center py-4 text-gray-500"><p>お気に入り商品がありません</p><p className="text-sm">下の商品一覧から★をタップして追加</p></div>) : (<div className="grid-3">{favoriteProducts.map(p => (<button key={p.id} onClick={() => quickRecord(p.id)} disabled={!selectedStaff} className="quick-card" style={{ opacity: selectedStaff ? 1 : 0.5 }}><div className="font-semibold text-sm mb-1">{p.name}</div><div className="text-sm text-gray-500">{p.mediumCategory}</div><span className={`badge ${getTypeBadgeClass(p.productType)}`} style={{ fontSize: '0.7rem' }}>{getTypeLabel(p.productType)}</span></button>))}</div>)}
             {selectedStaff && favoriteProducts.length > 0 && <p className="text-center text-sm text-green-600 mt-4">✓ タップすると即記録されます</p>}
           </div>
@@ -593,7 +707,7 @@ function UsageTracking({ products, staff, usage, setUsage, stockIn, setStockIn, 
         <div className="card">
           <h3 className="text-lg font-bold mb-4">使用記録（単品）</h3>
           <div className="space-y-4">
-            <div className="grid-2"><div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>スタッフ</label><select value={selectedStaff} onChange={e => setSelectedStaff(e.target.value)} className="select"><option value="">選択</option>{staff.map((s, i) => <option key={i} value={s}>{s}</option>)}</select></div><div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>使用日</label><input type="date" value={date} onChange={e => setDate(e.target.value)} className="input" /></div></div>
+            <div className="grid-2"><div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>スタッフ</label><select value={selectedStaff} onChange={e => setSelectedStaff(e.target.value)} className="select"><option value="">選択</option>{staff.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}</select></div><div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>使用日</label><input type="date" value={date} onChange={e => setDate(e.target.value)} className="input" /></div></div>
             <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>商品</label><select value={selectedProduct} onChange={e => setSelectedProduct(e.target.value)} className="select"><option value="">選択</option>{filteredProducts.map(p => <option key={p.id} value={p.id}>[{getTypeLabel(p.productType)}] {p.largeCategory} - {p.mediumCategory} - {p.name}</option>)}</select></div>
             <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>数量</label><input type="number" value={quantity} onChange={e => setQuantity(parseInt(e.target.value) || 1)} min="1" className="input" /></div>
             <button onClick={recordUsage} className="btn btn-blue w-full py-3" style={{ fontSize: '1.1rem' }}><Icons.TrendingDown />使用を記録</button>
@@ -605,7 +719,7 @@ function UsageTracking({ products, staff, usage, setUsage, stockIn, setStockIn, 
         <div className="space-y-4">
           <div className="card">
             <h3 className="text-lg font-bold mb-4">まとめて入力</h3>
-            <div className="grid-2 mb-4"><div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>スタッフ</label><select value={bulkStaff} onChange={e => setBulkStaff(e.target.value)} className="select"><option value="">選択</option>{staff.map((s, i) => <option key={i} value={s}>{s}</option>)}</select></div><div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>使用日</label><input type="date" value={bulkDate} onChange={e => setBulkDate(e.target.value)} className="input" /></div></div>
+            <div className="grid-2 mb-4"><div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>スタッフ</label><select value={bulkStaff} onChange={e => setBulkStaff(e.target.value)} className="select"><option value="">選択</option>{staff.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}</select></div><div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>使用日</label><input type="date" value={bulkDate} onChange={e => setBulkDate(e.target.value)} className="input" /></div></div>
             <div className="bg-green-50 p-4 rounded grid-2"><div className="summary-card"><div className="label">入力商品数</div><div className="value text-green-600">{bulkCount}個</div></div><div className="summary-card"><div className="label">合計金額</div><div className="value text-green-600">¥{bulkTotal.toLocaleString()}</div></div></div>
           </div>
           {Object.keys(groupedProducts).map(dealer => (<div key={dealer} className="card"><h4 className="text-lg font-bold mb-4 text-blue-600 flex items-center gap-2"><Icons.Building />{dealer}</h4>{Object.keys(groupedProducts[dealer]).map(category => (<div key={category} className="mb-4"><h5 className="font-semibold mb-2 text-gray-700">{category}</h5><div className="grid-3">{groupedProducts[dealer][category].map(p => (<div key={p.id} className={`product-card ${bulkEntries[p.id] > 0 ? 'selected' : ''}`}><div className="name">{p.name}</div><div className="price">¥{p.purchasePrice.toLocaleString()} <span className={`badge ${getTypeBadgeClass(p.productType)}`} style={{ fontSize: '0.6rem' }}>{getTypeLabel(p.productType)}</span></div><div className="counter"><button className="minus" onClick={() => setBulkEntries({...bulkEntries, [p.id]: Math.max(0, (bulkEntries[p.id] || 0) - 1)})}>-</button><input type="number" value={bulkEntries[p.id] || 0} onChange={e => setBulkEntries({...bulkEntries, [p.id]: parseInt(e.target.value) || 0})} min="0" /><button className="plus" onClick={() => setBulkEntries({...bulkEntries, [p.id]: (bulkEntries[p.id] || 0) + 1})}>+</button></div></div>))}</div></div>))}</div>))}
@@ -756,7 +870,7 @@ function InventoryInput({ products, staff, usage, stockIn, inventoryHistory, set
   return (
     <div className="space-y-4">
       <div className="card">
-        <div className="grid-2 mb-4"><div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>棚卸日</label><input type="date" value={date} onChange={e => setDate(e.target.value)} className="input" /></div><div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>担当</label><select value={currStaff} onChange={e => setCurrStaff(e.target.value)} className="select"><option value="">選択</option>{staff.map((s, i) => <option key={i} value={s}>{s}</option>)}</select></div></div>
+        <div className="grid-2 mb-4"><div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>棚卸日</label><input type="date" value={date} onChange={e => setDate(e.target.value)} className="input" /></div><div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>担当</label><select value={currStaff} onChange={e => setCurrStaff(e.target.value)} className="select"><option value="">選択</option>{staff.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}</select></div></div>
         {lastDate && (<><div className="bg-gray-50 p-4 rounded mb-4"><div className="text-sm text-gray-600">前回棚卸日：<span className="font-semibold">{lastDate}</span></div></div><button onClick={applyExpectedToAll} className="btn btn-blue w-full py-3 mb-4"><Icons.Calculator />予想在庫を自動入力</button></>)}
         <div className="bg-blue-50 p-4 rounded grid-2"><div className="summary-card"><div className="label">在庫資産</div><div className="value text-blue-600">¥{totP.toLocaleString()}</div></div><div className="summary-card"><div className="label">差異あり</div><div className={`value ${productsWithDiff > 0 ? 'text-orange-600' : 'text-green-600'}`}>{productsWithDiff}件</div></div></div>
       </div>
@@ -1150,7 +1264,7 @@ function StaffPurchase({ products, staff, staffPurchases, setStaffPurchases }) {
             <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>スタッフ</label>
             <select value={selectedStaff} onChange={e => setSelectedStaff(e.target.value)} className="select">
               <option value="">選択</option>
-              {staff.map((s, i) => <option key={i} value={s}>{s}</option>)}
+              {staff.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
             </select>
           </div>
           <div>
