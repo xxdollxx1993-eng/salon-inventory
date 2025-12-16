@@ -261,6 +261,16 @@ function UsageTracking({ products, staff, usage, setUsage, stockIn, setStockIn, 
   const [stockInProduct, setStockInProduct] = useState('')
   const [stockInQty, setStockInQty] = useState(1)
   const [stockInDate, setStockInDate] = useState(new Date().toISOString().split('T')[0])
+  const [filterType, setFilterType] = useState('all')
+
+  const productTypes = [
+    { value: 'all', label: '全て' },
+    { value: 'business', label: '業務用' },
+    { value: 'retail', label: '店販' },
+    { value: 'both', label: '両方' }
+  ]
+
+  const filteredProducts = filterType === 'all' ? products : products.filter(p => p.productType === filterType || p.productType === 'both')
 
   useEffect(() => { const init = {}; products.forEach(p => init[p.id] = 0); setBulkEntries(init) }, [products])
 
@@ -299,8 +309,19 @@ function UsageTracking({ products, staff, usage, setUsage, stockIn, setStockIn, 
     if (!error && data) { setStockIn([...stockIn, { id: data[0].id, productId: product.id, productName: product.name, largeCategory: product.largeCategory, quantity: stockInQty, date: stockInDate }]); alert('入荷を記録しました！'); setStockInQty(1); setStockInProduct('') }
   }
 
-  const favoriteProducts = products.filter(p => favorites.includes(p.id))
-  const groupedProducts = products.reduce((acc, p) => { if (!acc[p.largeCategory]) acc[p.largeCategory] = {}; if (!acc[p.largeCategory][p.mediumCategory]) acc[p.largeCategory][p.mediumCategory] = []; acc[p.largeCategory][p.mediumCategory].push(p); return acc }, {})
+  const getTypeLabel = (type) => {
+    if (type === 'retail') return '店販'
+    if (type === 'both') return '両方'
+    return '業務用'
+  }
+  const getTypeBadgeClass = (type) => {
+    if (type === 'retail') return 'badge-blue'
+    if (type === 'both') return 'badge-yellow'
+    return 'badge-green'
+  }
+
+  const favoriteProducts = filteredProducts.filter(p => favorites.includes(p.id))
+  const groupedProducts = filteredProducts.reduce((acc, p) => { if (!acc[p.largeCategory]) acc[p.largeCategory] = {}; if (!acc[p.largeCategory][p.mediumCategory]) acc[p.largeCategory][p.mediumCategory] = []; acc[p.largeCategory][p.mediumCategory].push(p); return acc }, {})
   const bulkTotal = Object.entries(bulkEntries).reduce((sum, [pid, qty]) => { const product = products.find(p => p.id === parseInt(pid)); return sum + (product ? qty * product.purchasePrice : 0) }, 0)
   const bulkCount = Object.values(bulkEntries).reduce((sum, qty) => sum + qty, 0)
 
@@ -314,16 +335,27 @@ function UsageTracking({ products, staff, usage, setUsage, stockIn, setStockIn, 
         </div>
       </div>
 
+      <div className="card">
+        <div className="flex justify-between items-center">
+          <span className="text-sm font-semibold">商品タイプで絞り込み</span>
+          <div className="flex gap-2">
+            {productTypes.map(t => (
+              <button key={t.value} onClick={() => setFilterType(t.value)} className={`btn ${filterType === t.value ? (t.value === 'business' ? 'btn-green' : t.value === 'retail' ? 'btn-blue' : t.value === 'both' ? 'btn-yellow' : 'btn-blue') : 'btn-gray'}`}>{t.label}</button>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {inputMode === 'quick' && (
         <div className="space-y-4">
           <div className="card">
             <h3 className="text-lg font-bold mb-2 flex items-center gap-2"><Icons.Star filled={true} className="text-yellow-500" />クイック入力</h3>
             <p className="text-sm text-gray-600 mb-4">よく使う商品を1タップで記録できます</p>
             <div className="mb-4"><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>スタッフ選択（必須）</label><select value={selectedStaff} onChange={e => setSelectedStaff(e.target.value)} className="select" style={{ fontSize: '1.1rem', padding: '0.75rem' }}><option value="">選択してください</option>{staff.map((s, i) => <option key={i} value={s}>{s}</option>)}</select></div>
-            {favoriteProducts.length === 0 ? (<div className="text-center py-4 text-gray-500"><p>お気に入り商品がありません</p><p className="text-sm">下の商品一覧から★をタップして追加</p></div>) : (<div className="grid-3">{favoriteProducts.map(p => (<button key={p.id} onClick={() => quickRecord(p.id)} disabled={!selectedStaff} className="quick-card" style={{ opacity: selectedStaff ? 1 : 0.5 }}><div className="font-semibold text-sm mb-1">{p.name}</div><div className="text-sm text-gray-500">{p.mediumCategory}</div></button>))}</div>)}
+            {favoriteProducts.length === 0 ? (<div className="text-center py-4 text-gray-500"><p>お気に入り商品がありません</p><p className="text-sm">下の商品一覧から★をタップして追加</p></div>) : (<div className="grid-3">{favoriteProducts.map(p => (<button key={p.id} onClick={() => quickRecord(p.id)} disabled={!selectedStaff} className="quick-card" style={{ opacity: selectedStaff ? 1 : 0.5 }}><div className="font-semibold text-sm mb-1">{p.name}</div><div className="text-sm text-gray-500">{p.mediumCategory}</div><span className={`badge ${getTypeBadgeClass(p.productType)}`} style={{ fontSize: '0.7rem' }}>{getTypeLabel(p.productType)}</span></button>))}</div>)}
             {selectedStaff && favoriteProducts.length > 0 && <p className="text-center text-sm text-green-600 mt-4">✓ タップすると即記録されます</p>}
           </div>
-          <div className="card"><h4 className="font-semibold mb-3">お気に入り設定</h4><div style={{ maxHeight: '300px', overflowY: 'auto' }}>{products.map(p => (<div key={p.id} className="flex justify-between items-center p-2 border-t"><span className="text-sm">{p.largeCategory} - {p.mediumCategory} - {p.name}</span><button onClick={() => toggleFavorite(p.id)} className={`favorite-btn ${favorites.includes(p.id) ? 'active' : ''}`}><Icons.Star filled={favorites.includes(p.id)} /></button></div>))}</div></div>
+          <div className="card"><h4 className="font-semibold mb-3">お気に入り設定</h4><div style={{ maxHeight: '300px', overflowY: 'auto' }}>{filteredProducts.map(p => (<div key={p.id} className="flex justify-between items-center p-2 border-t"><span className="text-sm">{p.largeCategory} - {p.mediumCategory} - {p.name} <span className={`badge ${getTypeBadgeClass(p.productType)}`} style={{ fontSize: '0.7rem' }}>{getTypeLabel(p.productType)}</span></span><button onClick={() => toggleFavorite(p.id)} className={`favorite-btn ${favorites.includes(p.id) ? 'active' : ''}`}><Icons.Star filled={favorites.includes(p.id)} /></button></div>))}</div></div>
         </div>
       )}
 
@@ -332,7 +364,7 @@ function UsageTracking({ products, staff, usage, setUsage, stockIn, setStockIn, 
           <h3 className="text-lg font-bold mb-4">使用記録（単品）</h3>
           <div className="space-y-4">
             <div className="grid-2"><div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>スタッフ</label><select value={selectedStaff} onChange={e => setSelectedStaff(e.target.value)} className="select"><option value="">選択</option>{staff.map((s, i) => <option key={i} value={s}>{s}</option>)}</select></div><div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>使用日</label><input type="date" value={date} onChange={e => setDate(e.target.value)} className="input" /></div></div>
-            <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>商品</label><select value={selectedProduct} onChange={e => setSelectedProduct(e.target.value)} className="select"><option value="">選択</option>{products.map(p => <option key={p.id} value={p.id}>{p.largeCategory} - {p.mediumCategory} - {p.name}</option>)}</select></div>
+            <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>商品</label><select value={selectedProduct} onChange={e => setSelectedProduct(e.target.value)} className="select"><option value="">選択</option>{filteredProducts.map(p => <option key={p.id} value={p.id}>[{getTypeLabel(p.productType)}] {p.largeCategory} - {p.mediumCategory} - {p.name}</option>)}</select></div>
             <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>数量</label><input type="number" value={quantity} onChange={e => setQuantity(parseInt(e.target.value) || 1)} min="1" className="input" /></div>
             <button onClick={recordUsage} className="btn btn-blue w-full py-3" style={{ fontSize: '1.1rem' }}><Icons.TrendingDown />使用を記録</button>
           </div>
@@ -346,7 +378,7 @@ function UsageTracking({ products, staff, usage, setUsage, stockIn, setStockIn, 
             <div className="grid-2 mb-4"><div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>スタッフ</label><select value={bulkStaff} onChange={e => setBulkStaff(e.target.value)} className="select"><option value="">選択</option>{staff.map((s, i) => <option key={i} value={s}>{s}</option>)}</select></div><div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>使用日</label><input type="date" value={bulkDate} onChange={e => setBulkDate(e.target.value)} className="input" /></div></div>
             <div className="bg-green-50 p-4 rounded grid-2"><div className="summary-card"><div className="label">入力商品数</div><div className="value text-green-600">{bulkCount}個</div></div><div className="summary-card"><div className="label">合計金額</div><div className="value text-green-600">¥{bulkTotal.toLocaleString()}</div></div></div>
           </div>
-          {Object.keys(groupedProducts).map(dealer => (<div key={dealer} className="card"><h4 className="text-lg font-bold mb-4 text-blue-600 flex items-center gap-2"><Icons.Building />{dealer}</h4>{Object.keys(groupedProducts[dealer]).map(category => (<div key={category} className="mb-4"><h5 className="font-semibold mb-2 text-gray-700">{category}</h5><div className="grid-3">{groupedProducts[dealer][category].map(p => (<div key={p.id} className={`product-card ${bulkEntries[p.id] > 0 ? 'selected' : ''}`}><div className="name">{p.name}</div><div className="price">¥{p.purchasePrice.toLocaleString()}</div><div className="counter"><button className="minus" onClick={() => setBulkEntries({...bulkEntries, [p.id]: Math.max(0, (bulkEntries[p.id] || 0) - 1)})}>-</button><input type="number" value={bulkEntries[p.id] || 0} onChange={e => setBulkEntries({...bulkEntries, [p.id]: parseInt(e.target.value) || 0})} min="0" /><button className="plus" onClick={() => setBulkEntries({...bulkEntries, [p.id]: (bulkEntries[p.id] || 0) + 1})}>+</button></div></div>))}</div></div>))}</div>))}
+          {Object.keys(groupedProducts).map(dealer => (<div key={dealer} className="card"><h4 className="text-lg font-bold mb-4 text-blue-600 flex items-center gap-2"><Icons.Building />{dealer}</h4>{Object.keys(groupedProducts[dealer]).map(category => (<div key={category} className="mb-4"><h5 className="font-semibold mb-2 text-gray-700">{category}</h5><div className="grid-3">{groupedProducts[dealer][category].map(p => (<div key={p.id} className={`product-card ${bulkEntries[p.id] > 0 ? 'selected' : ''}`}><div className="name">{p.name}</div><div className="price">¥{p.purchasePrice.toLocaleString()} <span className={`badge ${getTypeBadgeClass(p.productType)}`} style={{ fontSize: '0.6rem' }}>{getTypeLabel(p.productType)}</span></div><div className="counter"><button className="minus" onClick={() => setBulkEntries({...bulkEntries, [p.id]: Math.max(0, (bulkEntries[p.id] || 0) - 1)})}>-</button><input type="number" value={bulkEntries[p.id] || 0} onChange={e => setBulkEntries({...bulkEntries, [p.id]: parseInt(e.target.value) || 0})} min="0" /><button className="plus" onClick={() => setBulkEntries({...bulkEntries, [p.id]: (bulkEntries[p.id] || 0) + 1})}>+</button></div></div>))}</div></div>))}</div>))}
           <div className="text-center"><button onClick={recordBulkUsage} className="btn btn-green py-3 px-4" style={{ fontSize: '1.1rem' }}><Icons.Save />まとめて記録（{bulkCount}件）</button></div>
         </div>
       )}
@@ -358,7 +390,7 @@ function UsageTracking({ products, staff, usage, setUsage, stockIn, setStockIn, 
             <p className="text-sm text-gray-600 mb-4">商品の入荷を記録すると、棚卸の予想在庫が正確になります</p>
             <div className="space-y-4">
               <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>入荷日</label><input type="date" value={stockInDate} onChange={e => setStockInDate(e.target.value)} className="input" /></div>
-              <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>商品</label><select value={stockInProduct} onChange={e => setStockInProduct(e.target.value)} className="select"><option value="">選択</option>{products.map(p => <option key={p.id} value={p.id}>{p.largeCategory} - {p.mediumCategory} - {p.name}</option>)}</select></div>
+              <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>商品</label><select value={stockInProduct} onChange={e => setStockInProduct(e.target.value)} className="select"><option value="">選択</option>{filteredProducts.map(p => <option key={p.id} value={p.id}>[{getTypeLabel(p.productType)}] {p.largeCategory} - {p.mediumCategory} - {p.name}</option>)}</select></div>
               <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>入荷数</label><input type="number" value={stockInQty} onChange={e => setStockInQty(parseInt(e.target.value) || 1)} min="1" className="input" /></div>
               <button onClick={recordStockIn} className="btn btn-purple w-full py-3" style={{ fontSize: '1.1rem' }}><Icons.TrendingUp />入荷を記録</button>
             </div>
