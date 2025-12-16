@@ -119,6 +119,7 @@ function ProductManagement({ products, setProducts, categories, setCategories })
   const [editingId, setEditingId] = useState(null)
   const [editData, setEditData] = useState({})
   const [filterType, setFilterType] = useState('all')
+  const [sortMode, setSortMode] = useState(false)
 
   const productTypes = [
     { value: 'business', label: '業務用' },
@@ -138,8 +139,9 @@ function ProductManagement({ products, setProducts, categories, setCategories })
   }
   const addProduct = async () => {
     if (!newProduct.name || !newProduct.largeCategory || !newProduct.mediumCategory) return
-    const { data, error } = await supabase.from('products').insert({ large_category: newProduct.largeCategory, medium_category: newProduct.mediumCategory, name: newProduct.name, purchase_price: parseFloat(newProduct.purchasePrice) || 0, selling_price: parseFloat(newProduct.sellingPrice) || 0, product_type: newProduct.productType }).select()
-    if (!error && data) { setProducts([...products, { id: data[0].id, largeCategory: newProduct.largeCategory, mediumCategory: newProduct.mediumCategory, name: newProduct.name, purchasePrice: parseFloat(newProduct.purchasePrice) || 0, sellingPrice: parseFloat(newProduct.sellingPrice) || 0, productType: newProduct.productType }]); setNewProduct({ largeCategory: '', mediumCategory: '', name: '', purchasePrice: '', sellingPrice: '', productType: 'business' }) }
+    const maxOrder = products.length > 0 ? Math.max(...products.map(p => p.sortOrder || 0)) + 1 : 1
+    const { data, error } = await supabase.from('products').insert({ large_category: newProduct.largeCategory, medium_category: newProduct.mediumCategory, name: newProduct.name, purchase_price: parseFloat(newProduct.purchasePrice) || 0, selling_price: parseFloat(newProduct.sellingPrice) || 0, product_type: newProduct.productType, sort_order: maxOrder }).select()
+    if (!error && data) { setProducts([...products, { id: data[0].id, largeCategory: newProduct.largeCategory, mediumCategory: newProduct.mediumCategory, name: newProduct.name, purchasePrice: parseFloat(newProduct.purchasePrice) || 0, sellingPrice: parseFloat(newProduct.sellingPrice) || 0, productType: newProduct.productType, sortOrder: maxOrder }]); setNewProduct({ largeCategory: '', mediumCategory: '', name: '', purchasePrice: '', sellingPrice: '', productType: 'business' }) }
   }
   const deleteProduct = async (id) => {
     if (!confirm('この商品を削除しますか？')) return
@@ -171,7 +173,29 @@ function ProductManagement({ products, setProducts, categories, setCategories })
     if (type === 'both') return 'badge-yellow'
     return 'badge-green'
   }
-  const filteredProducts = filterType === 'all' ? products : products.filter(p => p.productType === filterType)
+
+  const moveProduct = async (index, direction) => {
+    const sortedProducts = [...filteredProducts].sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+    const newIndex = index + direction
+    if (newIndex < 0 || newIndex >= sortedProducts.length) return
+
+    const currentProduct = sortedProducts[index]
+    const targetProduct = sortedProducts[newIndex]
+
+    const currentOrder = currentProduct.sortOrder || 0
+    const targetOrder = targetProduct.sortOrder || 0
+
+    await supabase.from('products').update({ sort_order: targetOrder }).eq('id', currentProduct.id)
+    await supabase.from('products').update({ sort_order: currentOrder }).eq('id', targetProduct.id)
+
+    setProducts(products.map(p => {
+      if (p.id === currentProduct.id) return { ...p, sortOrder: targetOrder }
+      if (p.id === targetProduct.id) return { ...p, sortOrder: currentOrder }
+      return p
+    }))
+  }
+
+  const filteredProducts = (filterType === 'all' ? products : products.filter(p => p.productType === filterType)).sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
 
   return (
     <div className="space-y-4">
@@ -211,18 +235,27 @@ function ProductManagement({ products, setProducts, categories, setCategories })
       <div className="card">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-bold">商品一覧 ({filteredProducts.length}件)</h3>
-          <div className="flex gap-2">
-            <button onClick={() => setFilterType('all')} className={`btn ${filterType === 'all' ? 'btn-blue' : 'btn-gray'}`}>全て</button>
-            <button onClick={() => setFilterType('business')} className={`btn ${filterType === 'business' ? 'btn-green' : 'btn-gray'}`}>業務用</button>
-            <button onClick={() => setFilterType('retail')} className={`btn ${filterType === 'retail' ? 'btn-blue' : 'btn-gray'}`}>店販</button>
-            <button onClick={() => setFilterType('both')} className={`btn ${filterType === 'both' ? 'btn-yellow' : 'btn-gray'}`}>両方</button>
-          </div>
+          <button onClick={() => setSortMode(!sortMode)} className={`btn ${sortMode ? 'btn-yellow' : 'btn-gray'}`}>
+            {sortMode ? '並び替え完了' : '↕ 並び替え'}
+          </button>
         </div>
+        <div className="flex gap-2 mb-4">
+          <button onClick={() => setFilterType('all')} className={`btn ${filterType === 'all' ? 'btn-blue' : 'btn-gray'}`}>全て</button>
+          <button onClick={() => setFilterType('business')} className={`btn ${filterType === 'business' ? 'btn-green' : 'btn-gray'}`}>業務用</button>
+          <button onClick={() => setFilterType('retail')} className={`btn ${filterType === 'retail' ? 'btn-blue' : 'btn-gray'}`}>店販</button>
+          <button onClick={() => setFilterType('both')} className={`btn ${filterType === 'both' ? 'btn-yellow' : 'btn-gray'}`}>両方</button>
+        </div>
+        {sortMode && (
+          <div className="bg-yellow-50 p-3 rounded mb-4 text-sm text-gray-600">
+            💡 ↑↓ボタンで商品の表示順を変更できます。変更は自動保存されます。
+          </div>
+        )}
         <div className="overflow-x-auto">
-          <table><thead><tr><th>タイプ</th><th>ディーラー</th><th>カテゴリー</th><th>商品名</th><th className="text-right">仕入れ</th><th className="text-right">販売</th><th className="text-center">操作</th></tr></thead>
-            <tbody>{filteredProducts.map(p => (
+          <table><thead><tr>{sortMode && <th className="text-center">順番</th>}<th>タイプ</th><th>ディーラー</th><th>カテゴリー</th><th>商品名</th><th className="text-right">仕入れ</th><th className="text-right">販売</th><th className="text-center">操作</th></tr></thead>
+            <tbody>{filteredProducts.map((p, index) => (
               editingId === p.id ? (
                 <tr key={p.id} style={{ background: '#fef9c3' }}>
+                  {sortMode && <td></td>}
                   <td><select value={editData.productType} onChange={e => setEditData({...editData, productType: e.target.value})} className="select">{productTypes.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}</select></td>
                   <td><select value={editData.largeCategory} onChange={e => setEditData({...editData, largeCategory: e.target.value})} className="select">{categories.large.map((c, i) => <option key={i} value={c}>{c}</option>)}</select></td>
                   <td><select value={editData.mediumCategory} onChange={e => setEditData({...editData, mediumCategory: e.target.value})} className="select">{categories.medium.map((c, i) => <option key={i} value={c}>{c}</option>)}</select></td>
@@ -233,6 +266,12 @@ function ProductManagement({ products, setProducts, categories, setCategories })
                 </tr>
               ) : (
                 <tr key={p.id}>
+                  {sortMode && (
+                    <td className="text-center">
+                      <button onClick={() => moveProduct(index, -1)} disabled={index === 0} className="btn btn-gray p-1 mr-1" style={{ opacity: index === 0 ? 0.3 : 1 }}>↑</button>
+                      <button onClick={() => moveProduct(index, 1)} disabled={index === filteredProducts.length - 1} className="btn btn-gray p-1" style={{ opacity: index === filteredProducts.length - 1 ? 0.3 : 1 }}>↓</button>
+                    </td>
+                  )}
                   <td><span className={`badge ${getTypeBadgeClass(p.productType)}`}>{getTypeLabel(p.productType)}</span></td>
                   <td>{p.largeCategory}</td>
                   <td>{p.mediumCategory}</td>
@@ -249,7 +288,6 @@ function ProductManagement({ products, setProducts, categories, setCategories })
     </div>
   )
 }
-
 function UsageTracking({ products, staff, usage, setUsage, stockIn, setStockIn, favorites, setFavorites }) {
   const [inputMode, setInputMode] = useState('quick')
   const [selectedStaff, setSelectedStaff] = useState('')
