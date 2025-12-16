@@ -304,6 +304,13 @@ function UsageTracking({ products, staff, usage, setUsage, stockIn, setStockIn, 
   const [editingUsageId, setEditingUsageId] = useState(null)
   const [editUsageData, setEditUsageData] = useState({})
   const [showHistory, setShowHistory] = useState(false)
+  const [stockInMode, setStockInMode] = useState('bulk')
+  const [stockInDealer, setStockInDealer] = useState('')
+  const [stockInEntries, setStockInEntries] = useState({})
+  const [stockInBulkDate, setStockInBulkDate] = useState(new Date().toISOString().split('T')[0])
+  const [showStockInHistory, setShowStockInHistory] = useState(false)
+  const [editingStockInId, setEditingStockInId] = useState(null)
+  const [editStockInData, setEditStockInData] = useState({})
 
   const productTypes = [
     { value: 'all', label: '全て' },
@@ -313,8 +320,10 @@ function UsageTracking({ products, staff, usage, setUsage, stockIn, setStockIn, 
   ]
 
   const filteredProducts = filterType === 'all' ? products : products.filter(p => p.productType === filterType || p.productType === 'both')
+  const dealers = [...new Set(products.map(p => p.largeCategory))].filter(Boolean)
+  const dealerProducts = stockInDealer ? products.filter(p => p.largeCategory === stockInDealer) : []
 
-  useEffect(() => { const init = {}; products.forEach(p => init[p.id] = 0); setBulkEntries(init) }, [products])
+  useEffect(() => { const init = {}; products.forEach(p => init[p.id] = 0); setBulkEntries(init); setStockInEntries(init) }, [products])
 
   const toggleFavorite = async (productId) => {
     if (favorites.includes(productId)) { await supabase.from('favorites').delete().eq('product_id', productId); setFavorites(favorites.filter(id => id !== productId)) }
@@ -343,12 +352,33 @@ function UsageTracking({ products, staff, usage, setUsage, stockIn, setStockIn, 
     const { data, error } = await supabase.from('usage_records').insert(newRecords).select()
     if (!error && data) { setUsage([...usage, ...data.map(d => ({ id: d.id, staff: d.staff_name, productId: d.product_id, productName: d.product_name, largeCategory: d.large_category, mediumCategory: d.medium_category, purchasePrice: d.purchase_price, quantity: d.quantity, date: d.usage_date }))]); alert(`${newRecords.length}件の使用記録を保存しました！`); const init = {}; products.forEach(p => init[p.id] = 0); setBulkEntries(init); setBulkStaff('') }
   }
-  const recordStockIn = async () => {
+
+  const recordSingleStockIn = async () => {
     if (!stockInProduct) { alert('商品を選択してください'); return }
     const product = products.find(p => p.id === parseInt(stockInProduct))
     if (!product) return
     const { data, error } = await supabase.from('stock_in').insert({ product_id: product.id, product_name: product.name, large_category: product.largeCategory, quantity: stockInQty, stock_in_date: stockInDate }).select()
     if (!error && data) { setStockIn([...stockIn, { id: data[0].id, productId: product.id, productName: product.name, largeCategory: product.largeCategory, quantity: stockInQty, date: stockInDate }]); alert('入荷を記録しました！'); setStockInQty(1); setStockInProduct('') }
+  }
+
+  const recordBulkStockIn = async () => {
+    if (!stockInDealer) { alert('ディーラーを選択してください'); return }
+    const newRecords = []
+    for (const [productId, qty] of Object.entries(stockInEntries)) {
+      if (qty > 0) {
+        const product = products.find(p => p.id === parseInt(productId))
+        if (product && product.largeCategory === stockInDealer) {
+          newRecords.push({ product_id: product.id, product_name: product.name, large_category: product.largeCategory, quantity: qty, stock_in_date: stockInBulkDate })
+        }
+      }
+    }
+    if (newRecords.length === 0) { alert('入荷数量を入力してください'); return }
+    const { data, error } = await supabase.from('stock_in').insert(newRecords).select()
+    if (!error && data) {
+      setStockIn([...stockIn, ...data.map(d => ({ id: d.id, productId: d.product_id, productName: d.product_name, largeCategory: d.large_category, quantity: d.quantity, date: d.stock_in_date }))])
+      alert(`${newRecords.length}件の入荷を記録しました！`)
+      const init = {}; products.forEach(p => init[p.id] = 0); setStockInEntries(init)
+    }
   }
 
   const deleteUsage = async (id) => {
@@ -378,6 +408,22 @@ function UsageTracking({ products, staff, usage, setUsage, stockIn, setStockIn, 
     const { error } = await supabase.from('stock_in').delete().eq('id', id)
     if (!error) setStockIn(stockIn.filter(s => s.id !== id))
   }
+  const startEditStockIn = (record) => {
+    setEditingStockInId(record.id)
+    setEditStockInData({ quantity: record.quantity, date: record.date })
+  }
+  const cancelEditStockIn = () => {
+    setEditingStockInId(null)
+    setEditStockInData({})
+  }
+  const saveEditStockIn = async (id) => {
+    const { error } = await supabase.from('stock_in').update({ quantity: parseInt(editStockInData.quantity) || 1, stock_in_date: editStockInData.date }).eq('id', id)
+    if (!error) {
+      setStockIn(stockIn.map(s => s.id === id ? { ...s, quantity: parseInt(editStockInData.quantity) || 1, date: editStockInData.date } : s))
+      setEditingStockInId(null)
+      setEditStockInData({})
+    }
+  }
 
   const getTypeLabel = (type) => {
     if (type === 'retail') return '店販'
@@ -395,22 +441,47 @@ function UsageTracking({ products, staff, usage, setUsage, stockIn, setStockIn, 
   const bulkTotal = Object.entries(bulkEntries).reduce((sum, [pid, qty]) => { const product = products.find(p => p.id === parseInt(pid)); return sum + (product ? qty * product.purchasePrice : 0) }, 0)
   const bulkCount = Object.values(bulkEntries).reduce((sum, qty) => sum + qty, 0)
 
+  const stockInBulkCount = Object.entries(stockInEntries).reduce((sum, [pid, qty]) => {
+    const product = products.find(p => p.id === parseInt(pid))
+    if (product && product.largeCategory === stockInDealer) return sum + qty
+    return sum
+  }, 0)
+  const stockInBulkTotal = Object.entries(stockInEntries).reduce((sum, [pid, qty]) => {
+    const product = products.find(p => p.id === parseInt(pid))
+    if (product && product.largeCategory === stockInDealer) return sum + qty * product.purchasePrice
+    return sum
+  }, 0)
+
+  const groupedDealerProducts = dealerProducts.reduce((acc, p) => {
+    if (!acc[p.mediumCategory]) acc[p.mediumCategory] = []
+    acc[p.mediumCategory].push(p)
+    return acc
+  }, {})
+
   const recentUsage = [...usage].reverse().slice(0, 50)
+  const recentStockIn = [...stockIn].reverse().slice(0, 50)
 
   return (
     <div className="space-y-4">
       <div className="card">
         <div className="grid-4 mb-4">
           {[{ key: 'quick', label: 'クイック', icon: <Icons.Star filled={false} />, color: 'btn-yellow' }, { key: 'single', label: '単品入力', icon: <Icons.ShoppingCart />, color: 'btn-blue' }, { key: 'bulk', label: 'まとめて', icon: <Icons.Package />, color: 'btn-green' }, { key: 'stockin', label: '入荷', icon: <Icons.TrendingUp />, color: 'btn-purple' }].map(m => (
-            <button key={m.key} onClick={() => { setInputMode(m.key); setShowHistory(false) }} className={`btn ${inputMode === m.key && !showHistory ? m.color : 'btn-gray'}`} style={{ flexDirection: 'column', padding: '0.75rem' }}>{m.icon}<span className="text-sm">{m.label}</span></button>
+            <button key={m.key} onClick={() => { setInputMode(m.key); setShowHistory(false); setShowStockInHistory(false) }} className={`btn ${inputMode === m.key && !showHistory && !showStockInHistory ? m.color : 'btn-gray'}`} style={{ flexDirection: 'column', padding: '0.75rem' }}>{m.icon}<span className="text-sm">{m.label}</span></button>
           ))}
         </div>
-        <button onClick={() => setShowHistory(!showHistory)} className={`btn w-full ${showHistory ? 'btn-blue' : 'btn-gray'}`}>
-          {showHistory ? '入力画面に戻る' : '📋 使用履歴を見る・編集する'}
-        </button>
+        {inputMode !== 'stockin' && (
+          <button onClick={() => { setShowHistory(!showHistory); setShowStockInHistory(false) }} className={`btn w-full ${showHistory ? 'btn-blue' : 'btn-gray'}`}>
+            {showHistory ? '入力画面に戻る' : '📋 使用履歴を見る・編集する'}
+          </button>
+        )}
+        {inputMode === 'stockin' && (
+          <button onClick={() => { setShowStockInHistory(!showStockInHistory); setShowHistory(false) }} className={`btn w-full ${showStockInHistory ? 'btn-purple' : 'btn-gray'}`}>
+            {showStockInHistory ? '入力画面に戻る' : '📋 入荷履歴を見る・編集する'}
+          </button>
+        )}
       </div>
 
-      {!showHistory && (
+      {!showHistory && !showStockInHistory && inputMode !== 'stockin' && (
         <div className="card">
           <div className="flex justify-between items-center">
             <span className="text-sm font-semibold">商品タイプで絞り込み</span>
@@ -469,7 +540,51 @@ function UsageTracking({ products, staff, usage, setUsage, stockIn, setStockIn, 
         </div>
       )}
 
-      {!showHistory && inputMode === 'quick' && (
+      {showStockInHistory && (
+        <div className="card">
+          <h3 className="text-lg font-bold mb-4">入荷履歴（直近50件）</h3>
+          {recentStockIn.length === 0 ? (
+            <p className="text-gray-500 text-center py-4">まだ入荷記録がありません</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="text-sm">
+                <thead>
+                  <tr><th>日付</th><th>ディーラー</th><th>商品</th><th className="text-center">数量</th><th className="text-center">操作</th></tr>
+                </thead>
+                <tbody>
+                  {recentStockIn.map(s => (
+                    editingStockInId === s.id ? (
+                      <tr key={s.id} style={{ background: '#fef9c3' }}>
+                        <td><input type="date" value={editStockInData.date} onChange={e => setEditStockInData({...editStockInData, date: e.target.value})} className="input" style={{ width: '130px' }} /></td>
+                        <td>{s.largeCategory}</td>
+                        <td>{s.productName}</td>
+                        <td className="text-center"><input type="number" value={editStockInData.quantity} onChange={e => setEditStockInData({...editStockInData, quantity: e.target.value})} className="input" style={{ width: '60px', textAlign: 'center' }} min="1" /></td>
+                        <td className="text-center">
+                          <button onClick={() => saveEditStockIn(s.id)} className="text-green-600 text-sm mr-2">保存</button>
+                          <button onClick={cancelEditStockIn} className="text-gray-500 text-sm">取消</button>
+                        </td>
+                      </tr>
+                    ) : (
+                      <tr key={s.id}>
+                        <td>{s.date}</td>
+                        <td>{s.largeCategory}</td>
+                        <td>{s.productName}</td>
+                        <td className="text-center">{s.quantity}</td>
+                        <td className="text-center">
+                          <button onClick={() => startEditStockIn(s)} className="text-blue-500 text-sm mr-2">編集</button>
+                          <button onClick={() => deleteStockIn(s.id)} className="text-red-500 text-sm">削除</button>
+                        </td>
+                      </tr>
+                    )
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {!showHistory && !showStockInHistory && inputMode === 'quick' && (
         <div className="space-y-4">
           <div className="card">
             <h3 className="text-lg font-bold mb-2 flex items-center gap-2"><Icons.Star filled={true} className="text-yellow-500" />クイック入力</h3>
@@ -482,7 +597,7 @@ function UsageTracking({ products, staff, usage, setUsage, stockIn, setStockIn, 
         </div>
       )}
 
-      {!showHistory && inputMode === 'single' && (
+      {!showHistory && !showStockInHistory && inputMode === 'single' && (
         <div className="card">
           <h3 className="text-lg font-bold mb-4">使用記録（単品）</h3>
           <div className="space-y-4">
@@ -494,7 +609,7 @@ function UsageTracking({ products, staff, usage, setUsage, stockIn, setStockIn, 
         </div>
       )}
 
-      {!showHistory && inputMode === 'bulk' && (
+      {!showHistory && !showStockInHistory && inputMode === 'bulk' && (
         <div className="space-y-4">
           <div className="card">
             <h3 className="text-lg font-bold mb-4">まとめて入力</h3>
@@ -506,40 +621,86 @@ function UsageTracking({ products, staff, usage, setUsage, stockIn, setStockIn, 
         </div>
       )}
 
-      {!showHistory && inputMode === 'stockin' && (
+      {!showHistory && !showStockInHistory && inputMode === 'stockin' && (
         <div className="space-y-4">
           <div className="card">
             <h3 className="text-lg font-bold mb-2 flex items-center gap-2"><Icons.TrendingUp className="text-purple-600" />入荷記録</h3>
             <p className="text-sm text-gray-600 mb-4">商品の入荷を記録すると、棚卸の予想在庫が正確になります</p>
-            <div className="space-y-4">
-              <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>入荷日</label><input type="date" value={stockInDate} onChange={e => setStockInDate(e.target.value)} className="input" /></div>
-              <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>商品</label><select value={stockInProduct} onChange={e => setStockInProduct(e.target.value)} className="select"><option value="">選択</option>{filteredProducts.map(p => <option key={p.id} value={p.id}>[{getTypeLabel(p.productType)}] {p.largeCategory} - {p.mediumCategory} - {p.name}</option>)}</select></div>
-              <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>入荷数</label><input type="number" value={stockInQty} onChange={e => setStockInQty(parseInt(e.target.value) || 1)} min="1" className="input" /></div>
-              <button onClick={recordStockIn} className="btn btn-purple w-full py-3" style={{ fontSize: '1.1rem' }}><Icons.TrendingUp />入荷を記録</button>
+            <div className="flex gap-2 mb-4">
+              <button onClick={() => setStockInMode('bulk')} className={`btn ${stockInMode === 'bulk' ? 'btn-purple' : 'btn-gray'}`}>まとめて入荷</button>
+              <button onClick={() => setStockInMode('single')} className={`btn ${stockInMode === 'single' ? 'btn-purple' : 'btn-gray'}`}>単品入荷</button>
             </div>
           </div>
-          <div className="card">
-            <h4 className="font-semibold mb-3">最近の入荷履歴</h4>
-            {stockIn.length === 0 ? (<p className="text-gray-500 text-center py-4">まだ入荷記録がありません</p>) : (
-              <div style={{ maxHeight: '250px', overflowY: 'auto' }}>
-                {[...stockIn].reverse().slice(0, 20).map(s => (
-                  <div key={s.id} className="flex justify-between items-center p-2 bg-purple-50 rounded mb-2">
-                    <div><span className="text-sm font-semibold">{s.productName}</span><span className="text-sm text-gray-500 ml-2">{s.date}</span></div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-purple-600 font-bold">+{s.quantity}</span>
-                      <button onClick={() => deleteStockIn(s.id)} className="text-red-500 text-sm">削除</button>
-                    </div>
+
+          {stockInMode === 'bulk' && (
+            <>
+              <div className="card">
+                <div className="grid-2 mb-4">
+                  <div>
+                    <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>入荷日</label>
+                    <input type="date" value={stockInBulkDate} onChange={e => setStockInBulkDate(e.target.value)} className="input" />
                   </div>
-                ))}
+                  <div>
+                    <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>ディーラー選択</label>
+                    <select value={stockInDealer} onChange={e => setStockInDealer(e.target.value)} className="select">
+                      <option value="">選択してください</option>
+                      {dealers.map((d, i) => <option key={i} value={d}>{d}</option>)}
+                    </select>
+                  </div>
+                </div>
+                {stockInDealer && (
+                  <div className="bg-purple-50 p-4 rounded grid-2">
+                    <div className="summary-card"><div className="label">入荷商品数</div><div className="value text-purple-600">{stockInBulkCount}個</div></div>
+                    <div className="summary-card"><div className="label">入荷金額</div><div className="value text-purple-600">¥{stockInBulkTotal.toLocaleString()}</div></div>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+
+              {stockInDealer && (
+                <>
+                  {Object.keys(groupedDealerProducts).map(category => (
+                    <div key={category} className="card">
+                      <h4 className="font-semibold mb-3 text-gray-700">{category}</h4>
+                      <div className="grid-3">
+                        {groupedDealerProducts[category].map(p => (
+                          <div key={p.id} className={`product-card ${stockInEntries[p.id] > 0 ? 'selected' : ''}`}>
+                            <div className="name">{p.name}</div>
+                            <div className="price">¥{p.purchasePrice.toLocaleString()}</div>
+                            <div className="counter">
+                              <button className="minus" onClick={() => setStockInEntries({...stockInEntries, [p.id]: Math.max(0, (stockInEntries[p.id] || 0) - 1)})}>-</button>
+                              <input type="number" value={stockInEntries[p.id] || 0} onChange={e => setStockInEntries({...stockInEntries, [p.id]: parseInt(e.target.value) || 0})} min="0" />
+                              <button className="plus" onClick={() => setStockInEntries({...stockInEntries, [p.id]: (stockInEntries[p.id] || 0) + 1})}>+</button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                  <div className="text-center">
+                    <button onClick={recordBulkStockIn} className="btn btn-purple py-3 px-4" style={{ fontSize: '1.1rem' }}>
+                      <Icons.TrendingUp />まとめて入荷記録（{stockInBulkCount}件）
+                    </button>
+                  </div>
+                </>
+              )}
+            </>
+          )}
+
+          {stockInMode === 'single' && (
+            <div className="card">
+              <div className="space-y-4">
+                <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>入荷日</label><input type="date" value={stockInDate} onChange={e => setStockInDate(e.target.value)} className="input" /></div>
+                <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>商品</label><select value={stockInProduct} onChange={e => setStockInProduct(e.target.value)} className="select"><option value="">選択</option>{products.map(p => <option key={p.id} value={p.id}>{p.largeCategory} - {p.mediumCategory} - {p.name}</option>)}</select></div>
+                <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>入荷数</label><input type="number" value={stockInQty} onChange={e => setStockInQty(parseInt(e.target.value) || 1)} min="1" className="input" /></div>
+                <button onClick={recordSingleStockIn} className="btn btn-purple w-full py-3" style={{ fontSize: '1.1rem' }}><Icons.TrendingUp />入荷を記録</button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
   )
 }
-
 function InventoryInput({ products, staff, usage, stockIn, inventoryHistory, setInventoryHistory }) {
   const [inv, setInv] = useState({})
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
