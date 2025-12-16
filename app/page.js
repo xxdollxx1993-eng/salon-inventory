@@ -84,6 +84,7 @@ function StaffManagement({ staff, setStaff }) {
     if (!error) { setStaff([...staff, newStaff]); setNewStaff('') }
   }
   const deleteStaff = async (name) => {
+    if (!confirm(`「${name}」を削除しますか？\n※このスタッフの使用履歴は残ります`)) return
     const { error } = await supabase.from('staff').delete().eq('name', name)
     if (!error) setStaff(staff.filter(s => s !== name))
   }
@@ -110,7 +111,6 @@ function StaffManagement({ staff, setStaff }) {
     </div>
   )
 }
-
 function ProductManagement({ products, setProducts, categories, setCategories }) {
   const [newLarge, setNewLarge] = useState('')
   const [newMedium, setNewMedium] = useState('')
