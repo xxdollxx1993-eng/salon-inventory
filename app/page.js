@@ -81,27 +81,141 @@ export default function Home() {
   )
 }
 
-function StaffManagement({ staff, setStaff }) {
+function StaffManagement({ staff, setStaff, categories }) {
   const [newStaff, setNewStaff] = useState('')
+  const [newDealers, setNewDealers] = useState([])
+  const [editingId, setEditingId] = useState(null)
+  const [editData, setEditData] = useState({ name: '', dealers: [] })
+
+  const toggleNewDealer = (dealer) => {
+    if (newDealers.includes(dealer)) {
+      setNewDealers(newDealers.filter(d => d !== dealer))
+    } else {
+      setNewDealers([...newDealers, dealer])
+    }
+  }
+
+  const toggleEditDealer = (dealer) => {
+    if (editData.dealers.includes(dealer)) {
+      setEditData({...editData, dealers: editData.dealers.filter(d => d !== dealer)})
+    } else {
+      setEditData({...editData, dealers: [...editData.dealers, dealer]})
+    }
+  }
+
   const addStaff = async () => {
-    if (!newStaff || staff.includes(newStaff)) return
-    const { error } = await supabase.from('staff').insert({ name: newStaff })
-    if (!error) { setStaff([...staff, newStaff]); setNewStaff('') }
+    if (!newStaff || staff.find(s => s.name === newStaff)) return
+    const dealerStr = newDealers.join(',')
+    const { data, error } = await supabase.from('staff').insert({ name: newStaff, dealer: dealerStr }).select()
+    if (!error && data) { 
+      setStaff([...staff, { id: data[0].id, name: newStaff, dealer: dealerStr }])
+      setNewStaff('')
+      setNewDealers([])
+    }
   }
-  const deleteStaff = async (name) => {
+  const deleteStaff = async (id, name) => {
     if (!confirm(`「${name}」を削除しますか？\n※このスタッフの使用履歴は残ります`)) return
-    const { error } = await supabase.from('staff').delete().eq('name', name)
-    if (!error) setStaff(staff.filter(s => s !== name))
+    const { error } = await supabase.from('staff').delete().eq('id', id)
+    if (!error) setStaff(staff.filter(s => s.id !== id))
   }
+  const startEdit = (s) => {
+    setEditingId(s.id)
+    const dealers = s.dealer ? s.dealer.split(',').filter(d => d) : []
+    setEditData({ name: s.name, dealers })
+  }
+  const cancelEdit = () => {
+    setEditingId(null)
+    setEditData({ name: '', dealers: [] })
+  }
+  const saveEdit = async (id) => {
+    const dealerStr = editData.dealers.join(',')
+    const { error } = await supabase.from('staff').update({ name: editData.name, dealer: dealerStr }).eq('id', id)
+    if (!error) {
+      setStaff(staff.map(s => s.id === id ? { ...s, name: editData.name, dealer: dealerStr } : s))
+      setEditingId(null)
+      setEditData({ name: '', dealers: [] })
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="card">
         <h3 className="text-lg font-bold mb-4">スタッフ追加</h3>
-        <div className="flex gap-2"><input type="text" value={newStaff} onChange={e => setNewStaff(e.target.value)} placeholder="名前を入力" className="input" /><button onClick={addStaff} className="btn btn-blue">追加</button></div>
+        <div className="mb-4">
+          <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>スタッフ名</label>
+          <input type="text" value={newStaff} onChange={e => setNewStaff(e.target.value)} placeholder="名前を入力" className="input" />
+        </div>
+        <div className="mb-4">
+          <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>担当ディーラー（複数選択可）</label>
+          <div className="flex flex-wrap gap-2">
+            {categories.large.map((c, i) => (
+              <label key={i} className={`flex items-center gap-2 px-3 py-2 rounded cursor-pointer border ${newDealers.includes(c) ? 'bg-blue-100 border-blue-500' : 'bg-gray-50 border-gray-200'}`}>
+                <input type="checkbox" checked={newDealers.includes(c)} onChange={() => toggleNewDealer(c)} className="w-4 h-4" />
+                <span className="text-sm">{c}</span>
+              </label>
+            ))}
+          </div>
+          {categories.large.length === 0 && <p className="text-sm text-gray-500">※商品管理でディーラーを登録してください</p>}
+        </div>
+        <button onClick={addStaff} className="btn btn-blue">追加</button>
       </div>
       <div className="card">
         <h3 className="text-lg font-bold mb-4">スタッフ一覧 ({staff.length}名)</h3>
-        <div className="space-y-2">{staff.map((s, i) => (<div key={i} className="flex justify-between items-center p-3 bg-gray-50 rounded"><span className="font-semibold">{s}</span><button onClick={() => deleteStaff(s)} className="text-red-500 hover:text-red-700"><Icons.Trash /></button></div>))}</div>
+        <div className="overflow-x-auto">
+          <table>
+            <thead>
+              <tr>
+                <th>スタッフ名</th>
+                <th>担当ディーラー</th>
+                <th className="text-center">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {staff.map(s => (
+                editingId === s.id ? (
+                  <tr key={s.id} style={{ background: '#fef9c3' }}>
+                    <td>
+                      <input type="text" value={editData.name} onChange={e => setEditData({...editData, name: e.target.value})} className="input" />
+                    </td>
+                    <td>
+                      <div className="flex flex-wrap gap-1">
+                        {categories.large.map((c, i) => (
+                          <label key={i} className={`flex items-center gap-1 px-2 py-1 rounded cursor-pointer text-xs border ${editData.dealers.includes(c) ? 'bg-blue-100 border-blue-500' : 'bg-gray-50 border-gray-200'}`}>
+                            <input type="checkbox" checked={editData.dealers.includes(c)} onChange={() => toggleEditDealer(c)} className="w-3 h-3" />
+                            <span>{c}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="text-center">
+                      <button onClick={() => saveEdit(s.id)} className="text-green-600 text-sm mr-2">保存</button>
+                      <button onClick={cancelEdit} className="text-gray-500 text-sm">取消</button>
+                    </td>
+                  </tr>
+                ) : (
+                  <tr key={s.id}>
+                    <td className="font-semibold">{s.name}</td>
+                    <td>
+                      {s.dealer ? (
+                        <div className="flex flex-wrap gap-1">
+                          {s.dealer.split(',').filter(d => d).map((d, i) => (
+                            <span key={i} className="badge badge-blue">{d}</span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-gray-400">-</span>
+                      )}
+                    </td>
+                    <td className="text-center">
+                      <button onClick={() => startEdit(s)} className="text-blue-500 text-sm mr-2">編集</button>
+                      <button onClick={() => deleteStaff(s.id, s.name)} className="text-red-500 text-sm">削除</button>
+                    </td>
+                  </tr>
+                )
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   )
