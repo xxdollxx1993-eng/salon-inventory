@@ -13,7 +13,7 @@ const Icons = {
   TrendingUp: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>,
   TrendingDown: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>,
   Building: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></svg>,
-  Calculator: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="8" y2="10"/><line x1="12" y1="10" x2="12" y2="10"/><line x1="16" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="8" y2="14"/><line x1="12" y1="14" x2="12" y2="14"/><line x1="16" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="8" y2="18"/><line x1="12" y1="18" x2="12" y2="18"/><line x1="16" y1="18" x2="16" y2="18"/></svg>,
+  Calculator: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/><line x1="8" y1="18" x2="12" y2="18"/></svg>,
   Filter: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>,
   Check: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>,
   Alert: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>,
@@ -57,7 +57,7 @@ export default function Home() {
     } catch (e) { console.error('データ読み込みエラー:', e) }
     setLoading(false)
   }
-  
+
   if (loading) return <div className="container" style={{ paddingTop: '4rem', textAlign: 'center' }}><p>読み込み中...</p></div>
 
   return (
@@ -75,7 +75,7 @@ export default function Home() {
       {tab === 'usage' && <UsageTracking products={products} staff={staff} usage={usage} setUsage={setUsage} stockIn={stockIn} setStockIn={setStockIn} favorites={favorites} setFavorites={setFavorites} />}
       {tab === 'inventory' && <InventoryInput products={products} staff={staff} usage={usage} stockIn={stockIn} inventoryHistory={inventoryHistory} setInventoryHistory={setInventoryHistory} />}
       {tab === 'dealer' && <DealerSummary products={products} usage={usage} />}
- 　   {tab === 'purchase' && <StaffPurchase products={products} staff={staff} staffPurchases={staffPurchases} setStaffPurchases={setStaffPurchases} />}
+      {tab === 'purchase' && <StaffPurchase products={products} staff={staff} staffPurchases={staffPurchases} setStaffPurchases={setStaffPurchases} />}
       {tab === 'export' && <DataExport products={products} staff={staff} usage={usage} stockIn={stockIn} inventoryHistory={inventoryHistory} />}
     </div>
   )
@@ -251,16 +251,12 @@ function ProductManagement({ products, setProducts, categories, setCategories })
     const sortedProducts = [...filteredProducts].sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
     const newIndex = index + direction
     if (newIndex < 0 || newIndex >= sortedProducts.length) return
-
     const currentProduct = sortedProducts[index]
     const targetProduct = sortedProducts[newIndex]
-
     const currentOrder = currentProduct.sortOrder || 0
     const targetOrder = targetProduct.sortOrder || 0
-
     await supabase.from('products').update({ sort_order: targetOrder }).eq('id', currentProduct.id)
     await supabase.from('products').update({ sort_order: currentOrder }).eq('id', targetProduct.id)
-
     setProducts(products.map(p => {
       if (p.id === currentProduct.id) return { ...p, sortOrder: targetOrder }
       if (p.id === targetProduct.id) return { ...p, sortOrder: currentOrder }
@@ -361,6 +357,7 @@ function ProductManagement({ products, setProducts, categories, setCategories })
     </div>
   )
 }
+
 function UsageTracking({ products, staff, usage, setUsage, stockIn, setStockIn, favorites, setFavorites }) {
   const [inputMode, setInputMode] = useState('quick')
   const [selectedStaff, setSelectedStaff] = useState('')
@@ -583,7 +580,7 @@ function UsageTracking({ products, staff, usage, setUsage, stockIn, setStockIn, 
                     editingUsageId === u.id ? (
                       <tr key={u.id} style={{ background: '#fef9c3' }}>
                         <td><input type="date" value={editUsageData.date} onChange={e => setEditUsageData({...editUsageData, date: e.target.value})} className="input" style={{ width: '130px' }} /></td>
-                        <td><select value={editUsageData.staff} onChange={e => setEditUsageData({...editUsageData, staff: e.target.value})} className="select">{staff.map((s, i) => <option key={i} value={s}>{s}</option>)}</select></td>
+                        <td><select value={editUsageData.staff} onChange={e => setEditUsageData({...editUsageData, staff: e.target.value})} className="select">{staff.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}</select></td>
                         <td>{u.productName}</td>
                         <td className="text-center"><input type="number" value={editUsageData.quantity} onChange={e => setEditUsageData({...editUsageData, quantity: e.target.value})} className="input" style={{ width: '60px', textAlign: 'center' }} min="1" /></td>
                         <td className="text-right">¥{(u.purchasePrice * (parseInt(editUsageData.quantity) || 1)).toLocaleString()}</td>
@@ -662,7 +659,7 @@ function UsageTracking({ products, staff, usage, setUsage, stockIn, setStockIn, 
           <div className="card">
             <h3 className="text-lg font-bold mb-2 flex items-center gap-2"><Icons.Star filled={true} className="text-yellow-500" />クイック入力</h3>
             <p className="text-sm text-gray-600 mb-4">よく使う商品を1タップで記録できます</p>
-            <div className="mb-4"><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>スタッフ選択（必須）</label><select value={selectedStaff} onChange={e => setSelectedStaff(e.target.value)} className="select" style={{ fontSize: '1.1rem', padding: '0.75rem' }}><option value="">選択してください</option>{staff.map((s, i) => <option key={i} value={s}>{s}</option>)}</select></div>
+            <div className="mb-4"><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>スタッフ選択（必須）</label><select value={selectedStaff} onChange={e => setSelectedStaff(e.target.value)} className="select" style={{ fontSize: '1.1rem', padding: '0.75rem' }}><option value="">選択してください</option>{staff.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}</select></div>
             {favoriteProducts.length === 0 ? (<div className="text-center py-4 text-gray-500"><p>お気に入り商品がありません</p><p className="text-sm">下の商品一覧から★をタップして追加</p></div>) : (<div className="grid-3">{favoriteProducts.map(p => (<button key={p.id} onClick={() => quickRecord(p.id)} disabled={!selectedStaff} className="quick-card" style={{ opacity: selectedStaff ? 1 : 0.5 }}><div className="font-semibold text-sm mb-1">{p.name}</div><div className="text-sm text-gray-500">{p.mediumCategory}</div><span className={`badge ${getTypeBadgeClass(p.productType)}`} style={{ fontSize: '0.7rem' }}>{getTypeLabel(p.productType)}</span></button>))}</div>)}
             {selectedStaff && favoriteProducts.length > 0 && <p className="text-center text-sm text-green-600 mt-4">✓ タップすると即記録されます</p>}
           </div>
@@ -674,7 +671,7 @@ function UsageTracking({ products, staff, usage, setUsage, stockIn, setStockIn, 
         <div className="card">
           <h3 className="text-lg font-bold mb-4">使用記録（単品）</h3>
           <div className="space-y-4">
-            <div className="grid-2"><div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>スタッフ</label><select value={selectedStaff} onChange={e => setSelectedStaff(e.target.value)} className="select"><option value="">選択</option>{staff.map((s, i) => <option key={i} value={s}>{s}</option>)}</select></div><div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>使用日</label><input type="date" value={date} onChange={e => setDate(e.target.value)} className="input" /></div></div>
+            <div className="grid-2"><div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>スタッフ</label><select value={selectedStaff} onChange={e => setSelectedStaff(e.target.value)} className="select"><option value="">選択</option>{staff.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}</select></div><div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>使用日</label><input type="date" value={date} onChange={e => setDate(e.target.value)} className="input" /></div></div>
             <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>商品</label><select value={selectedProduct} onChange={e => setSelectedProduct(e.target.value)} className="select"><option value="">選択</option>{filteredProducts.map(p => <option key={p.id} value={p.id}>[{getTypeLabel(p.productType)}] {p.largeCategory} - {p.mediumCategory} - {p.name}</option>)}</select></div>
             <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>数量</label><input type="number" value={quantity} onChange={e => setQuantity(parseInt(e.target.value) || 1)} min="1" className="input" /></div>
             <button onClick={recordUsage} className="btn btn-blue w-full py-3" style={{ fontSize: '1.1rem' }}><Icons.TrendingDown />使用を記録</button>
@@ -686,7 +683,7 @@ function UsageTracking({ products, staff, usage, setUsage, stockIn, setStockIn, 
         <div className="space-y-4">
           <div className="card">
             <h3 className="text-lg font-bold mb-4">まとめて入力</h3>
-            <div className="grid-2 mb-4"><div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>スタッフ</label><select value={bulkStaff} onChange={e => setBulkStaff(e.target.value)} className="select"><option value="">選択</option>{staff.map((s, i) => <option key={i} value={s}>{s}</option>)}</select></div><div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>使用日</label><input type="date" value={bulkDate} onChange={e => setBulkDate(e.target.value)} className="input" /></div></div>
+            <div className="grid-2 mb-4"><div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>スタッフ</label><select value={bulkStaff} onChange={e => setBulkStaff(e.target.value)} className="select"><option value="">選択</option>{staff.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}</select></div><div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>使用日</label><input type="date" value={bulkDate} onChange={e => setBulkDate(e.target.value)} className="input" /></div></div>
             <div className="bg-green-50 p-4 rounded grid-2"><div className="summary-card"><div className="label">入力商品数</div><div className="value text-green-600">{bulkCount}個</div></div><div className="summary-card"><div className="label">合計金額</div><div className="value text-green-600">¥{bulkTotal.toLocaleString()}</div></div></div>
           </div>
           {Object.keys(groupedProducts).map(dealer => (<div key={dealer} className="card"><h4 className="text-lg font-bold mb-4 text-blue-600 flex items-center gap-2"><Icons.Building />{dealer}</h4>{Object.keys(groupedProducts[dealer]).map(category => (<div key={category} className="mb-4"><h5 className="font-semibold mb-2 text-gray-700">{category}</h5><div className="grid-3">{groupedProducts[dealer][category].map(p => (<div key={p.id} className={`product-card ${bulkEntries[p.id] > 0 ? 'selected' : ''}`}><div className="name">{p.name}</div><div className="price">¥{p.purchasePrice.toLocaleString()} <span className={`badge ${getTypeBadgeClass(p.productType)}`} style={{ fontSize: '0.6rem' }}>{getTypeLabel(p.productType)}</span></div><div className="counter"><button className="minus" onClick={() => setBulkEntries({...bulkEntries, [p.id]: Math.max(0, (bulkEntries[p.id] || 0) - 1)})}>-</button><input type="number" value={bulkEntries[p.id] || 0} onChange={e => setBulkEntries({...bulkEntries, [p.id]: parseInt(e.target.value) || 0})} min="0" /><button className="plus" onClick={() => setBulkEntries({...bulkEntries, [p.id]: (bulkEntries[p.id] || 0) + 1})}>+</button></div></div>))}</div></div>))}</div>))}
@@ -774,6 +771,7 @@ function UsageTracking({ products, staff, usage, setUsage, stockIn, setStockIn, 
     </div>
   )
 }
+
 function InventoryInput({ products, staff, usage, stockIn, inventoryHistory, setInventoryHistory }) {
   const [inv, setInv] = useState({})
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
@@ -836,7 +834,7 @@ function InventoryInput({ products, staff, usage, stockIn, inventoryHistory, set
   return (
     <div className="space-y-4">
       <div className="card">
-        <div className="grid-2 mb-4"><div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>棚卸日</label><input type="date" value={date} onChange={e => setDate(e.target.value)} className="input" /></div><div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>担当</label><select value={currStaff} onChange={e => setCurrStaff(e.target.value)} className="select"><option value="">選択</option>{staff.map((s, i) => <option key={i} value={s}>{s}</option>)}</select></div></div>
+        <div className="grid-2 mb-4"><div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>棚卸日</label><input type="date" value={date} onChange={e => setDate(e.target.value)} className="input" /></div><div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>担当</label><select value={currStaff} onChange={e => setCurrStaff(e.target.value)} className="select"><option value="">選択</option>{staff.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}</select></div></div>
         {lastDate && (<><div className="bg-gray-50 p-4 rounded mb-4"><div className="text-sm text-gray-600">前回棚卸日：<span className="font-semibold">{lastDate}</span></div></div><button onClick={applyExpectedToAll} className="btn btn-blue w-full py-3 mb-4"><Icons.Calculator />予想在庫を自動入力</button></>)}
         <div className="bg-blue-50 p-4 rounded grid-2"><div className="summary-card"><div className="label">在庫資産</div><div className="value text-blue-600">¥{totP.toLocaleString()}</div></div><div className="summary-card"><div className="label">差異あり</div><div className={`value ${productsWithDiff > 0 ? 'text-orange-600' : 'text-green-600'}`}>{productsWithDiff}件</div></div></div>
       </div>
@@ -931,8 +929,6 @@ function DealerSummary({ products, usage }) {
 }
 
 function DataExport({ products, staff, usage, stockIn, inventoryHistory }) {
-  const [exporting, setExporting] = useState(false)
-
   const getTypeLabel = (type) => {
     if (type === 'retail') return '店販'
     if (type === 'both') return '両方'
@@ -1232,7 +1228,7 @@ function StaffPurchase({ products, staff, staffPurchases, setStaffPurchases }) {
             <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>スタッフ</label>
             <select value={selectedStaff} onChange={e => setSelectedStaff(e.target.value)} className="select">
               <option value="">選択</option>
-              {staff.map((s, i) => <option key={i} value={s}>{s}</option>)}
+              {staff.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
             </select>
           </div>
           <div>
