@@ -28,6 +28,7 @@ export default function Home() {
   const [stockIn, setStockIn] = useState([])
   const [inventoryHistory, setInventoryHistory] = useState([])
   const [favorites, setFavorites] = useState([])
+  const [staffPurchases, setStaffPurchases] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => { loadAllData() }, [])
@@ -35,7 +36,7 @@ export default function Home() {
   const loadAllData = async () => {
     setLoading(true)
     try {
-      const [staffRes, productsRes, categoriesRes, usageRes, stockInRes, inventoryRes, favoritesRes] = await Promise.all([
+      const [staffRes, productsRes, categoriesRes, usageRes, stockInRes, inventoryRes, favoritesRes, purchasesRes] = await Promise.all([
         supabase.from('staff').select('*').order('id'),
         supabase.from('products').select('*').order('id'),
         supabase.from('categories').select('*').order('id'),
@@ -43,6 +44,7 @@ export default function Home() {
         supabase.from('stock_in').select('*').order('id'),
         supabase.from('inventory_history').select('*').order('id'),
         supabase.from('favorites').select('*').order('id'),
+        supabase.from('staff_purchases').select('*').order('id'),
       ])
       if (staffRes.data) setStaff(staffRes.data.map(s => s.name))
       if (productsRes.data) setProducts(productsRes.data.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)).map(p => ({ id: p.id, largeCategory: p.large_category, mediumCategory: p.medium_category, name: p.name, purchasePrice: p.purchase_price, sellingPrice: p.selling_price, productType: p.product_type || 'business', sortOrder: p.sort_order || 0 })))
@@ -51,10 +53,11 @@ export default function Home() {
       if (stockInRes.data) setStockIn(stockInRes.data.map(s => ({ id: s.id, productId: s.product_id, productName: s.product_name, largeCategory: s.large_category, quantity: s.quantity, date: s.stock_in_date })))
       if (inventoryRes.data) setInventoryHistory(inventoryRes.data.map(i => ({ id: i.id, date: i.inventory_date, staff: i.staff_name, data: i.data, totalPurchaseValue: i.total_purchase_value, totalUsageValue: i.total_usage_value })))
       if (favoritesRes.data) setFavorites(favoritesRes.data.map(f => f.product_id))
+      if (purchasesRes.data) setStaffPurchases(purchasesRes.data.map(p => ({ id: p.id, staff: p.staff_name, productId: p.product_id, productName: p.product_name, largeCategory: p.large_category, mediumCategory: p.medium_category, purchasePrice: p.purchase_price, quantity: p.quantity, date: p.purchase_date })))
     } catch (e) { console.error('データ読み込みエラー:', e) }
     setLoading(false)
   }
-
+  
   if (loading) return <div className="container" style={{ paddingTop: '4rem', textAlign: 'center' }}><p>読み込み中...</p></div>
 
   return (
@@ -62,7 +65,7 @@ export default function Home() {
       <div className="card">
         <div className="flex justify-between items-center mb-4"><h1 className="text-2xl font-bold">美容室棚卸管理システム</h1></div>
         <div className="tabs">
-          {[{ key: 'staff', label: 'スタッフ管理' }, { key: 'products', label: '商品管理' }, { key: 'usage', label: '使用・入荷' }, { key: 'inventory', label: '棚卸入力' }, { key: 'dealer', label: 'ディーラー集計' }, { key: 'export', label: 'データ出力' }].map(t => (
+          {[{ key: 'staff', label: 'スタッフ管理' }, { key: 'products', label: '商品管理' }, { key: 'usage', label: '使用・入荷' }, { key: 'inventory', label: '棚卸入力' }, { key: 'dealer', label: 'ディーラー集計' }, { key: 'purchase', label: 'スタッフ購入' }, { key: 'export', label: 'データ出力' }].map(t => (
             <button key={t.key} className={`tab ${tab === t.key ? 'active' : ''}`} onClick={() => setTab(t.key)}>{t.label}</button>
           ))}
         </div>
@@ -72,6 +75,7 @@ export default function Home() {
       {tab === 'usage' && <UsageTracking products={products} staff={staff} usage={usage} setUsage={setUsage} stockIn={stockIn} setStockIn={setStockIn} favorites={favorites} setFavorites={setFavorites} />}
       {tab === 'inventory' && <InventoryInput products={products} staff={staff} usage={usage} stockIn={stockIn} inventoryHistory={inventoryHistory} setInventoryHistory={setInventoryHistory} />}
       {tab === 'dealer' && <DealerSummary products={products} usage={usage} />}
+ 　   {tab === 'purchase' && <StaffPurchase products={products} staff={staff} staffPurchases={staffPurchases} setStaffPurchases={setStaffPurchases} />}
       {tab === 'export' && <DataExport products={products} staff={staff} usage={usage} stockIn={stockIn} inventoryHistory={inventoryHistory} />}
     </div>
   )
@@ -1043,6 +1047,214 @@ function DataExport({ products, staff, usage, stockIn, inventoryHistory }) {
           <li>• <strong>CSV</strong>：Excelで開いて分析・加工できます</li>
           <li>• <strong>PDF</strong>：印刷画面が開きます。「PDFとして保存」も可能</li>
         </ul>
+      </div>
+    </div>
+  )
+}
+
+function StaffPurchase({ products, staff, staffPurchases, setStaffPurchases }) {
+  const [selectedStaff, setSelectedStaff] = useState('')
+  const [selectedProduct, setSelectedProduct] = useState('')
+  const [quantity, setQuantity] = useState(1)
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0])
+  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7))
+  const [editingId, setEditingId] = useState(null)
+  const [editData, setEditData] = useState({})
+
+  const recordPurchase = async () => {
+    if (!selectedStaff || !selectedProduct) { alert('スタッフと商品を選択してください'); return }
+    const product = products.find(p => p.id === parseInt(selectedProduct))
+    if (!product) return
+    const { data, error } = await supabase.from('staff_purchases').insert({
+      staff_name: selectedStaff,
+      product_id: product.id,
+      product_name: product.name,
+      large_category: product.largeCategory,
+      medium_category: product.mediumCategory,
+      purchase_price: product.purchasePrice,
+      quantity,
+      purchase_date: date
+    }).select()
+    if (!error && data) {
+      setStaffPurchases([...staffPurchases, { id: data[0].id, staff: selectedStaff, productId: product.id, productName: product.name, largeCategory: product.largeCategory, mediumCategory: product.mediumCategory, purchasePrice: product.purchasePrice, quantity, date }])
+      alert('購入を記録しました！')
+      setQuantity(1)
+    }
+  }
+
+  const deletePurchase = async (id) => {
+    if (!confirm('この購入記録を削除しますか？')) return
+    const { error } = await supabase.from('staff_purchases').delete().eq('id', id)
+    if (!error) setStaffPurchases(staffPurchases.filter(p => p.id !== id))
+  }
+
+  const startEdit = (record) => {
+    setEditingId(record.id)
+    setEditData({ staff: record.staff, quantity: record.quantity, date: record.date })
+  }
+  const cancelEdit = () => {
+    setEditingId(null)
+    setEditData({})
+  }
+  const saveEdit = async (id) => {
+    const { error } = await supabase.from('staff_purchases').update({
+      staff_name: editData.staff,
+      quantity: parseInt(editData.quantity) || 1,
+      purchase_date: editData.date
+    }).eq('id', id)
+    if (!error) {
+      setStaffPurchases(staffPurchases.map(p => p.id === id ? { ...p, staff: editData.staff, quantity: parseInt(editData.quantity) || 1, date: editData.date } : p))
+      setEditingId(null)
+      setEditData({})
+    }
+  }
+
+  const monthlyPurchases = staffPurchases.filter(p => p.date && p.date.startsWith(selectedMonth))
+  const staffSummary = {}
+  monthlyPurchases.forEach(p => {
+    if (!staffSummary[p.staff]) staffSummary[p.staff] = { items: [], total: 0 }
+    staffSummary[p.staff].items.push(p)
+    staffSummary[p.staff].total += p.purchasePrice * p.quantity
+  })
+  const grandTotal = Object.values(staffSummary).reduce((sum, s) => sum + s.total, 0)
+
+  const printMonthlyReport = () => {
+    const content = `
+      <h2>${selectedMonth.replace('-', '年')}月 スタッフ購入一覧</h2>
+      ${Object.entries(staffSummary).map(([staffName, data]) => `
+        <div style="margin-bottom: 20px; page-break-inside: avoid;">
+          <h3 style="background: #f0f0f0; padding: 8px;">${staffName}</h3>
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
+            <thead><tr style="background: #f9f9f9;"><th style="border: 1px solid #ddd; padding: 6px; text-align: left;">日付</th><th style="border: 1px solid #ddd; padding: 6px; text-align: left;">商品</th><th style="border: 1px solid #ddd; padding: 6px; text-align: right;">数量</th><th style="border: 1px solid #ddd; padding: 6px; text-align: right;">金額</th></tr></thead>
+            <tbody>
+              ${data.items.map(item => `<tr><td style="border: 1px solid #ddd; padding: 6px;">${item.date}</td><td style="border: 1px solid #ddd; padding: 6px;">${item.productName}</td><td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${item.quantity}</td><td style="border: 1px solid #ddd; padding: 6px; text-align: right;">¥${(item.purchasePrice * item.quantity).toLocaleString()}</td></tr>`).join('')}
+              <tr style="font-weight: bold; background: #fff9e6;"><td colspan="3" style="border: 1px solid #ddd; padding: 6px;">合計（給料天引額）</td><td style="border: 1px solid #ddd; padding: 6px; text-align: right;">¥${data.total.toLocaleString()}</td></tr>
+            </tbody>
+          </table>
+        </div>
+      `).join('')}
+      <div style="margin-top: 20px; padding: 10px; background: #e6f3ff; font-weight: bold;">全スタッフ合計: ¥${grandTotal.toLocaleString()}</div>
+    `
+    const printWindow = window.open('', '_blank')
+    printWindow.document.write(`<!DOCTYPE html><html><head><title>スタッフ購入一覧 ${selectedMonth}</title><style>body { font-family: sans-serif; padding: 20px; } h2 { margin-bottom: 20px; }</style></head><body>${content}</body></html>`)
+    printWindow.document.close()
+    printWindow.print()
+  }
+
+  const downloadCSV = () => {
+    const BOM = '\uFEFF'
+    const headers = ['スタッフ', '日付', '商品名', '数量', '単価', '金額']
+    const rows = monthlyPurchases.map(p => [p.staff, p.date, p.productName, p.quantity, p.purchasePrice, p.purchasePrice * p.quantity])
+    const csvContent = BOM + [headers.join(','), ...rows.map(row => row.map(cell => `"${cell}"`).join(','))].join('\n')
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = `スタッフ購入_${selectedMonth}.csv`
+    link.click()
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="card">
+        <h3 className="text-lg font-bold mb-4">🛒 スタッフ購入記録</h3>
+        <p className="text-sm text-gray-600 mb-4">スタッフが商品を購入した際に記録します（仕入れ価格で計算）</p>
+        <div className="grid-2 mb-4">
+          <div>
+            <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>スタッフ</label>
+            <select value={selectedStaff} onChange={e => setSelectedStaff(e.target.value)} className="select">
+              <option value="">選択</option>
+              {staff.map((s, i) => <option key={i} value={s}>{s}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>購入日</label>
+            <input type="date" value={date} onChange={e => setDate(e.target.value)} className="input" />
+          </div>
+        </div>
+        <div className="grid-2 mb-4">
+          <div>
+            <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>商品</label>
+            <select value={selectedProduct} onChange={e => setSelectedProduct(e.target.value)} className="select">
+              <option value="">選択</option>
+              {products.map(p => <option key={p.id} value={p.id}>{p.name}（¥{p.purchasePrice.toLocaleString()}）</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>数量</label>
+            <input type="number" value={quantity} onChange={e => setQuantity(parseInt(e.target.value) || 1)} min="1" className="input" />
+          </div>
+        </div>
+        <button onClick={recordPurchase} className="btn btn-blue w-full py-3">購入を記録</button>
+      </div>
+
+      <div className="card">
+        <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
+          <h3 className="text-lg font-bold">📊 月次集計</h3>
+          <input type="month" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="input" style={{ width: 'auto' }} />
+        </div>
+        <div className="bg-blue-50 p-4 rounded mb-4">
+          <div className="grid-2">
+            <div className="summary-card">
+              <div className="label">購入件数</div>
+              <div className="value text-blue-600">{monthlyPurchases.length}件</div>
+            </div>
+            <div className="summary-card">
+              <div className="label">合計金額</div>
+              <div className="value text-blue-600">¥{grandTotal.toLocaleString()}</div>
+            </div>
+          </div>
+        </div>
+        <div className="flex gap-2 mb-4 flex-wrap">
+          <button onClick={printMonthlyReport} className="btn btn-blue">PDF出力（印刷）</button>
+          <button onClick={downloadCSV} className="btn btn-green">CSV出力</button>
+        </div>
+
+        {Object.keys(staffSummary).length === 0 ? (
+          <p className="text-gray-500 text-center py-4">この月の購入記録はありません</p>
+        ) : (
+          Object.entries(staffSummary).map(([staffName, data]) => (
+            <div key={staffName} className="mb-4 border rounded-lg overflow-hidden">
+              <div className="bg-gray-100 p-3 flex justify-between items-center">
+                <span className="font-bold">{staffName}</span>
+                <span className="text-green-600 font-bold">¥{data.total.toLocaleString()}</span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="text-sm">
+                  <thead>
+                    <tr><th>日付</th><th>商品</th><th className="text-center">数量</th><th className="text-right">金額</th><th className="text-center">操作</th></tr>
+                  </thead>
+                  <tbody>
+                    {data.items.map(item => (
+                      editingId === item.id ? (
+                        <tr key={item.id} style={{ background: '#fef9c3' }}>
+                          <td><input type="date" value={editData.date} onChange={e => setEditData({...editData, date: e.target.value})} className="input" style={{ width: '120px' }} /></td>
+                          <td>{item.productName}</td>
+                          <td className="text-center"><input type="number" value={editData.quantity} onChange={e => setEditData({...editData, quantity: e.target.value})} className="input" style={{ width: '60px', textAlign: 'center' }} min="1" /></td>
+                          <td className="text-right">¥{(item.purchasePrice * (parseInt(editData.quantity) || 1)).toLocaleString()}</td>
+                          <td className="text-center">
+                            <button onClick={() => saveEdit(item.id)} className="text-green-600 text-sm mr-2">保存</button>
+                            <button onClick={cancelEdit} className="text-gray-500 text-sm">取消</button>
+                          </td>
+                        </tr>
+                      ) : (
+                        <tr key={item.id}>
+                          <td>{item.date}</td>
+                          <td>{item.productName}</td>
+                          <td className="text-center">{item.quantity}</td>
+                          <td className="text-right">¥{(item.purchasePrice * item.quantity).toLocaleString()}</td>
+                          <td className="text-center">
+                            <button onClick={() => startEdit(item)} className="text-blue-500 text-sm mr-2">編集</button>
+                            <button onClick={() => deletePurchase(item.id)} className="text-red-500 text-sm">削除</button>
+                          </td>
+                        </tr>
+                      )
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   )
