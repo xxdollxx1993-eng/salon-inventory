@@ -115,6 +115,9 @@ function ProductManagement({ products, setProducts, categories, setCategories })
   const [newLarge, setNewLarge] = useState('')
   const [newMedium, setNewMedium] = useState('')
   const [newProduct, setNewProduct] = useState({ largeCategory: '', mediumCategory: '', name: '', purchasePrice: '', sellingPrice: '' })
+  const [editingId, setEditingId] = useState(null)
+  const [editData, setEditData] = useState({})
+
   const addCategory = async (type, value, setter) => {
     if (!value || categories[type].includes(value)) return
     const { error } = await supabase.from('categories').insert({ type, name: value })
@@ -135,6 +138,23 @@ function ProductManagement({ products, setProducts, categories, setCategories })
     const { error } = await supabase.from('products').delete().eq('id', id)
     if (!error) setProducts(products.filter(p => p.id !== id))
   }
+  const startEdit = (product) => {
+    setEditingId(product.id)
+    setEditData({ name: product.name, largeCategory: product.largeCategory, mediumCategory: product.mediumCategory, purchasePrice: product.purchasePrice, sellingPrice: product.sellingPrice })
+  }
+  const cancelEdit = () => {
+    setEditingId(null)
+    setEditData({})
+  }
+  const saveEdit = async (id) => {
+    const { error } = await supabase.from('products').update({ name: editData.name, large_category: editData.largeCategory, medium_category: editData.mediumCategory, purchase_price: parseFloat(editData.purchasePrice) || 0, selling_price: parseFloat(editData.sellingPrice) || 0 }).eq('id', id)
+    if (!error) {
+      setProducts(products.map(p => p.id === id ? { ...p, name: editData.name, largeCategory: editData.largeCategory, mediumCategory: editData.mediumCategory, purchasePrice: parseFloat(editData.purchasePrice) || 0, sellingPrice: parseFloat(editData.sellingPrice) || 0 } : p))
+      setEditingId(null)
+      setEditData({})
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="card">
@@ -169,7 +189,27 @@ function ProductManagement({ products, setProducts, categories, setCategories })
         <h3 className="text-lg font-bold mb-4">商品一覧 ({products.length}件)</h3>
         <div className="overflow-x-auto">
           <table><thead><tr><th>ディーラー</th><th>カテゴリー</th><th>商品名</th><th className="text-right">仕入れ</th><th className="text-right">販売</th><th className="text-center">操作</th></tr></thead>
-            <tbody>{products.map(p => (<tr key={p.id}><td>{p.largeCategory}</td><td>{p.mediumCategory}</td><td>{p.name}</td><td className="text-right">¥{p.purchasePrice.toLocaleString()}</td><td className="text-right">¥{p.sellingPrice.toLocaleString()}</td><td className="text-center"><button onClick={() => deleteProduct(p.id)} className="text-red-500 text-sm">削除</button></td></tr>))}</tbody>
+            <tbody>{products.map(p => (
+              editingId === p.id ? (
+                <tr key={p.id} style={{ background: '#fef9c3' }}>
+                  <td><select value={editData.largeCategory} onChange={e => setEditData({...editData, largeCategory: e.target.value})} className="select">{categories.large.map((c, i) => <option key={i} value={c}>{c}</option>)}</select></td>
+                  <td><select value={editData.mediumCategory} onChange={e => setEditData({...editData, mediumCategory: e.target.value})} className="select">{categories.medium.map((c, i) => <option key={i} value={c}>{c}</option>)}</select></td>
+                  <td><input type="text" value={editData.name} onChange={e => setEditData({...editData, name: e.target.value})} className="input" /></td>
+                  <td><input type="number" value={editData.purchasePrice} onChange={e => setEditData({...editData, purchasePrice: e.target.value})} className="input" style={{ width: '80px' }} /></td>
+                  <td><input type="number" value={editData.sellingPrice} onChange={e => setEditData({...editData, sellingPrice: e.target.value})} className="input" style={{ width: '80px' }} /></td>
+                  <td className="text-center"><button onClick={() => saveEdit(p.id)} className="text-green-600 text-sm mr-2">保存</button><button onClick={cancelEdit} className="text-gray-500 text-sm">取消</button></td>
+                </tr>
+              ) : (
+                <tr key={p.id}>
+                  <td>{p.largeCategory}</td>
+                  <td>{p.mediumCategory}</td>
+                  <td>{p.name}</td>
+                  <td className="text-right">¥{p.purchasePrice.toLocaleString()}</td>
+                  <td className="text-right">¥{p.sellingPrice.toLocaleString()}</td>
+                  <td className="text-center"><button onClick={() => startEdit(p)} className="text-blue-500 text-sm mr-2">編集</button><button onClick={() => deleteProduct(p.id)} className="text-red-500 text-sm">削除</button></td>
+                </tr>
+              )
+            ))}</tbody>
           </table>
         </div>
       </div>
