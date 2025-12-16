@@ -46,7 +46,7 @@ export default function Home() {
         supabase.from('favorites').select('*').order('id'),
         supabase.from('staff_purchases').select('*').order('id'),
       ])
-      if (staffRes.data) setStaff(staffRes.data.map(s => s.name))
+      if (staffRes.data) setStaff(staffRes.data.map(s => ({ id: s.id, name: s.name, dealer: s.dealer || '' })))
       if (productsRes.data) setProducts(productsRes.data.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)).map(p => ({ id: p.id, largeCategory: p.large_category, mediumCategory: p.medium_category, name: p.name, purchasePrice: p.purchase_price, sellingPrice: p.selling_price, productType: p.product_type || 'business', sortOrder: p.sort_order || 0 })))
       if (categoriesRes.data) { setCategories({ large: categoriesRes.data.filter(c => c.type === 'large').map(c => c.name), medium: categoriesRes.data.filter(c => c.type === 'medium').map(c => c.name) }) }
       if (usageRes.data) setUsage(usageRes.data.map(u => ({ id: u.id, staff: u.staff_name, productId: u.product_id, productName: u.product_name, largeCategory: u.large_category, mediumCategory: u.medium_category, purchasePrice: u.purchase_price, quantity: u.quantity, date: u.usage_date })))
@@ -70,7 +70,7 @@ export default function Home() {
           ))}
         </div>
       </div>
-      {tab === 'staff' && <StaffManagement staff={staff} setStaff={setStaff} />}
+      {tab === 'staff' && <StaffManagement staff={staff} setStaff={setStaff} categories={categories} />}
       {tab === 'products' && <ProductManagement products={products} setProducts={setProducts} categories={categories} setCategories={setCategories} />}
       {tab === 'usage' && <UsageTracking products={products} staff={staff} usage={usage} setUsage={setUsage} stockIn={stockIn} setStockIn={setStockIn} favorites={favorites} setFavorites={setFavorites} />}
       {tab === 'inventory' && <InventoryInput products={products} staff={staff} usage={usage} stockIn={stockIn} inventoryHistory={inventoryHistory} setInventoryHistory={setInventoryHistory} />}
