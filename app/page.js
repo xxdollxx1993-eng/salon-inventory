@@ -114,9 +114,16 @@ function StaffManagement({ staff, setStaff }) {
 function ProductManagement({ products, setProducts, categories, setCategories }) {
   const [newLarge, setNewLarge] = useState('')
   const [newMedium, setNewMedium] = useState('')
-  const [newProduct, setNewProduct] = useState({ largeCategory: '', mediumCategory: '', name: '', purchasePrice: '', sellingPrice: '' })
+  const [newProduct, setNewProduct] = useState({ largeCategory: '', mediumCategory: '', name: '', purchasePrice: '', sellingPrice: '', productType: 'business' })
   const [editingId, setEditingId] = useState(null)
   const [editData, setEditData] = useState({})
+  const [filterType, setFilterType] = useState('all')
+
+  const productTypes = [
+    { value: 'business', label: '業務用' },
+    { value: 'retail', label: '店販' },
+    { value: 'both', label: '両方' }
+  ]
 
   const addCategory = async (type, value, setter) => {
     if (!value || categories[type].includes(value)) return
@@ -130,8 +137,8 @@ function ProductManagement({ products, setProducts, categories, setCategories })
   }
   const addProduct = async () => {
     if (!newProduct.name || !newProduct.largeCategory || !newProduct.mediumCategory) return
-    const { data, error } = await supabase.from('products').insert({ large_category: newProduct.largeCategory, medium_category: newProduct.mediumCategory, name: newProduct.name, purchase_price: parseFloat(newProduct.purchasePrice) || 0, selling_price: parseFloat(newProduct.sellingPrice) || 0 }).select()
-    if (!error && data) { setProducts([...products, { id: data[0].id, largeCategory: newProduct.largeCategory, mediumCategory: newProduct.mediumCategory, name: newProduct.name, purchasePrice: parseFloat(newProduct.purchasePrice) || 0, sellingPrice: parseFloat(newProduct.sellingPrice) || 0 }]); setNewProduct({ largeCategory: '', mediumCategory: '', name: '', purchasePrice: '', sellingPrice: '' }) }
+    const { data, error } = await supabase.from('products').insert({ large_category: newProduct.largeCategory, medium_category: newProduct.mediumCategory, name: newProduct.name, purchase_price: parseFloat(newProduct.purchasePrice) || 0, selling_price: parseFloat(newProduct.sellingPrice) || 0, product_type: newProduct.productType }).select()
+    if (!error && data) { setProducts([...products, { id: data[0].id, largeCategory: newProduct.largeCategory, mediumCategory: newProduct.mediumCategory, name: newProduct.name, purchasePrice: parseFloat(newProduct.purchasePrice) || 0, sellingPrice: parseFloat(newProduct.sellingPrice) || 0, productType: newProduct.productType }]); setNewProduct({ largeCategory: '', mediumCategory: '', name: '', purchasePrice: '', sellingPrice: '', productType: 'business' }) }
   }
   const deleteProduct = async (id) => {
     if (!confirm('この商品を削除しますか？')) return
@@ -140,20 +147,30 @@ function ProductManagement({ products, setProducts, categories, setCategories })
   }
   const startEdit = (product) => {
     setEditingId(product.id)
-    setEditData({ name: product.name, largeCategory: product.largeCategory, mediumCategory: product.mediumCategory, purchasePrice: product.purchasePrice, sellingPrice: product.sellingPrice })
+    setEditData({ name: product.name, largeCategory: product.largeCategory, mediumCategory: product.mediumCategory, purchasePrice: product.purchasePrice, sellingPrice: product.sellingPrice, productType: product.productType || 'business' })
   }
   const cancelEdit = () => {
     setEditingId(null)
     setEditData({})
   }
   const saveEdit = async (id) => {
-    const { error } = await supabase.from('products').update({ name: editData.name, large_category: editData.largeCategory, medium_category: editData.mediumCategory, purchase_price: parseFloat(editData.purchasePrice) || 0, selling_price: parseFloat(editData.sellingPrice) || 0 }).eq('id', id)
+    const { error } = await supabase.from('products').update({ name: editData.name, large_category: editData.largeCategory, medium_category: editData.mediumCategory, purchase_price: parseFloat(editData.purchasePrice) || 0, selling_price: parseFloat(editData.sellingPrice) || 0, product_type: editData.productType }).eq('id', id)
     if (!error) {
-      setProducts(products.map(p => p.id === id ? { ...p, name: editData.name, largeCategory: editData.largeCategory, mediumCategory: editData.mediumCategory, purchasePrice: parseFloat(editData.purchasePrice) || 0, sellingPrice: parseFloat(editData.sellingPrice) || 0 } : p))
+      setProducts(products.map(p => p.id === id ? { ...p, name: editData.name, largeCategory: editData.largeCategory, mediumCategory: editData.mediumCategory, purchasePrice: parseFloat(editData.purchasePrice) || 0, sellingPrice: parseFloat(editData.sellingPrice) || 0, productType: editData.productType } : p))
       setEditingId(null)
       setEditData({})
     }
   }
+  const getTypeLabel = (type) => {
+    const found = productTypes.find(t => t.value === type)
+    return found ? found.label : '業務用'
+  }
+  const getTypeBadgeClass = (type) => {
+    if (type === 'retail') return 'badge-blue'
+    if (type === 'both') return 'badge-yellow'
+    return 'badge-green'
+  }
+  const filteredProducts = filterType === 'all' ? products : products.filter(p => p.productType === filterType)
 
   return (
     <div className="space-y-4">
@@ -178,20 +195,34 @@ function ProductManagement({ products, setProducts, categories, setCategories })
           <select value={newProduct.largeCategory} onChange={e => setNewProduct({ ...newProduct, largeCategory: e.target.value })} className="select"><option value="">大カテゴリー</option>{categories.large.map((c, i) => <option key={i} value={c}>{c}</option>)}</select>
           <select value={newProduct.mediumCategory} onChange={e => setNewProduct({ ...newProduct, mediumCategory: e.target.value })} className="select"><option value="">中カテゴリー</option>{categories.medium.map((c, i) => <option key={i} value={c}>{c}</option>)}</select>
         </div>
-        <div className="grid-3 mb-4">
+        <div className="grid-2 mb-4">
           <input type="text" value={newProduct.name} onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} placeholder="商品名" className="input" />
+          <select value={newProduct.productType} onChange={e => setNewProduct({ ...newProduct, productType: e.target.value })} className="select">
+            {productTypes.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+          </select>
+        </div>
+        <div className="grid-2 mb-4">
           <input type="number" value={newProduct.purchasePrice} onChange={e => setNewProduct({ ...newProduct, purchasePrice: e.target.value })} placeholder="仕入れ価格" className="input" />
           <input type="number" value={newProduct.sellingPrice} onChange={e => setNewProduct({ ...newProduct, sellingPrice: e.target.value })} placeholder="販売価格" className="input" />
         </div>
         <button onClick={addProduct} className="btn btn-blue"><Icons.Plus />商品を追加</button>
       </div>
       <div className="card">
-        <h3 className="text-lg font-bold mb-4">商品一覧 ({products.length}件)</h3>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-bold">商品一覧 ({filteredProducts.length}件)</h3>
+          <div className="flex gap-2">
+            <button onClick={() => setFilterType('all')} className={`btn ${filterType === 'all' ? 'btn-blue' : 'btn-gray'}`}>全て</button>
+            <button onClick={() => setFilterType('business')} className={`btn ${filterType === 'business' ? 'btn-green' : 'btn-gray'}`}>業務用</button>
+            <button onClick={() => setFilterType('retail')} className={`btn ${filterType === 'retail' ? 'btn-blue' : 'btn-gray'}`}>店販</button>
+            <button onClick={() => setFilterType('both')} className={`btn ${filterType === 'both' ? 'btn-yellow' : 'btn-gray'}`}>両方</button>
+          </div>
+        </div>
         <div className="overflow-x-auto">
-          <table><thead><tr><th>ディーラー</th><th>カテゴリー</th><th>商品名</th><th className="text-right">仕入れ</th><th className="text-right">販売</th><th className="text-center">操作</th></tr></thead>
-            <tbody>{products.map(p => (
+          <table><thead><tr><th>タイプ</th><th>ディーラー</th><th>カテゴリー</th><th>商品名</th><th className="text-right">仕入れ</th><th className="text-right">販売</th><th className="text-center">操作</th></tr></thead>
+            <tbody>{filteredProducts.map(p => (
               editingId === p.id ? (
                 <tr key={p.id} style={{ background: '#fef9c3' }}>
+                  <td><select value={editData.productType} onChange={e => setEditData({...editData, productType: e.target.value})} className="select">{productTypes.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}</select></td>
                   <td><select value={editData.largeCategory} onChange={e => setEditData({...editData, largeCategory: e.target.value})} className="select">{categories.large.map((c, i) => <option key={i} value={c}>{c}</option>)}</select></td>
                   <td><select value={editData.mediumCategory} onChange={e => setEditData({...editData, mediumCategory: e.target.value})} className="select">{categories.medium.map((c, i) => <option key={i} value={c}>{c}</option>)}</select></td>
                   <td><input type="text" value={editData.name} onChange={e => setEditData({...editData, name: e.target.value})} className="input" /></td>
@@ -201,6 +232,7 @@ function ProductManagement({ products, setProducts, categories, setCategories })
                 </tr>
               ) : (
                 <tr key={p.id}>
+                  <td><span className={`badge ${getTypeBadgeClass(p.productType)}`}>{getTypeLabel(p.productType)}</span></td>
                   <td>{p.largeCategory}</td>
                   <td>{p.mediumCategory}</td>
                   <td>{p.name}</td>
