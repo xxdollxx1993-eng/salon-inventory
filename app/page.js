@@ -70,7 +70,7 @@ export default function Home() {
           ))}
         </div>
       </div>
-      {tab === 'staff' && <StaffManagement staff={staff} setStaff={setStaff} />}
+      {tab === 'staff' && <StaffManagement staff={staff} setStaff={setStaff} categories={categories} />}
       {tab === 'products' && <ProductManagement products={products} setProducts={setProducts} categories={categories} setCategories={setCategories} />}
       {tab === 'usage' && <UsageTracking products={products} staff={staff} usage={usage} setUsage={setUsage} stockIn={stockIn} setStockIn={setStockIn} favorites={favorites} setFavorites={setFavorites} />}
       {tab === 'inventory' && <InventoryInput products={products} staff={staff} usage={usage} stockIn={stockIn} inventoryHistory={inventoryHistory} setInventoryHistory={setInventoryHistory} />}
