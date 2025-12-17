@@ -128,6 +128,7 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
   const [dealerAllocations, setDealerAllocations] = useState([])
   const [bonusSettings, setBonusSettings] = useState([])
   const [lossRecords, setLossRecords] = useState([])
+  const [lossPrices, setLossPrices] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => { loadAllData() }, [])
@@ -135,7 +136,7 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
   const loadAllData = async () => {
     setLoading(true)
     try {
-      const [staffRes, productsRes, categoriesRes, usageRes, stockInRes, inventoryRes, favoritesRes, purchasesRes, budgetsRes, allocationsRes, bonusRes, lossRes] = await Promise.all([
+      const [staffRes, productsRes, categoriesRes, usageRes, stockInRes, inventoryRes, favoritesRes, purchasesRes, budgetsRes, allocationsRes, bonusRes, lossRes, lossPricesRes] = await Promise.all([
         supabase.from('staff').select('*').order('id'),
         supabase.from('products').select('*').order('id'),
         supabase.from('categories').select('*').order('id'),
@@ -148,6 +149,7 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
         supabase.from('dealer_budget_allocation').select('*').order('id'),
         supabase.from('bonus_settings').select('*').order('id'),
         supabase.from('loss_records').select('*').order('id'),
+        supabase.from('loss_price_settings').select('*').order('id'),
       ])
       if (staffRes.data) setStaff(staffRes.data.map(s => ({
         id: s.id, name: s.name, dealer: s.dealer || '',
@@ -174,6 +176,7 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
       if (allocationsRes.data) setDealerAllocations(allocationsRes.data.map(a => ({ id: a.id, yearMonth: a.year_month, dealerName: a.dealer_name, budget: a.budget })))
       if (bonusRes.data) setBonusSettings(bonusRes.data.map(b => ({ id: b.id, periodStart: b.period_start, periodEnd: b.period_end, targetSales: b.target_sales, targetRate: parseFloat(b.target_rate), actualPurchase: b.actual_purchase, memo: b.memo })))
       if (lossRes.data) setLossRecords(lossRes.data.map(l => ({ id: l.id, date: l.record_date, categoryName: l.category_name, pricePerGram: parseFloat(l.price_per_gram), lossGrams: parseFloat(l.loss_grams), lossAmount: parseFloat(l.loss_amount), memo: l.memo })))
+      if (lossPricesRes.data) setLossPrices(lossPricesRes.data.map(p => ({ id: p.id, categoryName: p.category_name, pricePerGram: parseFloat(p.price_per_gram) })))
     } catch (e) { console.error('データ読み込みエラー:', e) }
     setLoading(false)
   }
@@ -189,12 +192,13 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
     { key: 'inventory', label: '棚卸' },
     { key: 'dealer', label: '予算管理' },
     { key: 'purchase', label: 'スタッフ購入' },
+    { key: 'loss', label: 'ロス入力' },
     { key: 'products', label: '商品管理' },
     { key: 'staff', label: 'スタッフ' },
     { key: 'export', label: '出力' },
     ...(isAdmin ? [
       { key: 'bonus', label: 'ボーナス原資' },
-      { key: 'loss', label: 'ロス管理' },
+      { key: 'lossprice', label: 'ロス単価設定' },
       { key: 'settings', label: '設定' }
     ] : [])
   ]
@@ -239,10 +243,11 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
       {tab === 'dealer' && <DealerBudget products={products} usage={usage} stockIn={stockIn} categories={categories} dealerBudgets={dealerBudgets} setDealerBudgets={setDealerBudgets} dealerAllocations={dealerAllocations} setDealerAllocations={setDealerAllocations} isAdmin={isAdmin} />}
       {tab === 'purchase' && <StaffPurchase products={products} staff={staff} staffPurchases={staffPurchases} setStaffPurchases={setStaffPurchases} />}
       {tab === 'products' && <ProductManagement products={products} setProducts={setProducts} categories={categories} setCategories={setCategories} />}
-      {tab === 'staff' && <StaffManagement staff={staff} setStaff={setStaff} categories={categories} />}
+      {tab === 'staff' && <StaffManagement staff={staff} setStaff={setStaff} categories={categories} isAdmin={isAdmin} />}
       {tab === 'export' && <DataExport products={products} staff={staff} usage={usage} stockIn={stockIn} inventoryHistory={inventoryHistory} />}
       {tab === 'bonus' && isAdmin && <BonusManagement staff={staff} bonusSettings={bonusSettings} setBonusSettings={setBonusSettings} stockIn={stockIn} products={products} />}
-      {tab === 'loss' && isAdmin && <LossManagement lossRecords={lossRecords} setLossRecords={setLossRecords} />}
+      {tab === 'loss' && <LossInput lossRecords={lossRecords} setLossRecords={setLossRecords} lossPrices={lossPrices} isAdmin={isAdmin} />}
+      {tab === 'lossprice' && isAdmin && <LossPriceSettings lossPrices={lossPrices} setLossPrices={setLossPrices} />}
       {tab === 'settings' && isAdmin && <AppSettings passwords={passwords} setPasswords={setPasswords} />}
     </div>
   )
@@ -930,7 +935,7 @@ function ProductManagement({ products, setProducts, categories, setCategories })
 }
 
 // ==================== スタッフ管理 ====================
-function StaffManagement({ staff, setStaff, categories }) {
+function StaffManagement({ staff, setStaff, categories, isAdmin }) {
   const [newStaff, setNewStaff] = useState('')
   const [newDealers, setNewDealers] = useState([])
   const [newJoinDate, setNewJoinDate] = useState('')
@@ -978,6 +983,33 @@ function StaffManagement({ staff, setStaff, categories }) {
     if (!error) { setStaff(staff.map(s => s.id === id ? { ...s, name: editData.name, dealer: dealerStr, joinDate: editData.joinDate || null, tenureRate: editData.tenureRate, workType: editData.workType, partTimeRate: editData.partTimeRate, isOpeningStaff: editData.isOpeningStaff, specialRate: editData.specialRate } : s)); setEditingId(null) }
   }
 
+  // スタッフ用のシンプル表示
+  if (!isAdmin) {
+    return (
+      <div className="card">
+        <h3 className="text-lg font-bold mb-4">スタッフ一覧 ({staff.length}名)</h3>
+        <div className="space-y-3">
+          {staff.map(s => (
+            <div key={s.id} className="border rounded p-4">
+              <div className="font-bold text-lg mb-2">{s.name}</div>
+              {s.dealer && (
+                <div>
+                  <span className="text-sm text-gray-500">発注担当：</span>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {s.dealer.split(',').filter(d => d).map((d, i) => (
+                      <span key={i} className="bg-blue-50 px-2 py-1 rounded text-sm">{d}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  // 管理者用のフル表示
   return (
     <div className="space-y-4">
       <div className="card">
@@ -997,7 +1029,16 @@ function StaffManagement({ staff, setStaff, categories }) {
           <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>オープニングスタッフ</label><label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={newIsOpening} onChange={e => setNewIsOpening(e.target.checked)} /><span>はい</span></label></div>
           <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>特別係数</label><select value={newSpecialRate} onChange={e => setNewSpecialRate(parseInt(e.target.value))} className="select">{specialRateOptions.map(r => <option key={r} value={r}>+{r}%</option>)}</select></div>
         </div>
-        <div className="mb-4"><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>発注担当ディーラー</label><div className="flex flex-wrap gap-2">{categories.large.map((c, i) => (<label key={i} className={`flex items-center gap-2 px-3 py-2 rounded cursor-pointer border ${newDealers.includes(c.name) ? 'bg-blue-100 border-blue-500' : 'bg-gray-50 border-gray-200'}`}><input type="checkbox" checked={newDealers.includes(c.name)} onChange={() => toggleNewDealer(c.name)} /><span className="text-sm">{c.name}</span></label>))}</div></div>
+        <div className="mb-4"><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>発注担当ディーラー</label>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {categories.large.map((c, i) => (
+              <label key={i} className={`flex items-center gap-2 px-3 py-2 rounded cursor-pointer border ${newDealers.includes(c.name) ? 'bg-blue-100 border-blue-500' : 'bg-gray-50 border-gray-200'}`}>
+                <input type="checkbox" checked={newDealers.includes(c.name)} onChange={() => toggleNewDealer(c.name)} />
+                <span className="text-sm">{c.name}</span>
+              </label>
+            ))}
+          </div>
+        </div>
         <button onClick={addStaff} className="btn btn-blue">追加</button>
       </div>
       <div className="card">
@@ -1006,20 +1047,31 @@ function StaffManagement({ staff, setStaff, categories }) {
           {staff.map(s => (
             editingId === s.id ? (
               <div key={s.id} className="border rounded p-4 bg-yellow-50">
-                <div className="grid-2 mb-4">
+                <h4 className="font-bold mb-4">✏️ {s.name} を編集中</h4>
+                <div className="grid-2 mb-3">
                   <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>名前</label><input type="text" value={editData.name} onChange={e => setEditData({...editData, name: e.target.value})} className="input" /></div>
                   <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>入社日</label><input type="date" value={editData.joinDate} onChange={e => setEditData({...editData, joinDate: e.target.value})} className="input" /></div>
                 </div>
-                <div className="grid-2 mb-4">
+                <div className="grid-2 mb-3">
                   <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>勤続係数</label><select value={editData.tenureRate} onChange={e => setEditData({...editData, tenureRate: parseInt(e.target.value)})} className="select">{tenureRateOptions.map(r => <option key={r} value={r}>{r}%</option>)}</select></div>
                   <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>勤務形態</label><select value={editData.workType} onChange={e => setEditData({...editData, workType: e.target.value})} className="select"><option value="full">フル</option><option value="part">時短</option></select></div>
                 </div>
-                {editData.workType === 'part' && (<div className="mb-4"><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>時短係数</label><select value={editData.partTimeRate} onChange={e => setEditData({...editData, partTimeRate: parseInt(e.target.value)})} className="select">{partTimeRateOptions.map(r => <option key={r} value={r}>{r}%</option>)}</select></div>)}
-                <div className="grid-2 mb-4">
+                {editData.workType === 'part' && (<div className="mb-3"><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>時短係数</label><select value={editData.partTimeRate} onChange={e => setEditData({...editData, partTimeRate: parseInt(e.target.value)})} className="select" style={{ width: 'auto' }}>{partTimeRateOptions.map(r => <option key={r} value={r}>{r}%</option>)}</select></div>)}
+                <div className="grid-2 mb-3">
                   <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>オープニング</label><label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={editData.isOpeningStaff} onChange={e => setEditData({...editData, isOpeningStaff: e.target.checked})} /><span>はい</span></label></div>
                   <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>特別係数</label><select value={editData.specialRate} onChange={e => setEditData({...editData, specialRate: parseInt(e.target.value)})} className="select">{specialRateOptions.map(r => <option key={r} value={r}>+{r}%</option>)}</select></div>
                 </div>
-                <div className="mb-4"><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>発注担当</label><div className="flex flex-wrap gap-1">{categories.large.map((c, i) => (<label key={i} className={`flex items-center gap-1 px-2 py-1 rounded cursor-pointer text-xs border ${editData.dealers.includes(c.name) ? 'bg-blue-100 border-blue-500' : 'bg-gray-50 border-gray-200'}`}><input type="checkbox" checked={editData.dealers.includes(c.name)} onChange={() => toggleEditDealer(c.name)} className="w-3 h-3" /><span>{c.name}</span></label>))}</div></div>
+                <div className="mb-4">
+                  <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>発注担当</label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {categories.large.map((c, i) => (
+                      <label key={i} className={`flex items-center gap-2 px-3 py-2 rounded cursor-pointer text-sm border ${editData.dealers.includes(c.name) ? 'bg-blue-100 border-blue-500' : 'bg-white border-gray-200'}`}>
+                        <input type="checkbox" checked={editData.dealers.includes(c.name)} onChange={() => toggleEditDealer(c.name)} className="w-4 h-4" />
+                        <span>{c.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
                 <div className="flex gap-2"><button onClick={() => saveEdit(s.id)} className="btn btn-green">保存</button><button onClick={() => setEditingId(null)} className="btn btn-gray">取消</button></div>
               </div>
             ) : (
@@ -1186,22 +1238,23 @@ function BonusManagement({ staff, bonusSettings, setBonusSettings, stockIn, prod
   )
 }
 
-// ==================== ロス管理（管理者のみ） ====================
-function LossManagement({ lossRecords, setLossRecords }) {
+// ==================== ロス入力（スタッフも使用可） ====================
+function LossInput({ lossRecords, setLossRecords, lossPrices, isAdmin }) {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
-  const [categoryName, setCategoryName] = useState('')
-  const [pricePerGram, setPricePerGram] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState('')
   const [lossGrams, setLossGrams] = useState('')
   const [memo, setMemo] = useState('')
 
-  const lossAmount = (parseFloat(pricePerGram) || 0) * (parseFloat(lossGrams) || 0)
+  const selectedPrice = lossPrices.find(p => p.categoryName === selectedCategory)
+  const pricePerGram = selectedPrice ? selectedPrice.pricePerGram : 0
+  const lossAmount = pricePerGram * (parseFloat(lossGrams) || 0)
 
   const recordLoss = async () => {
-    if (!categoryName || !pricePerGram || !lossGrams) { alert('必須項目を入力してください'); return }
-    const { data, error } = await supabase.from('loss_records').insert({ record_date: date, category_name: categoryName, price_per_gram: parseFloat(pricePerGram), loss_grams: parseFloat(lossGrams), loss_amount: lossAmount, memo }).select()
+    if (!selectedCategory || !lossGrams) { alert('カテゴリとロスg数を入力してください'); return }
+    const { data, error } = await supabase.from('loss_records').insert({ record_date: date, category_name: selectedCategory, price_per_gram: pricePerGram, loss_grams: parseFloat(lossGrams), loss_amount: lossAmount, memo }).select()
     if (!error && data) {
-      setLossRecords([...lossRecords, { id: data[0].id, date, categoryName, pricePerGram: parseFloat(pricePerGram), lossGrams: parseFloat(lossGrams), lossAmount, memo }])
-      alert('ロスを記録しました！'); setCategoryName(''); setPricePerGram(''); setLossGrams(''); setMemo('')
+      setLossRecords([...lossRecords, { id: data[0].id, date, categoryName: selectedCategory, pricePerGram, lossGrams: parseFloat(lossGrams), lossAmount, memo }])
+      alert('ロスを記録しました！'); setLossGrams(''); setMemo('')
     }
   }
 
@@ -1216,21 +1269,42 @@ function LossManagement({ lossRecords, setLossRecords }) {
   return (
     <div className="space-y-4">
       <div className="card">
-        <h3 className="text-lg font-bold mb-4">📉 ロス管理</h3>
-        <div className="grid-2 mb-4">
-          <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>記録日</label><input type="date" value={date} onChange={e => setDate(e.target.value)} className="input" /></div>
-          <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>カテゴリー名</label><input type="text" value={categoryName} onChange={e => setCategoryName(e.target.value)} placeholder="例: カラー材" className="input" /></div>
-        </div>
-        <div className="grid-2 mb-4">
-          <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>1gあたり金額（円）</label><input type="number" value={pricePerGram} onChange={e => setPricePerGram(e.target.value)} placeholder="例: 10" className="input" step="0.1" /></div>
-          <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>ロスg数</label><input type="number" value={lossGrams} onChange={e => setLossGrams(e.target.value)} placeholder="例: 500" className="input" step="0.1" /></div>
-        </div>
-        <div className="bg-red-50 p-4 rounded mb-4 text-center">
-          <div className="text-sm text-gray-600">ロス金額（自動計算）</div>
-          <div className="text-2xl font-bold text-red-600">¥{lossAmount.toLocaleString()}</div>
-        </div>
-        <div className="mb-4"><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>メモ（任意）</label><input type="text" value={memo} onChange={e => setMemo(e.target.value)} placeholder="備考" className="input" /></div>
-        <button onClick={recordLoss} className="btn btn-red w-full py-3">ロスを記録</button>
+        <h3 className="text-lg font-bold mb-4">📉 ロス入力</h3>
+        {lossPrices.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            <p className="mb-2">単価設定がありません</p>
+            <p className="text-sm">{isAdmin ? '下の「単価設定」でカテゴリを追加してください' : '管理者に単価設定を依頼してください'}</p>
+          </div>
+        ) : (
+          <>
+            <div className="grid-2 mb-4">
+              <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>記録日</label><input type="date" value={date} onChange={e => setDate(e.target.value)} className="input" /></div>
+              <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>カテゴリー</label>
+                <select value={selectedCategory} onChange={e => setSelectedCategory(e.target.value)} className="select">
+                  <option value="">選択してください</option>
+                  {lossPrices.map(p => <option key={p.id} value={p.categoryName}>{p.categoryName}（¥{p.pricePerGram}/g）</option>)}
+                </select>
+              </div>
+            </div>
+            {selectedCategory && (
+              <>
+                <div className="bg-gray-50 p-3 rounded mb-4">
+                  <div className="text-sm text-gray-600">単価：<span className="font-bold">¥{pricePerGram}/g</span></div>
+                </div>
+                <div className="mb-4">
+                  <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>ロスg数</label>
+                  <input type="number" value={lossGrams} onChange={e => setLossGrams(e.target.value)} placeholder="例: 500" className="input" step="0.1" />
+                </div>
+                <div className="bg-red-50 p-4 rounded mb-4 text-center">
+                  <div className="text-sm text-gray-600">ロス金額（自動計算）</div>
+                  <div className="text-2xl font-bold text-red-600">¥{lossAmount.toLocaleString()}</div>
+                </div>
+                <div className="mb-4"><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>メモ（任意）</label><input type="text" value={memo} onChange={e => setMemo(e.target.value)} placeholder="備考" className="input" /></div>
+                <button onClick={recordLoss} className="btn btn-red w-full py-3">ロスを記録</button>
+              </>
+            )}
+          </>
+        )}
       </div>
 
       <div className="card">
@@ -1241,12 +1315,12 @@ function LossManagement({ lossRecords, setLossRecords }) {
         {lossRecords.length === 0 ? (<p className="text-gray-500 text-center py-4">ロス記録はありません</p>) : (
           <div className="overflow-x-auto">
             <table className="text-sm">
-              <thead><tr><th>日付</th><th>カテゴリー</th><th className="text-right">単価/g</th><th className="text-right">ロスg</th><th className="text-right">金額</th><th>メモ</th><th className="text-center">操作</th></tr></thead>
+              <thead><tr><th>日付</th><th>カテゴリー</th><th className="text-right">単価/g</th><th className="text-right">ロスg</th><th className="text-right">金額</th><th>メモ</th>{isAdmin && <th className="text-center">操作</th>}</tr></thead>
               <tbody>
                 {[...lossRecords].reverse().map(l => (
                   <tr key={l.id}>
                     <td>{l.date}</td><td>{l.categoryName}</td><td className="text-right">¥{l.pricePerGram}</td><td className="text-right">{l.lossGrams}g</td><td className="text-right text-red-600 font-semibold">¥{l.lossAmount.toLocaleString()}</td><td className="text-gray-500">{l.memo || '-'}</td>
-                    <td className="text-center"><button onClick={() => deleteLoss(l.id)} className="text-red-500 text-sm">削除</button></td>
+                    {isAdmin && <td className="text-center"><button onClick={() => deleteLoss(l.id)} className="text-red-500 text-sm">削除</button></td>}
                   </tr>
                 ))}
               </tbody>
@@ -1254,6 +1328,72 @@ function LossManagement({ lossRecords, setLossRecords }) {
           </div>
         )}
       </div>
+    </div>
+  )
+}
+
+// ==================== ロス単価設定（管理者のみ） ====================
+function LossPriceSettings({ lossPrices, setLossPrices }) {
+  const [newCategory, setNewCategory] = useState('')
+  const [newPrice, setNewPrice] = useState('')
+  const [editingId, setEditingId] = useState(null)
+  const [editPrice, setEditPrice] = useState('')
+
+  const addPrice = async () => {
+    if (!newCategory || !newPrice) { alert('カテゴリと単価を入力してください'); return }
+    if (lossPrices.find(p => p.categoryName === newCategory)) { alert('このカテゴリは既に登録されています'); return }
+    const { data, error } = await supabase.from('loss_price_settings').insert({ category_name: newCategory, price_per_gram: parseFloat(newPrice) }).select()
+    if (!error && data) {
+      setLossPrices([...lossPrices, { id: data[0].id, categoryName: newCategory, pricePerGram: parseFloat(newPrice) }])
+      setNewCategory(''); setNewPrice('')
+    }
+  }
+
+  const startEdit = (p) => { setEditingId(p.id); setEditPrice(p.pricePerGram.toString()) }
+  const saveEdit = async (id) => {
+    const { error } = await supabase.from('loss_price_settings').update({ price_per_gram: parseFloat(editPrice) }).eq('id', id)
+    if (!error) { setLossPrices(lossPrices.map(p => p.id === id ? { ...p, pricePerGram: parseFloat(editPrice) } : p)); setEditingId(null) }
+  }
+
+  const deletePrice = async (id) => {
+    if (!confirm('この単価設定を削除しますか？')) return
+    const { error } = await supabase.from('loss_price_settings').delete().eq('id', id)
+    if (!error) setLossPrices(lossPrices.filter(p => p.id !== id))
+  }
+
+  return (
+    <div className="card">
+      <h3 className="text-lg font-bold mb-4">⚙️ ロス単価設定</h3>
+      <div className="grid-2 mb-4">
+        <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>カテゴリー名</label><input type="text" value={newCategory} onChange={e => setNewCategory(e.target.value)} placeholder="例: カラー材" className="input" /></div>
+        <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>1gあたり金額（円）</label><input type="number" value={newPrice} onChange={e => setNewPrice(e.target.value)} placeholder="例: 10" className="input" step="0.1" /></div>
+      </div>
+      <button onClick={addPrice} className="btn btn-blue mb-4"><Icons.Plus /> 単価を追加</button>
+
+      {lossPrices.length === 0 ? (<p className="text-gray-500 text-center py-4">単価設定がありません</p>) : (
+        <div className="overflow-x-auto">
+          <table>
+            <thead><tr><th>カテゴリー</th><th className="text-right">単価/g</th><th className="text-center">操作</th></tr></thead>
+            <tbody>
+              {lossPrices.map(p => (
+                editingId === p.id ? (
+                  <tr key={p.id} style={{ background: '#fef9c3' }}>
+                    <td className="font-semibold">{p.categoryName}</td>
+                    <td className="text-right"><input type="number" value={editPrice} onChange={e => setEditPrice(e.target.value)} className="input" style={{ width: '100px' }} step="0.1" /></td>
+                    <td className="text-center"><button onClick={() => saveEdit(p.id)} className="text-green-600 text-sm mr-2">保存</button><button onClick={() => setEditingId(null)} className="text-gray-500 text-sm">取消</button></td>
+                  </tr>
+                ) : (
+                  <tr key={p.id}>
+                    <td className="font-semibold">{p.categoryName}</td>
+                    <td className="text-right">¥{p.pricePerGram}</td>
+                    <td className="text-center"><button onClick={() => startEdit(p)} className="text-blue-500 text-sm mr-2">編集</button><button onClick={() => deletePrice(p.id)} className="text-red-500 text-sm">削除</button></td>
+                  </tr>
+                )
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   )
 }
