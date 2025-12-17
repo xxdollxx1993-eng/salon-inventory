@@ -76,6 +76,7 @@ export default function Home() {
       {tab === 'inventory' && <InventoryInput products={products} staff={staff} usage={usage} stockIn={stockIn} inventoryHistory={inventoryHistory} setInventoryHistory={setInventoryHistory} />}
       {tab === 'dealer' && <DealerSummary products={products} usage={usage} />}
       {tab === 'purchase' && <StaffPurchase products={products} staff={staff} staffPurchases={staffPurchases} setStaffPurchases={setStaffPurchases} />}
+      {tab === 'order' && <OrderLinks categories={categories} setCategories={setCategories} usage={usage} />}
       {tab === 'export' && <DataExport products={products} staff={staff} usage={usage} stockIn={stockIn} inventoryHistory={inventoryHistory} />}
     </div>
   )
@@ -237,15 +238,32 @@ function ProductManagement({ products, setProducts, categories, setCategories })
   ]
 
   const addCategory = async (type, value, setter) => {
-    if (!value || categories[type].includes(value)) return
+  const exists = type === 'large' ? categories.large.some(c => c.name === value) : categories.medium.includes(value)
+  if (!value || exists) return
+  const { error } = await supabase.from('categories').insert({ type, name: value })
+  if (!error) {
+    if (type === 'large') {
+      setCategories({ ...categories, large: [...categories.large, { name: value, url: '' }] })
+    } else {
+      setCategories({ ...categories, medium: [...categories.medium, value] })
+    }
+    setter('')
+  }
+}
     const { error } = await supabase.from('categories').insert({ type, name: value })
     if (!error) { setCategories({ ...categories, [type]: [...categories[type], value] }); setter('') }
   }
   const deleteCategory = async (type, name) => {
-    if (!confirm(`「${name}」を削除しますか？`)) return
-    const { error } = await supabase.from('categories').delete().eq('type', type).eq('name', name)
-    if (!error) { setCategories({ ...categories, [type]: categories[type].filter(c => c !== name) }) }
+  if (!confirm(`「${name}」を削除しますか？`)) return
+  const { error } = await supabase.from('categories').delete().eq('type', type).eq('name', name)
+  if (!error) {
+    if (type === 'large') {
+      setCategories({ ...categories, large: categories.large.filter(c => c.name !== name) })
+    } else {
+      setCategories({ ...categories, medium: categories.medium.filter(c => c !== name) })
+    }
   }
+}
   const addProduct = async () => {
     if (!newProduct.name || !newProduct.largeCategory || !newProduct.mediumCategory) return
     const maxOrder = products.length > 0 ? Math.max(...products.map(p => p.sortOrder || 0)) + 1 : 1
@@ -1149,6 +1167,107 @@ function DataExport({ products, staff, usage, stockIn, inventoryHistory }) {
           <li>• <strong>PDF</strong>：印刷画面が開きます。「PDFとして保存」も可能</li>
         </ul>
       </div>
+    </div>
+  )
+}
+
+function OrderLinks({ categories, setCategories, usage }) {
+  const [editingDealer, setEditingDealer] = useState(null)
+  const [editUrl, setEditUrl] = useState('')
+  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7))
+
+  const startEdit = (dealer) => {
+    setEditingDealer(dealer.name)
+    setEditUrl(dealer.url || '')
+  }
+
+  const saveUrl = async (dealerName) => {
+    const { error } = await supabase.from('categories').update({ url: editUrl }).eq('type', 'large').eq('name', dealerName)
+    if (!error) {
+      setCategories({
+        ...categories,
+        large: categories.large.map(d => d.name === dealerName ? { ...d, url: editUrl } : d)
+      })
+      setEditingDealer(null)
+      setEditUrl('')
+    }
+  }
+
+  const cancelEdit = () => {
+    setEditingDealer(null)
+    setEditUrl('')
+  }
+
+  const getMonthlyUsage = (dealerName) => {
+    return usage
+      .filter(u => u.largeCategory === dealerName && u.date && u.date.startsWith(selectedMonth))
+      .reduce((sum, u) => ({ quantity: sum.quantity + u.quantity, amount: sum.amount + (u.purchasePrice * u.quantity) }), { quantity: 0, amount: 0 })
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="card">
+        <h3 className="text-lg font-bold mb-4">📦 発注リンク</h3>
+        <p className="text-sm text-gray-600 mb-4">ディーラーの発注ページにワンタップでアクセス</p>
+        <div className="mb-4">
+          <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>使用量の表示月</label>
+          <input type="month" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="input" style={{ width: 'auto' }} />
+        </div>
+      </div>
+
+      {categories.large.length === 0 ? (
+        <div className="card text-center text-gray-500">
+          <p>ディーラーが登録されていません</p>
+          <p className="text-sm">商品管理タブでディーラーを追加してください</p>
+        </div>
+      ) : (
+        categories.large.map(dealer => {
+          const monthlyUsage = getMonthlyUsage(dealer.name)
+          return (
+            <div key={dealer.name} className="card">
+              <div className="flex justify-between items-start mb-3">
+                <h4 className="text-xl font-bold text-blue-600">{dealer.name}</h4>
+                {dealer.url && (
+                  <a href={dealer.url} target="_blank" rel="noopener noreferrer" className="btn btn-blue">
+                    発注ページを開く →
+                  </a>
+                )}
+              </div>
+              
+              <div className="bg-gray-50 p-3 rounded mb-3">
+                <div className="text-sm text-gray-600 mb-1">{selectedMonth.replace('-', '年')}月の使用量</div>
+                <div className="flex gap-4">
+                  <span className="font-bold text-blue-600">{monthlyUsage.quantity}個</span>
+                  <span className="font-bold text-green-600">¥{monthlyUsage.amount.toLocaleString()}</span>
+                </div>
+              </div>
+
+              {editingDealer === dealer.name ? (
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    value={editUrl}
+                    onChange={e => setEditUrl(e.target.value)}
+                    placeholder="https://example.com/order"
+                    className="input flex-1"
+                  />
+                  <button onClick={() => saveUrl(dealer.name)} className="btn btn-green">保存</button>
+                  <button onClick={cancelEdit} className="btn btn-gray">取消</button>
+                </div>
+              ) : (
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-500">
+                    {dealer.url || 'URLが未設定です'}
+                  </span>
+                  <button onClick={() => startEdit(dealer)} className="text-blue-500 text-sm">
+                    {dealer.url ? 'URL編集' : 'URL設定'}
+                  </button>
+                </div>
+              )}
+            </div>
+          )
+        })
+      )}
     </div>
   )
 }
