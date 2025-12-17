@@ -65,7 +65,7 @@ export default function Home() {
       <div className="card">
         <div className="flex justify-between items-center mb-4"><h1 className="text-2xl font-bold">美容室棚卸管理システム</h1></div>
         <div className="tabs">
-          {[{ key: 'staff', label: 'スタッフ管理' }, { key: 'products', label: '商品管理' }, { key: 'usage', label: '使用・入荷' }, { key: 'inventory', label: '棚卸入力' }, { key: 'dealer', label: 'ディーラー集計' }, { key: 'purchase', label: 'スタッフ購入' }, { key: 'export', label: 'データ出力' }].map(t => (
+          {[{ key: 'staff', label: 'スタッフ管理' }, { key: 'products', label: '商品管理' }, { key: 'usage', label: '使用・入荷' }, { key: 'inventory', label: '棚卸入力' }, { key: 'dealer', label: 'ディーラー集計' }, { key: 'purchase', label: 'スタッフ購入' }, { key: 'order', label: '発注リンク' }, { key: 'export', label: 'データ出力' }].map(t => (
             <button key={t.key} className={`tab ${tab === t.key ? 'active' : ''}`} onClick={() => setTab(t.key)}>{t.label}</button>
           ))}
         </div>
