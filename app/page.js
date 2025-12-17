@@ -72,7 +72,7 @@ export default function Home() {
       </div>
       {tab === 'staff' && <StaffManagement staff={staff} setStaff={setStaff} categories={categories} />}
       {tab === 'products' && <ProductManagement products={products} setProducts={setProducts} categories={categories} setCategories={setCategories} />}
-      {tab === 'usage' && <UsageTracking products={products} staff={staff} usage={usage} setUsage={setUsage} stockIn={stockIn} setStockIn={setStockIn} favorites={favorites} setFavorites={setFavorites} />}
+      {tab === 'usage' && <UsageTracking products={products} staff={staff} usage={usage} setUsage={setUsage} stockIn={stockIn} setStockIn={setStockIn} favorites={favorites} setFavorites={setFavorites} categories={categories} />}
       {tab === 'inventory' && <InventoryInput products={products} staff={staff} usage={usage} stockIn={stockIn} inventoryHistory={inventoryHistory} setInventoryHistory={setInventoryHistory} />}
       {tab === 'dealer' && <DealerSummary products={products} usage={usage} />}
       {tab === 'purchase' && <StaffPurchase products={products} staff={staff} staffPurchases={staffPurchases} setStaffPurchases={setStaffPurchases} />}
@@ -150,9 +150,9 @@ function StaffManagement({ staff, setStaff, categories }) {
           <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>担当ディーラー（複数選択可）</label>
           <div className="flex flex-wrap gap-2">
             {categories.large.map((c, i) => (
-              <label key={i} className={`flex items-center gap-2 px-3 py-2 rounded cursor-pointer border ${newDealers.includes(c) ? 'bg-blue-100 border-blue-500' : 'bg-gray-50 border-gray-200'}`}>
-                <input type="checkbox" checked={newDealers.includes(c)} onChange={() => toggleNewDealer(c)} className="w-4 h-4" />
-                <span className="text-sm">{c}</span>
+              <label key={i} className={`flex items-center gap-2 px-3 py-2 rounded cursor-pointer border ${newDealers.includes(c.name) ? 'bg-blue-100 border-blue-500' : 'bg-gray-50 border-gray-200'}`}>
+                <input type="checkbox" checked={newDealers.includes(c.name)} onChange={() => toggleNewDealer(c.name)} className="w-4 h-4" />
+                <span className="text-sm">{c.name}</span>
               </label>
             ))}
           </div>
@@ -181,9 +181,9 @@ function StaffManagement({ staff, setStaff, categories }) {
                     <td>
                       <div className="flex flex-wrap gap-1">
                         {categories.large.map((c, i) => (
-                          <label key={i} className={`flex items-center gap-1 px-2 py-1 rounded cursor-pointer text-xs border ${editData.dealers.includes(c) ? 'bg-blue-100 border-blue-500' : 'bg-gray-50 border-gray-200'}`}>
-                            <input type="checkbox" checked={editData.dealers.includes(c)} onChange={() => toggleEditDealer(c)} className="w-3 h-3" />
-                            <span>{c}</span>
+                          <label key={i} className={`flex items-center gap-1 px-2 py-1 rounded cursor-pointer text-xs border ${editData.dealers.includes(c.name) ? 'bg-blue-100 border-blue-500' : 'bg-gray-50 border-gray-200'}`}>
+                            <input type="checkbox" checked={editData.dealers.includes(c.name)} onChange={() => toggleEditDealer(c.name)} className="w-3 h-3" />
+                            <span>{c.name}</span>
                           </label>
                         ))}
                       </div>
@@ -238,32 +238,29 @@ function ProductManagement({ products, setProducts, categories, setCategories })
   ]
 
   const addCategory = async (type, value, setter) => {
-  const exists = type === 'large' ? categories.large.some(c => c.name === value) : categories.medium.includes(value)
-  if (!value || exists) return
-  const { error } = await supabase.from('categories').insert({ type, name: value })
-  if (!error) {
-    if (type === 'large') {
-      setCategories({ ...categories, large: [...categories.large, { name: value, url: '' }] })
-    } else {
-      setCategories({ ...categories, medium: [...categories.medium, value] })
-    }
-    setter('')
-  }
-}
+    const exists = type === 'large' ? categories.large.some(c => c.name === value) : categories.medium.includes(value)
+    if (!value || exists) return
     const { error } = await supabase.from('categories').insert({ type, name: value })
-    if (!error) { setCategories({ ...categories, [type]: [...categories[type], value] }); setter('') }
+    if (!error) {
+      if (type === 'large') {
+        setCategories({ ...categories, large: [...categories.large, { name: value, url: '' }] })
+      } else {
+        setCategories({ ...categories, medium: [...categories.medium, value] })
+      }
+      setter('')
+    }
   }
   const deleteCategory = async (type, name) => {
-  if (!confirm(`「${name}」を削除しますか？`)) return
-  const { error } = await supabase.from('categories').delete().eq('type', type).eq('name', name)
-  if (!error) {
-    if (type === 'large') {
-      setCategories({ ...categories, large: categories.large.filter(c => c.name !== name) })
-    } else {
-      setCategories({ ...categories, medium: categories.medium.filter(c => c !== name) })
+    if (!confirm(`「${name}」を削除しますか？`)) return
+    const { error } = await supabase.from('categories').delete().eq('type', type).eq('name', name)
+    if (!error) {
+      if (type === 'large') {
+        setCategories({ ...categories, large: categories.large.filter(c => c.name !== name) })
+      } else {
+        setCategories({ ...categories, medium: categories.medium.filter(c => c !== name) })
+      }
     }
   }
-}
   const addProduct = async () => {
     if (!newProduct.name || !newProduct.largeCategory || !newProduct.mediumCategory) return
     const maxOrder = products.length > 0 ? Math.max(...products.map(p => p.sortOrder || 0)) + 1 : 1
@@ -328,7 +325,7 @@ function ProductManagement({ products, setProducts, categories, setCategories })
           <div>
             <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>大カテゴリー（ディーラー）</label>
             <div className="flex gap-2"><input type="text" value={newLarge} onChange={e => setNewLarge(e.target.value)} placeholder="例：〇〇商事" className="input" /><button onClick={() => addCategory('large', newLarge, setNewLarge)} className="btn btn-blue">追加</button></div>
-            <div className="flex gap-2 mt-2" style={{ flexWrap: 'wrap' }}>{categories.large.map((c, i) => <span key={i} className="bg-blue-50 px-3 py-1 rounded text-sm flex items-center gap-1">{c}<button onClick={() => deleteCategory('large', c)} className="text-red-500 ml-1 hover:text-red-700">×</button></span>)}</div>
+            <div className="flex gap-2 mt-2" style={{ flexWrap: 'wrap' }}>{categories.large.map((c, i) => <span key={i} className="bg-blue-50 px-3 py-1 rounded text-sm flex items-center gap-1">{c.name}<button onClick={() => deleteCategory('large', c.name)} className="text-red-500 ml-1 hover:text-red-700">×</button></span>)}</div>
           </div>
           <div>
             <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>中カテゴリー（種類）</label>
@@ -340,7 +337,7 @@ function ProductManagement({ products, setProducts, categories, setCategories })
       <div className="card">
         <h3 className="text-lg font-bold mb-4">商品登録</h3>
         <div className="grid-2 mb-4">
-          <select value={newProduct.largeCategory} onChange={e => setNewProduct({ ...newProduct, largeCategory: e.target.value })} className="select"><option value="">大カテゴリー</option>{categories.large.map((c, i) => <option key={i} value={c}>{c}</option>)}</select>
+          <select value={newProduct.largeCategory} onChange={e => setNewProduct({ ...newProduct, largeCategory: e.target.value })} className="select"><option value="">大カテゴリー</option>{categories.large.map((c, i) => <option key={i} value={c.name}>{c.name}</option>)}</select>
           <select value={newProduct.mediumCategory} onChange={e => setNewProduct({ ...newProduct, mediumCategory: e.target.value })} className="select"><option value="">中カテゴリー</option>{categories.medium.map((c, i) => <option key={i} value={c}>{c}</option>)}</select>
         </div>
         <div className="grid-2 mb-4">
@@ -380,7 +377,7 @@ function ProductManagement({ products, setProducts, categories, setCategories })
                 <tr key={p.id} style={{ background: '#fef9c3' }}>
                   {sortMode && <td></td>}
                   <td><select value={editData.productType} onChange={e => setEditData({...editData, productType: e.target.value})} className="select">{productTypes.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}</select></td>
-                  <td><select value={editData.largeCategory} onChange={e => setEditData({...editData, largeCategory: e.target.value})} className="select">{categories.large.map((c, i) => <option key={i} value={c}>{c}</option>)}</select></td>
+                  <td><select value={editData.largeCategory} onChange={e => setEditData({...editData, largeCategory: e.target.value})} className="select">{categories.large.map((c, i) => <option key={i} value={c.name}>{c.name}</option>)}</select></td>
                   <td><select value={editData.mediumCategory} onChange={e => setEditData({...editData, mediumCategory: e.target.value})} className="select">{categories.medium.map((c, i) => <option key={i} value={c}>{c}</option>)}</select></td>
                   <td><input type="text" value={editData.name} onChange={e => setEditData({...editData, name: e.target.value})} className="input" /></td>
                   <td><input type="number" value={editData.purchasePrice} onChange={e => setEditData({...editData, purchasePrice: e.target.value})} className="input" style={{ width: '80px' }} /></td>
@@ -412,7 +409,7 @@ function ProductManagement({ products, setProducts, categories, setCategories })
   )
 }
 
-function UsageTracking({ products, staff, usage, setUsage, stockIn, setStockIn, favorites, setFavorites }) {
+function UsageTracking({ products, staff, usage, setUsage, stockIn, setStockIn, favorites, setFavorites, categories }) {
   const [inputMode, setInputMode] = useState('quick')
   const [selectedStaff, setSelectedStaff] = useState('')
   const [selectedProduct, setSelectedProduct] = useState('')
@@ -444,7 +441,7 @@ function UsageTracking({ products, staff, usage, setUsage, stockIn, setStockIn, 
   ]
 
   const filteredProducts = filterType === 'all' ? products : products.filter(p => p.productType === filterType || p.productType === 'both')
-  const dealers = [...new Set(products.map(p => p.largeCategory))].filter(Boolean)
+  const dealers = categories.large.map(c => c.name)
   const dealerProducts = stockInDealer ? products.filter(p => p.largeCategory === stockInDealer) : []
 
   useEffect(() => { const init = {}; products.forEach(p => init[p.id] = 0); setBulkEntries(init); setStockInEntries(init) }, [products])
@@ -982,6 +979,107 @@ function DealerSummary({ products, usage }) {
   )
 }
 
+function OrderLinks({ categories, setCategories, usage }) {
+  const [editingDealer, setEditingDealer] = useState(null)
+  const [editUrl, setEditUrl] = useState('')
+  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7))
+
+  const startEdit = (dealer) => {
+    setEditingDealer(dealer.name)
+    setEditUrl(dealer.url || '')
+  }
+
+  const saveUrl = async (dealerName) => {
+    const { error } = await supabase.from('categories').update({ url: editUrl }).eq('type', 'large').eq('name', dealerName)
+    if (!error) {
+      setCategories({
+        ...categories,
+        large: categories.large.map(d => d.name === dealerName ? { ...d, url: editUrl } : d)
+      })
+      setEditingDealer(null)
+      setEditUrl('')
+    }
+  }
+
+  const cancelEdit = () => {
+    setEditingDealer(null)
+    setEditUrl('')
+  }
+
+  const getMonthlyUsage = (dealerName) => {
+    return usage
+      .filter(u => u.largeCategory === dealerName && u.date && u.date.startsWith(selectedMonth))
+      .reduce((sum, u) => ({ quantity: sum.quantity + u.quantity, amount: sum.amount + (u.purchasePrice * u.quantity) }), { quantity: 0, amount: 0 })
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="card">
+        <h3 className="text-lg font-bold mb-4">📦 発注リンク</h3>
+        <p className="text-sm text-gray-600 mb-4">ディーラーの発注ページにワンタップでアクセス</p>
+        <div className="mb-4">
+          <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>使用量の表示月</label>
+          <input type="month" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="input" style={{ width: 'auto' }} />
+        </div>
+      </div>
+
+      {categories.large.length === 0 ? (
+        <div className="card text-center text-gray-500">
+          <p>ディーラーが登録されていません</p>
+          <p className="text-sm">商品管理タブでディーラーを追加してください</p>
+        </div>
+      ) : (
+        categories.large.map(dealer => {
+          const monthlyUsage = getMonthlyUsage(dealer.name)
+          return (
+            <div key={dealer.name} className="card">
+              <div className="flex justify-between items-start mb-3">
+                <h4 className="text-xl font-bold text-blue-600">{dealer.name}</h4>
+                {dealer.url && (
+                  <a href={dealer.url} target="_blank" rel="noopener noreferrer" className="btn btn-blue">
+                    発注ページを開く →
+                  </a>
+                )}
+              </div>
+              
+              <div className="bg-gray-50 p-3 rounded mb-3">
+                <div className="text-sm text-gray-600 mb-1">{selectedMonth.replace('-', '年')}月の使用量</div>
+                <div className="flex gap-4">
+                  <span className="font-bold text-blue-600">{monthlyUsage.quantity}個</span>
+                  <span className="font-bold text-green-600">¥{monthlyUsage.amount.toLocaleString()}</span>
+                </div>
+              </div>
+
+              {editingDealer === dealer.name ? (
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    value={editUrl}
+                    onChange={e => setEditUrl(e.target.value)}
+                    placeholder="https://example.com/order"
+                    className="input flex-1"
+                  />
+                  <button onClick={() => saveUrl(dealer.name)} className="btn btn-green">保存</button>
+                  <button onClick={cancelEdit} className="btn btn-gray">取消</button>
+                </div>
+              ) : (
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-500">
+                    {dealer.url || 'URLが未設定です'}
+                  </span>
+                  <button onClick={() => startEdit(dealer)} className="text-blue-500 text-sm">
+                    {dealer.url ? 'URL編集' : 'URL設定'}
+                  </button>
+                </div>
+              )}
+            </div>
+          )
+        })
+      )}
+    </div>
+  )
+}
+
 function DataExport({ products, staff, usage, stockIn, inventoryHistory }) {
   const getTypeLabel = (type) => {
     if (type === 'retail') return '店販'
@@ -1167,107 +1265,6 @@ function DataExport({ products, staff, usage, stockIn, inventoryHistory }) {
           <li>• <strong>PDF</strong>：印刷画面が開きます。「PDFとして保存」も可能</li>
         </ul>
       </div>
-    </div>
-  )
-}
-
-function OrderLinks({ categories, setCategories, usage }) {
-  const [editingDealer, setEditingDealer] = useState(null)
-  const [editUrl, setEditUrl] = useState('')
-  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7))
-
-  const startEdit = (dealer) => {
-    setEditingDealer(dealer.name)
-    setEditUrl(dealer.url || '')
-  }
-
-  const saveUrl = async (dealerName) => {
-    const { error } = await supabase.from('categories').update({ url: editUrl }).eq('type', 'large').eq('name', dealerName)
-    if (!error) {
-      setCategories({
-        ...categories,
-        large: categories.large.map(d => d.name === dealerName ? { ...d, url: editUrl } : d)
-      })
-      setEditingDealer(null)
-      setEditUrl('')
-    }
-  }
-
-  const cancelEdit = () => {
-    setEditingDealer(null)
-    setEditUrl('')
-  }
-
-  const getMonthlyUsage = (dealerName) => {
-    return usage
-      .filter(u => u.largeCategory === dealerName && u.date && u.date.startsWith(selectedMonth))
-      .reduce((sum, u) => ({ quantity: sum.quantity + u.quantity, amount: sum.amount + (u.purchasePrice * u.quantity) }), { quantity: 0, amount: 0 })
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="card">
-        <h3 className="text-lg font-bold mb-4">📦 発注リンク</h3>
-        <p className="text-sm text-gray-600 mb-4">ディーラーの発注ページにワンタップでアクセス</p>
-        <div className="mb-4">
-          <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>使用量の表示月</label>
-          <input type="month" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="input" style={{ width: 'auto' }} />
-        </div>
-      </div>
-
-      {categories.large.length === 0 ? (
-        <div className="card text-center text-gray-500">
-          <p>ディーラーが登録されていません</p>
-          <p className="text-sm">商品管理タブでディーラーを追加してください</p>
-        </div>
-      ) : (
-        categories.large.map(dealer => {
-          const monthlyUsage = getMonthlyUsage(dealer.name)
-          return (
-            <div key={dealer.name} className="card">
-              <div className="flex justify-between items-start mb-3">
-                <h4 className="text-xl font-bold text-blue-600">{dealer.name}</h4>
-                {dealer.url && (
-                  <a href={dealer.url} target="_blank" rel="noopener noreferrer" className="btn btn-blue">
-                    発注ページを開く →
-                  </a>
-                )}
-              </div>
-              
-              <div className="bg-gray-50 p-3 rounded mb-3">
-                <div className="text-sm text-gray-600 mb-1">{selectedMonth.replace('-', '年')}月の使用量</div>
-                <div className="flex gap-4">
-                  <span className="font-bold text-blue-600">{monthlyUsage.quantity}個</span>
-                  <span className="font-bold text-green-600">¥{monthlyUsage.amount.toLocaleString()}</span>
-                </div>
-              </div>
-
-              {editingDealer === dealer.name ? (
-                <div className="flex gap-2">
-                  <input
-                    type="url"
-                    value={editUrl}
-                    onChange={e => setEditUrl(e.target.value)}
-                    placeholder="https://example.com/order"
-                    className="input flex-1"
-                  />
-                  <button onClick={() => saveUrl(dealer.name)} className="btn btn-green">保存</button>
-                  <button onClick={cancelEdit} className="btn btn-gray">取消</button>
-                </div>
-              ) : (
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-500">
-                    {dealer.url || 'URLが未設定です'}
-                  </span>
-                  <button onClick={() => startEdit(dealer)} className="text-blue-500 text-sm">
-                    {dealer.url ? 'URL編集' : 'URL設定'}
-                  </button>
-                </div>
-              )}
-            </div>
-          )
-        })
-      )}
     </div>
   )
 }
