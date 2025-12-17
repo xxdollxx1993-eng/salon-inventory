@@ -79,14 +79,41 @@ export default function Home() {
 
   if (loading) return <div className="container" style={{ paddingTop: '4rem', textAlign: 'center' }}><p>読み込み中...</p></div>
 
+  const mainTabs = [
+    { key: 'usage', label: '使用入力' },
+    { key: 'stockin', label: '入荷' },
+    { key: 'order', label: '発注リンク' }
+  ]
+  const otherTabs = [
+    { key: 'inventory', label: '棚卸' },
+    { key: 'dealer', label: '予算管理' },
+    { key: 'purchase', label: 'スタッフ購入' },
+    { key: 'products', label: '商品管理' },
+    { key: 'staff', label: 'スタッフ' },
+    { key: 'export', label: '出力' }
+  ]
+  const currentLabel = [...mainTabs, ...otherTabs].find(t => t.key === tab)?.label || '使用入力'
+  const isOtherTab = otherTabs.some(t => t.key === tab)
+
   return (
     <div className="container">
       <div className="card">
         <div className="flex justify-between items-center mb-4"><h1 className="text-2xl font-bold">美容室在庫管理</h1></div>
-        <div className="tabs">
-          {[{ key: 'usage', label: '使用入力' }, { key: 'stockin', label: '入荷入力' }, { key: 'inventory', label: '棚卸' }, { key: 'dealer', label: '予算管理' }, { key: 'order', label: '発注リンク' }, { key: 'purchase', label: 'スタッフ購入' }, { key: 'products', label: '商品管理' }, { key: 'staff', label: 'スタッフ' }, { key: 'export', label: '出力' }].map(t => (
+        <div className="flex gap-2 flex-wrap">
+          {mainTabs.map(t => (
             <button key={t.key} className={`tab ${tab === t.key ? 'active' : ''}`} onClick={() => setTab(t.key)}>{t.label}</button>
           ))}
+          <select 
+            value={isOtherTab ? tab : ''} 
+            onChange={e => e.target.value && setTab(e.target.value)} 
+            className={`select ${isOtherTab ? 'bg-blue-100 border-blue-500' : ''}`}
+            style={{ minWidth: '120px' }}
+          >
+            <option value="">{isOtherTab ? currentLabel : 'その他 ▼'}</option>
+            {otherTabs.map(t => (
+              <option key={t.key} value={t.key}>{t.label}</option>
+            ))}
+          </select>
         </div>
       </div>
       {tab === 'usage' && <UsageInput products={products} usage={usage} setUsage={setUsage} favorites={favorites} setFavorites={setFavorites} />}
