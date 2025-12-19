@@ -175,7 +175,7 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
       if (purchasesRes.data) setStaffPurchases(purchasesRes.data.map(p => ({ id: p.id, staff: p.staff_name, productId: p.product_id, productName: p.product_name, largeCategory: p.large_category, mediumCategory: p.medium_category, purchasePrice: p.purchase_price, quantity: p.quantity, date: p.purchase_date })))
       if (budgetsRes.data) setDealerBudgets(budgetsRes.data.map(b => ({ id: b.id, yearMonth: b.year_month, targetSales: b.target_sales, targetRate: parseFloat(b.target_rate) })))
       if (allocationsRes.data) setDealerAllocations(allocationsRes.data.map(a => ({ id: a.id, yearMonth: a.year_month, dealerName: a.dealer_name, budget: a.budget })))
-      if (bonusRes.data) setBonusSettings(bonusRes.data.map(b => ({ id: b.id, periodStart: b.period_start, periodEnd: b.period_end, targetSales: b.target_sales, retailSales: b.retail_sales || 0, targetRate: parseFloat(b.target_rate), actualPurchase: b.actual_purchase, memo: b.memo })))
+      if (bonusRes.data) setBonusSettings(bonusRes.data.map(b => ({ id: b.id, periodStart: b.period_start, periodEnd: b.period_end, targetSales: b.target_sales, retailSales: b.retail_sales || 0, targetRate: parseFloat(b.target_rate), actualPurchase: b.actual_purchase, manualMaterialCost: b.manual_material_cost, memo: b.memo })))
       if (lossRes.data) setLossRecords(lossRes.data.map(l => ({ id: l.id, date: l.record_date, categoryName: l.category_name, pricePerGram: parseFloat(l.price_per_gram), lossGrams: parseFloat(l.loss_grams), lossAmount: parseFloat(l.loss_amount), memo: l.memo })))
       if (lossPricesRes.data) setLossPrices(lossPricesRes.data.map(p => ({ id: p.id, categoryName: p.category_name, pricePerGram: parseFloat(p.price_per_gram) })))
     } catch (e) { console.error('データ読み込みエラー:', e) }
@@ -1178,6 +1178,7 @@ function BonusManagement({ staff, bonusSettings, setBonusSettings, stockIn, prod
   const [periodEnd, setPeriodEnd] = useState('')
   const [totalSales, setTotalSales] = useState('')
   const [retailSales, setRetailSales] = useState('')
+  const [manualMaterialCost, setManualMaterialCost] = useState('')
   const [editingId, setEditingId] = useState(null)
   const [editData, setEditData] = useState({})
 
@@ -1199,9 +1200,17 @@ function BonusManagement({ staff, bonusSettings, setBonusSettings, stockIn, prod
     }, 0)
   }
 
-  // 材料費 = 全入荷 - スタッフ購入
+  // 材料費 = 全入荷 - スタッフ購入（自動計算）
   const calcMaterialCost = (start, end) => {
     return calcTotalStockIn(start, end) - calcStaffPurchases(start, end)
+  }
+
+  // 実際に使用する材料費（手入力優先）
+  const getEffectiveMaterialCost = (setting) => {
+    if (setting.manualMaterialCost !== null && setting.manualMaterialCost !== undefined && setting.manualMaterialCost !== '') {
+      return setting.manualMaterialCost
+    }
+    return setting.actualPurchase || 0
   }
 
   // ボーナス原資の計算
@@ -1231,14 +1240,16 @@ function BonusManagement({ staff, bonusSettings, setBonusSettings, stockIn, prod
 
   const savePeriod = async () => {
     if (!periodStart || !periodEnd || !totalSales) { alert('期間と売上を入力してください'); return }
-    const materialCost = calcMaterialCost(periodStart, periodEnd)
+    const autoMaterialCost = calcMaterialCost(periodStart, periodEnd)
+    const manualCost = manualMaterialCost ? parseInt(manualMaterialCost) : null
     const { data, error } = await supabase.from('bonus_settings').insert({ 
       period_start: periodStart, 
       period_end: periodEnd, 
       target_sales: parseInt(totalSales) || 0,
       retail_sales: parseInt(retailSales) || 0,
       target_rate: BASE_RATE, 
-      actual_purchase: materialCost, 
+      actual_purchase: autoMaterialCost,
+      manual_material_cost: manualCost,
       memo: '' 
     }).select()
     if (!error && data) {
@@ -1249,10 +1260,11 @@ function BonusManagement({ staff, bonusSettings, setBonusSettings, stockIn, prod
         targetSales: parseInt(totalSales) || 0,
         retailSales: parseInt(retailSales) || 0,
         targetRate: BASE_RATE, 
-        actualPurchase: materialCost, 
+        actualPurchase: autoMaterialCost,
+        manualMaterialCost: manualCost,
         memo: '' 
       }])
-      alert('保存しました！'); setPeriodStart(''); setPeriodEnd(''); setTotalSales(''); setRetailSales('')
+      alert('保存しました！'); setPeriodStart(''); setPeriodEnd(''); setTotalSales(''); setRetailSales(''); setManualMaterialCost('')
     }
   }
 
@@ -1264,23 +1276,30 @@ function BonusManagement({ staff, bonusSettings, setBonusSettings, stockIn, prod
 
   const startEdit = (setting) => {
     setEditingId(setting.id)
-    setEditData({ totalSales: setting.targetSales, retailSales: setting.retailSales || 0 })
+    setEditData({ 
+      totalSales: setting.targetSales, 
+      retailSales: setting.retailSales || 0,
+      manualMaterialCost: setting.manualMaterialCost || ''
+    })
   }
 
   const saveEditedPeriod = async (id) => {
     const setting = bonusSettings.find(b => b.id === id)
-    const materialCost = calcMaterialCost(setting.periodStart, setting.periodEnd)
+    const autoMaterialCost = calcMaterialCost(setting.periodStart, setting.periodEnd)
+    const manualCost = editData.manualMaterialCost ? parseInt(editData.manualMaterialCost) : null
     const { error } = await supabase.from('bonus_settings').update({ 
       target_sales: parseInt(editData.totalSales) || 0,
       retail_sales: parseInt(editData.retailSales) || 0,
-      actual_purchase: materialCost
+      actual_purchase: autoMaterialCost,
+      manual_material_cost: manualCost
     }).eq('id', id)
     if (!error) {
       setBonusSettings(bonusSettings.map(b => b.id === id ? { 
         ...b, 
         targetSales: parseInt(editData.totalSales) || 0,
         retailSales: parseInt(editData.retailSales) || 0,
-        actualPurchase: materialCost 
+        actualPurchase: autoMaterialCost,
+        manualMaterialCost: manualCost
       } : b))
       setEditingId(null)
     }
@@ -1288,7 +1307,8 @@ function BonusManagement({ staff, bonusSettings, setBonusSettings, stockIn, prod
 
   // 最新の期間設定を取得
   const latestSetting = bonusSettings.length > 0 ? bonusSettings[bonusSettings.length - 1] : null
-  const latestCalc = latestSetting ? calcBonusPool(latestSetting.targetSales, latestSetting.actualPurchase) : null
+  const latestMaterialCost = latestSetting ? getEffectiveMaterialCost(latestSetting) : 0
+  const latestCalc = latestSetting ? calcBonusPool(latestSetting.targetSales, latestMaterialCost) : null
 
   // スタッフ用のシンプル表示
   if (!isAdmin) {
@@ -1346,7 +1366,6 @@ function BonusManagement({ staff, bonusSettings, setBonusSettings, stockIn, prod
         <h3 className="text-lg font-bold mb-4">💎 ボーナス原資管理</h3>
         <div className="bg-blue-50 p-3 rounded mb-4 text-sm">
           <p><strong>計算式：</strong></p>
-          <p>材料費 = 全入荷 − スタッフ購入</p>
           <p>原資 = 売上 × (20% − 材料費率) × 40%</p>
         </div>
         <div className="grid-2 mb-4">
@@ -1368,13 +1387,24 @@ function BonusManagement({ staff, bonusSettings, setBonusSettings, stockIn, prod
             <p>施術売上（自動）：¥{((parseInt(totalSales) || 0) - (parseInt(retailSales) || 0)).toLocaleString()}</p>
           </div>
         )}
+        
         {periodStart && periodEnd && (
-          <div className="bg-gray-50 p-3 rounded mb-4 text-sm">
-            <p>期間内の入荷金額：¥{calcTotalStockIn(periodStart, periodEnd).toLocaleString()}</p>
-            <p>期間内のスタッフ購入：¥{calcStaffPurchases(periodStart, periodEnd).toLocaleString()}</p>
-            <p className="font-bold">材料費（差引）：¥{calcMaterialCost(periodStart, periodEnd).toLocaleString()}</p>
+          <div className="bg-gray-100 p-4 rounded mb-4">
+            <p className="font-semibold mb-2">📊 材料費（自動計算・参考）</p>
+            <div className="text-sm text-gray-600 mb-2">
+              <p>入荷: ¥{calcTotalStockIn(periodStart, periodEnd).toLocaleString()}</p>
+              <p>スタッフ購入: -¥{calcStaffPurchases(periodStart, periodEnd).toLocaleString()}</p>
+              <p className="font-bold">= ¥{calcMaterialCost(periodStart, periodEnd).toLocaleString()}</p>
+            </div>
           </div>
         )}
+        
+        <div className="mb-4">
+          <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>✏️ 材料費（手入力・試算表の数字）</label>
+          <input type="number" value={manualMaterialCost} onChange={e => setManualMaterialCost(e.target.value)} placeholder="空欄なら自動計算を使用" className="input" />
+          <p className="text-xs text-gray-500 mt-1">※試算表の数字がある場合はこちらを優先</p>
+        </div>
+        
         <button onClick={savePeriod} className="btn btn-blue">期間を追加</button>
       </div>
 
@@ -1383,11 +1413,13 @@ function BonusManagement({ staff, bonusSettings, setBonusSettings, stockIn, prod
           <h4 className="font-bold mb-4">登録済み期間</h4>
           <div className="space-y-4">
             {[...bonusSettings].reverse().map(setting => {
-              const { rate, diff, pool } = calcBonusPool(setting.targetSales, setting.actualPurchase)
+              const effectiveMaterialCost = getEffectiveMaterialCost(setting)
+              const { rate, diff, pool } = calcBonusPool(setting.targetSales, effectiveMaterialCost)
               const distribution = calcDistribution(pool)
               const staffBonus = distribution.filter(s => !s.isManagement).reduce((sum, s) => sum + s.share, 0)
               const internalReserve = distribution.filter(s => s.isManagement).reduce((sum, s) => sum + s.share, 0)
               const serviceSales = (setting.targetSales || 0) - (setting.retailSales || 0)
+              const isManualCost = setting.manualMaterialCost !== null && setting.manualMaterialCost !== undefined
               
               return (
                 <div key={setting.id} className="border rounded p-4">
@@ -1417,6 +1449,11 @@ function BonusManagement({ staff, bonusSettings, setBonusSettings, stockIn, prod
                           <input type="number" value={editData.retailSales} onChange={e => setEditData({...editData, retailSales: e.target.value})} className="input" />
                         </div>
                       </div>
+                      <div className="mb-4">
+                        <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>材料費（手入力）</label>
+                        <input type="number" value={editData.manualMaterialCost} onChange={e => setEditData({...editData, manualMaterialCost: e.target.value})} placeholder="空欄なら自動計算" className="input" />
+                        <p className="text-xs text-gray-500 mt-1">自動計算: ¥{setting.actualPurchase?.toLocaleString()}</p>
+                      </div>
                       <div className="flex gap-2">
                         <button onClick={() => saveEditedPeriod(setting.id)} className="btn btn-green">保存</button>
                         <button onClick={() => setEditingId(null)} className="btn btn-gray">取消</button>
@@ -1440,9 +1477,14 @@ function BonusManagement({ staff, bonusSettings, setBonusSettings, stockIn, prod
                       </div>
                       
                       <div className="grid-2 gap-4 mb-4">
-                        <div className="bg-gray-50 p-3 rounded">
-                          <div className="text-sm text-gray-600">材料費</div>
-                          <div className="text-xl font-bold">¥{setting.actualPurchase?.toLocaleString()}</div>
+                        <div className={`p-3 rounded ${isManualCost ? 'bg-yellow-50 border border-yellow-300' : 'bg-gray-50'}`}>
+                          <div className="text-sm text-gray-600">
+                            材料費 {isManualCost && <span className="text-yellow-600">（手入力）</span>}
+                          </div>
+                          <div className="text-xl font-bold">¥{effectiveMaterialCost.toLocaleString()}</div>
+                          {isManualCost && (
+                            <div className="text-xs text-gray-500 mt-1">自動計算: ¥{setting.actualPurchase?.toLocaleString()}</div>
+                          )}
                         </div>
                         <div className={`p-3 rounded ${rate <= BASE_RATE ? 'bg-green-50' : 'bg-red-50'}`}>
                           <div className="text-sm text-gray-600">材料費率</div>
