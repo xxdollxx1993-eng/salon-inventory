@@ -1206,7 +1206,7 @@ function BonusManagement({ staff, bonusSettings, setBonusSettings, stockIn, prod
     return calcTotalStockIn(start, end) - calcStaffPurchases(start, end)
   }
 
-  // 実際に使用する材料費（手入力優先、ディーラー購入分を引く）
+  // 実際に使用する材料費（手入力優先、プロラボ分を引く）
   const getEffectiveMaterialCost = (setting) => {
     let baseCost = 0
     if (setting.manualMaterialCost !== null && setting.manualMaterialCost !== undefined && setting.manualMaterialCost !== '') {
@@ -1214,7 +1214,7 @@ function BonusManagement({ staff, bonusSettings, setBonusSettings, stockIn, prod
     } else {
       baseCost = setting.actualPurchase || 0
     }
-    // ディーラー購入分を引く
+    // プロラボ分を引く
     const dealerPurch = setting.dealerPurchase || 0
     return baseCost - dealerPurch
   }
@@ -1418,7 +1418,7 @@ function BonusManagement({ staff, bonusSettings, setBonusSettings, stockIn, prod
         </div>
         
         <div className="mb-4">
-          <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>−）ディーラー購入分（スタッフ購入用）</label>
+          <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>−）プロラボ分（スタッフ購入用）</label>
           <input type="number" value={dealerPurchase} onChange={e => setDealerPurchase(e.target.value)} placeholder="例: 500000" className="input" />
           <p className="text-xs text-gray-500 mt-1">※材料費から引かれます</p>
         </div>
@@ -1480,7 +1480,7 @@ function BonusManagement({ staff, bonusSettings, setBonusSettings, stockIn, prod
                           <input type="number" value={editData.manualMaterialCost} onChange={e => setEditData({...editData, manualMaterialCost: e.target.value})} placeholder="空欄なら自動計算" className="input" />
                         </div>
                         <div>
-                          <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>ディーラー購入分</label>
+                          <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>プロラボ分</label>
                           <input type="number" value={editData.dealerPurchase} onChange={e => setEditData({...editData, dealerPurchase: e.target.value})} placeholder="0" className="input" />
                         </div>
                       </div>
@@ -1516,7 +1516,7 @@ function BonusManagement({ staff, bonusSettings, setBonusSettings, stockIn, prod
                             <>
                               <span className="text-gray-500 mx-2">−</span>
                               <span className="text-red-600">¥{setting.dealerPurchase.toLocaleString()}</span>
-                              <span className="text-gray-500 text-xs ml-1">(ディーラー購入)</span>
+                              <span className="text-gray-500 text-xs ml-1">(プロラボ分)</span>
                             </>
                           )}
                         </div>
