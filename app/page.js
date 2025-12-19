@@ -175,7 +175,7 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
       if (purchasesRes.data) setStaffPurchases(purchasesRes.data.map(p => ({ id: p.id, staff: p.staff_name, productId: p.product_id, productName: p.product_name, largeCategory: p.large_category, mediumCategory: p.medium_category, purchasePrice: p.purchase_price, quantity: p.quantity, date: p.purchase_date })))
       if (budgetsRes.data) setDealerBudgets(budgetsRes.data.map(b => ({ id: b.id, yearMonth: b.year_month, targetSales: b.target_sales, targetRate: parseFloat(b.target_rate) })))
       if (allocationsRes.data) setDealerAllocations(allocationsRes.data.map(a => ({ id: a.id, yearMonth: a.year_month, dealerName: a.dealer_name, budget: a.budget })))
-      if (bonusRes.data) setBonusSettings(bonusRes.data.map(b => ({ id: b.id, periodStart: b.period_start, periodEnd: b.period_end, targetSales: b.target_sales, targetRate: parseFloat(b.target_rate), actualPurchase: b.actual_purchase, memo: b.memo })))
+      if (bonusRes.data) setBonusSettings(bonusRes.data.map(b => ({ id: b.id, periodStart: b.period_start, periodEnd: b.period_end, targetSales: b.target_sales, retailSales: b.retail_sales || 0, targetRate: parseFloat(b.target_rate), actualPurchase: b.actual_purchase, memo: b.memo })))
       if (lossRes.data) setLossRecords(lossRes.data.map(l => ({ id: l.id, date: l.record_date, categoryName: l.category_name, pricePerGram: parseFloat(l.price_per_gram), lossGrams: parseFloat(l.loss_grams), lossAmount: parseFloat(l.loss_amount), memo: l.memo })))
       if (lossPricesRes.data) setLossPrices(lossPricesRes.data.map(p => ({ id: p.id, categoryName: p.category_name, pricePerGram: parseFloat(p.price_per_gram) })))
     } catch (e) { console.error('データ読み込みエラー:', e) }
@@ -1176,7 +1176,8 @@ function DataExport({ products, staff, usage, stockIn, inventoryHistory }) {
 function BonusManagement({ staff, bonusSettings, setBonusSettings, stockIn, products, staffPurchases, isAdmin }) {
   const [periodStart, setPeriodStart] = useState('')
   const [periodEnd, setPeriodEnd] = useState('')
-  const [targetSales, setTargetSales] = useState('')
+  const [totalSales, setTotalSales] = useState('')
+  const [retailSales, setRetailSales] = useState('')
   const [editingId, setEditingId] = useState(null)
   const [editData, setEditData] = useState({})
 
@@ -1229,12 +1230,13 @@ function BonusManagement({ staff, bonusSettings, setBonusSettings, stockIn, prod
   }
 
   const savePeriod = async () => {
-    if (!periodStart || !periodEnd || !targetSales) { alert('期間と売上を入力してください'); return }
+    if (!periodStart || !periodEnd || !totalSales) { alert('期間と売上を入力してください'); return }
     const materialCost = calcMaterialCost(periodStart, periodEnd)
     const { data, error } = await supabase.from('bonus_settings').insert({ 
       period_start: periodStart, 
       period_end: periodEnd, 
-      target_sales: parseInt(targetSales) || 0, 
+      target_sales: parseInt(totalSales) || 0,
+      retail_sales: parseInt(retailSales) || 0,
       target_rate: BASE_RATE, 
       actual_purchase: materialCost, 
       memo: '' 
@@ -1244,12 +1246,13 @@ function BonusManagement({ staff, bonusSettings, setBonusSettings, stockIn, prod
         id: data[0].id, 
         periodStart, 
         periodEnd, 
-        targetSales: parseInt(targetSales) || 0, 
+        targetSales: parseInt(totalSales) || 0,
+        retailSales: parseInt(retailSales) || 0,
         targetRate: BASE_RATE, 
         actualPurchase: materialCost, 
         memo: '' 
       }])
-      alert('保存しました！'); setPeriodStart(''); setPeriodEnd(''); setTargetSales('')
+      alert('保存しました！'); setPeriodStart(''); setPeriodEnd(''); setTotalSales(''); setRetailSales('')
     }
   }
 
@@ -1261,20 +1264,22 @@ function BonusManagement({ staff, bonusSettings, setBonusSettings, stockIn, prod
 
   const startEdit = (setting) => {
     setEditingId(setting.id)
-    setEditData({ targetSales: setting.targetSales })
+    setEditData({ totalSales: setting.targetSales, retailSales: setting.retailSales || 0 })
   }
 
   const saveEditedPeriod = async (id) => {
     const setting = bonusSettings.find(b => b.id === id)
     const materialCost = calcMaterialCost(setting.periodStart, setting.periodEnd)
     const { error } = await supabase.from('bonus_settings').update({ 
-      target_sales: parseInt(editData.targetSales) || 0,
+      target_sales: parseInt(editData.totalSales) || 0,
+      retail_sales: parseInt(editData.retailSales) || 0,
       actual_purchase: materialCost
     }).eq('id', id)
     if (!error) {
       setBonusSettings(bonusSettings.map(b => b.id === id ? { 
         ...b, 
-        targetSales: parseInt(editData.targetSales) || 0,
+        targetSales: parseInt(editData.totalSales) || 0,
+        retailSales: parseInt(editData.retailSales) || 0,
         actualPurchase: materialCost 
       } : b))
       setEditingId(null)
@@ -1348,10 +1353,21 @@ function BonusManagement({ staff, bonusSettings, setBonusSettings, stockIn, prod
           <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>期間開始</label><input type="date" value={periodStart} onChange={e => setPeriodStart(e.target.value)} className="input" /></div>
           <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>期間終了</label><input type="date" value={periodEnd} onChange={e => setPeriodEnd(e.target.value)} className="input" /></div>
         </div>
-        <div className="mb-4">
-          <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>売上実績</label>
-          <input type="number" value={targetSales} onChange={e => setTargetSales(e.target.value)} placeholder="例: 45000000" className="input" />
+        <div className="grid-2 mb-4">
+          <div>
+            <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>値引き後総売上</label>
+            <input type="number" value={totalSales} onChange={e => setTotalSales(e.target.value)} placeholder="例: 45000000" className="input" />
+          </div>
+          <div>
+            <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>店販売上</label>
+            <input type="number" value={retailSales} onChange={e => setRetailSales(e.target.value)} placeholder="例: 5000000" className="input" />
+          </div>
         </div>
+        {totalSales && (
+          <div className="bg-gray-50 p-3 rounded mb-4 text-sm">
+            <p>施術売上（自動）：¥{((parseInt(totalSales) || 0) - (parseInt(retailSales) || 0)).toLocaleString()}</p>
+          </div>
+        )}
         {periodStart && periodEnd && (
           <div className="bg-gray-50 p-3 rounded mb-4 text-sm">
             <p>期間内の入荷金額：¥{calcTotalStockIn(periodStart, periodEnd).toLocaleString()}</p>
@@ -1371,6 +1387,7 @@ function BonusManagement({ staff, bonusSettings, setBonusSettings, stockIn, prod
               const distribution = calcDistribution(pool)
               const staffBonus = distribution.filter(s => !s.isManagement).reduce((sum, s) => sum + s.share, 0)
               const internalReserve = distribution.filter(s => s.isManagement).reduce((sum, s) => sum + s.share, 0)
+              const serviceSales = (setting.targetSales || 0) - (setting.retailSales || 0)
               
               return (
                 <div key={setting.id} className="border rounded p-4">
@@ -1390,9 +1407,15 @@ function BonusManagement({ staff, bonusSettings, setBonusSettings, stockIn, prod
 
                   {editingId === setting.id ? (
                     <div className="bg-yellow-50 p-4 rounded mb-4">
-                      <div className="mb-4">
-                        <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>売上実績</label>
-                        <input type="number" value={editData.targetSales} onChange={e => setEditData({...editData, targetSales: e.target.value})} className="input" />
+                      <div className="grid-2 mb-4">
+                        <div>
+                          <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>値引き後総売上</label>
+                          <input type="number" value={editData.totalSales} onChange={e => setEditData({...editData, totalSales: e.target.value})} className="input" />
+                        </div>
+                        <div>
+                          <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>店販売上</label>
+                          <input type="number" value={editData.retailSales} onChange={e => setEditData({...editData, retailSales: e.target.value})} className="input" />
+                        </div>
                       </div>
                       <div className="flex gap-2">
                         <button onClick={() => saveEditedPeriod(setting.id)} className="btn btn-green">保存</button>
@@ -1401,22 +1424,33 @@ function BonusManagement({ staff, bonusSettings, setBonusSettings, stockIn, prod
                     </div>
                   ) : (
                     <>
-                      <div className="grid-2 gap-4 mb-4">
+                      <div className="grid-3 gap-4 mb-4">
                         <div className="bg-gray-50 p-3 rounded">
-                          <div className="text-sm text-gray-600">売上実績</div>
+                          <div className="text-sm text-gray-600">値引き後総売上</div>
                           <div className="text-xl font-bold">¥{setting.targetSales?.toLocaleString()}</div>
                         </div>
+                        <div className="bg-gray-50 p-3 rounded">
+                          <div className="text-sm text-gray-600">店販売上</div>
+                          <div className="text-xl font-bold">¥{(setting.retailSales || 0).toLocaleString()}</div>
+                        </div>
+                        <div className="bg-gray-50 p-3 rounded">
+                          <div className="text-sm text-gray-600">施術売上</div>
+                          <div className="text-xl font-bold">¥{serviceSales.toLocaleString()}</div>
+                        </div>
+                      </div>
+                      
+                      <div className="grid-2 gap-4 mb-4">
                         <div className="bg-gray-50 p-3 rounded">
                           <div className="text-sm text-gray-600">材料費</div>
                           <div className="text-xl font-bold">¥{setting.actualPurchase?.toLocaleString()}</div>
                         </div>
+                        <div className={`p-3 rounded ${rate <= BASE_RATE ? 'bg-green-50' : 'bg-red-50'}`}>
+                          <div className="text-sm text-gray-600">材料費率</div>
+                          <div className={`text-xl font-bold ${rate <= BASE_RATE ? 'text-green-600' : 'text-red-600'}`}>{rate.toFixed(1)}%</div>
+                        </div>
                       </div>
                       
-                      <div className="grid-3 gap-4 mb-4">
-                        <div className={`p-3 rounded text-center ${rate <= BASE_RATE ? 'bg-green-50' : 'bg-red-50'}`}>
-                          <div className="text-sm text-gray-600">材料費率</div>
-                          <div className={`text-2xl font-bold ${rate <= BASE_RATE ? 'text-green-600' : 'text-red-600'}`}>{rate.toFixed(1)}%</div>
-                        </div>
+                      <div className="grid-2 gap-4 mb-4">
                         <div className={`p-3 rounded text-center ${diff > 0 ? 'bg-green-50' : 'bg-gray-50'}`}>
                           <div className="text-sm text-gray-600">基準との差</div>
                           <div className={`text-2xl font-bold ${diff > 0 ? 'text-green-600' : 'text-gray-400'}`}>{diff > 0 ? `-${diff.toFixed(1)}%` : `+${Math.abs(diff).toFixed(1)}%`}</div>
