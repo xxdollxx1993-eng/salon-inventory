@@ -127,6 +127,7 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
   const [dealerBudgets, setDealerBudgets] = useState([])
   const [dealerAllocations, setDealerAllocations] = useState([])
   const [bonusSettings, setBonusSettings] = useState([])
+  const [monthlyReports, setMonthlyReports] = useState([])
   const [lossRecords, setLossRecords] = useState([])
   const [lossPrices, setLossPrices] = useState([])
   const [loading, setLoading] = useState(true)
@@ -136,7 +137,7 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
   const loadAllData = async () => {
     setLoading(true)
     try {
-      const [staffRes, productsRes, categoriesRes, usageRes, stockInRes, inventoryRes, favoritesRes, purchasesRes, budgetsRes, allocationsRes, bonusRes, lossRes, lossPricesRes] = await Promise.all([
+      const [staffRes, productsRes, categoriesRes, usageRes, stockInRes, inventoryRes, favoritesRes, purchasesRes, budgetsRes, allocationsRes, bonusRes, lossRes, lossPricesRes, monthlyRes] = await Promise.all([
         supabase.from('staff').select('*').order('id'),
         supabase.from('products').select('*').order('id'),
         supabase.from('categories').select('*').order('id'),
@@ -150,6 +151,7 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
         supabase.from('bonus_settings').select('*').order('id'),
         supabase.from('loss_records').select('*').order('id'),
         supabase.from('loss_price_settings').select('*').order('id'),
+        supabase.from('monthly_reports').select('*').order('year').order('month'),
       ])
       if (staffRes.data) setStaff(staffRes.data.map(s => ({
         id: s.id, name: s.name, dealer: s.dealer || '',
@@ -178,6 +180,7 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
       if (bonusRes.data) setBonusSettings(bonusRes.data.map(b => ({ id: b.id, periodStart: b.period_start, periodEnd: b.period_end, targetSales: b.target_sales, retailSales: b.retail_sales || 0, targetRate: parseFloat(b.target_rate), actualPurchase: b.actual_purchase, manualMaterialCost: b.manual_material_cost, dealerPurchase: b.dealer_purchase || 0, memo: b.memo })))
       if (lossRes.data) setLossRecords(lossRes.data.map(l => ({ id: l.id, date: l.record_date, categoryName: l.category_name, pricePerGram: parseFloat(l.price_per_gram), lossGrams: parseFloat(l.loss_grams), lossAmount: parseFloat(l.loss_amount), memo: l.memo })))
       if (lossPricesRes.data) setLossPrices(lossPricesRes.data.map(p => ({ id: p.id, categoryName: p.category_name, pricePerGram: parseFloat(p.price_per_gram) })))
+      if (monthlyRes.data) setMonthlyReports(monthlyRes.data.map(m => ({ id: m.id, year: m.year, month: m.month, totalSales: m.total_sales, retailSales: m.retail_sales, materialCost: m.material_cost, prolaboPurchase: m.prolabo_purchase })))
     } catch (e) { console.error('データ読み込みエラー:', e) }
     setLoading(false)
   }
@@ -194,6 +197,7 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
     { key: 'dealer', label: '予算管理' },
     { key: 'purchase', label: 'スタッフ購入' },
     { key: 'loss', label: 'ロス入力' },
+    { key: 'monthly', label: '📊 月次レポート' },
     { key: 'bonus', label: '材料費達成率' },
     { key: 'products', label: '商品管理' },
     { key: 'staff', label: 'スタッフ' },
@@ -247,6 +251,7 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
       {tab === 'staff' && <StaffManagement staff={staff} setStaff={setStaff} categories={categories} isAdmin={isAdmin} />}
       {tab === 'export' && <DataExport products={products} staff={staff} usage={usage} stockIn={stockIn} inventoryHistory={inventoryHistory} />}
       {tab === 'bonus' && <BonusManagement staff={staff} bonusSettings={bonusSettings} setBonusSettings={setBonusSettings} stockIn={stockIn} products={products} staffPurchases={staffPurchases} isAdmin={isAdmin} />}
+      {tab === 'monthly' && <MonthlyReport monthlyReports={monthlyReports} setMonthlyReports={setMonthlyReports} stockIn={stockIn} products={products} staffPurchases={staffPurchases} isAdmin={isAdmin} />}
       {tab === 'loss' && <LossInput lossRecords={lossRecords} setLossRecords={setLossRecords} lossPrices={lossPrices} isAdmin={isAdmin} />}
       {tab === 'lossprice' && isAdmin && <LossPriceSettings lossPrices={lossPrices} setLossPrices={setLossPrices} />}
       {tab === 'settings' && isAdmin && <AppSettings passwords={passwords} setPasswords={setPasswords} />}
@@ -1168,6 +1173,401 @@ function DataExport({ products, staff, usage, stockIn, inventoryHistory }) {
     <div className="card">
       <h3 className="text-lg font-bold mb-4">📊 データ出力</h3>
       <div className="space-y-3">{items.map((item, i) => (<div key={i} className="flex justify-between items-center p-4 bg-gray-50 rounded"><div><span className="font-semibold">{item.label}</span><span className="text-sm text-gray-500 ml-2">({item.count}件)</span></div><button onClick={item.fn} className="btn btn-green">CSV出力</button></div>))}</div>
+    </div>
+  )
+}
+
+// ==================== 月次レポート ====================
+function MonthlyReport({ monthlyReports, setMonthlyReports, stockIn, products, staffPurchases, isAdmin }) {
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1)
+  const [totalSales, setTotalSales] = useState('')
+  const [retailSales, setRetailSales] = useState('')
+  const [prolaboPurchase, setProlaboPurchase] = useState('')
+  const [editingId, setEditingId] = useState(null)
+  const [editData, setEditData] = useState({})
+  const [chartType, setChartType] = useState('material') // 'material' or 'retail'
+
+  const BASE_RATE = 20
+
+  // 指定月の入荷金額を計算
+  const calcMonthlyStockIn = (year, month) => {
+    const startDate = `${year}-${String(month).padStart(2, '0')}-01`
+    const endDate = month === 12 
+      ? `${year + 1}-01-01` 
+      : `${year}-${String(month + 1).padStart(2, '0')}-01`
+    
+    return stockIn.filter(s => s.date >= startDate && s.date < endDate).reduce((sum, s) => {
+      const product = products.find(p => p.id === s.productId)
+      return sum + (product ? s.quantity * product.purchasePrice : 0)
+    }, 0)
+  }
+
+  // 指定月のスタッフ購入金額を計算
+  const calcMonthlyStaffPurchases = (year, month) => {
+    const startDate = `${year}-${String(month).padStart(2, '0')}-01`
+    const endDate = month === 12 
+      ? `${year + 1}-01-01` 
+      : `${year}-${String(month + 1).padStart(2, '0')}-01`
+    
+    return staffPurchases.filter(p => p.date >= startDate && p.date < endDate).reduce((sum, p) => {
+      return sum + (p.purchasePrice * p.quantity)
+    }, 0)
+  }
+
+  // 材料費（自動計算）
+  const calcAutoMaterialCost = (year, month) => {
+    return calcMonthlyStockIn(year, month) - calcMonthlyStaffPurchases(year, month)
+  }
+
+  // 材料費率を計算
+  const calcMaterialRate = (report) => {
+    if (!report.totalSales || report.totalSales <= 0) return 0
+    const effectiveCost = (report.materialCost || 0) - (report.prolaboPurchase || 0)
+    return (effectiveCost / report.totalSales) * 100
+  }
+
+  // 店販比率を計算
+  const calcRetailRate = (report) => {
+    if (!report.totalSales || report.totalSales <= 0) return 0
+    return ((report.retailSales || 0) / report.totalSales) * 100
+  }
+
+  const saveReport = async () => {
+    if (!totalSales) { alert('売上を入力してください'); return }
+    
+    const autoMaterialCost = calcAutoMaterialCost(selectedYear, selectedMonth)
+    const existing = monthlyReports.find(r => r.year === selectedYear && r.month === selectedMonth)
+    
+    if (existing) {
+      const { error } = await supabase.from('monthly_reports').update({
+        total_sales: parseInt(totalSales) || 0,
+        retail_sales: parseInt(retailSales) || 0,
+        material_cost: autoMaterialCost,
+        prolabo_purchase: parseInt(prolaboPurchase) || 0
+      }).eq('id', existing.id)
+      
+      if (!error) {
+        setMonthlyReports(monthlyReports.map(r => r.id === existing.id ? {
+          ...r,
+          totalSales: parseInt(totalSales) || 0,
+          retailSales: parseInt(retailSales) || 0,
+          materialCost: autoMaterialCost,
+          prolaboPurchase: parseInt(prolaboPurchase) || 0
+        } : r))
+        alert('更新しました！')
+      }
+    } else {
+      const { data, error } = await supabase.from('monthly_reports').insert({
+        year: selectedYear,
+        month: selectedMonth,
+        total_sales: parseInt(totalSales) || 0,
+        retail_sales: parseInt(retailSales) || 0,
+        material_cost: autoMaterialCost,
+        prolabo_purchase: parseInt(prolaboPurchase) || 0
+      }).select()
+      
+      if (!error && data) {
+        setMonthlyReports([...monthlyReports, {
+          id: data[0].id,
+          year: selectedYear,
+          month: selectedMonth,
+          totalSales: parseInt(totalSales) || 0,
+          retailSales: parseInt(retailSales) || 0,
+          materialCost: autoMaterialCost,
+          prolaboPurchase: parseInt(prolaboPurchase) || 0
+        }])
+        alert('保存しました！')
+      }
+    }
+    setTotalSales(''); setRetailSales(''); setProlaboPurchase('')
+  }
+
+  const deleteReport = async (id) => {
+    if (!confirm('この月のデータを削除しますか？')) return
+    const { error } = await supabase.from('monthly_reports').delete().eq('id', id)
+    if (!error) setMonthlyReports(monthlyReports.filter(r => r.id !== id))
+  }
+
+  // 既存データがあれば入力欄に反映
+  const loadExistingData = () => {
+    const existing = monthlyReports.find(r => r.year === selectedYear && r.month === selectedMonth)
+    if (existing) {
+      setTotalSales(existing.totalSales?.toString() || '')
+      setRetailSales(existing.retailSales?.toString() || '')
+      setProlaboPurchase(existing.prolaboPurchase?.toString() || '')
+    } else {
+      setTotalSales(''); setRetailSales(''); setProlaboPurchase('')
+    }
+  }
+
+  // 年月が変わったら既存データを読み込む
+  React.useEffect(() => { loadExistingData() }, [selectedYear, selectedMonth])
+
+  // グラフ用データ（直近12ヶ月）
+  const getChartData = () => {
+    const data = []
+    const now = new Date()
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+      const year = d.getFullYear()
+      const month = d.getMonth() + 1
+      const report = monthlyReports.find(r => r.year === year && r.month === month)
+      data.push({
+        label: `${month}月`,
+        year,
+        month,
+        materialRate: report ? calcMaterialRate(report) : null,
+        retailRate: report ? calcRetailRate(report) : null,
+        hasData: !!report
+      })
+    }
+    return data
+  }
+
+  const chartData = getChartData()
+  const existingReport = monthlyReports.find(r => r.year === selectedYear && r.month === selectedMonth)
+  const autoMaterial = calcAutoMaterialCost(selectedYear, selectedMonth)
+
+  // SVGで折れ線グラフを描画
+  const renderChart = () => {
+    const data = chartData
+    const width = 350
+    const height = 200
+    const padding = { top: 20, right: 20, bottom: 30, left: 40 }
+    const chartWidth = width - padding.left - padding.right
+    const chartHeight = height - padding.top - padding.bottom
+
+    const values = data.map(d => chartType === 'material' ? d.materialRate : d.retailRate).filter(v => v !== null)
+    const maxValue = chartType === 'material' ? Math.max(25, ...values) : Math.max(20, ...values)
+    const minValue = 0
+
+    const getX = (i) => padding.left + (i / (data.length - 1)) * chartWidth
+    const getY = (v) => v === null ? null : padding.top + chartHeight - ((v - minValue) / (maxValue - minValue)) * chartHeight
+
+    const points = data.map((d, i) => {
+      const value = chartType === 'material' ? d.materialRate : d.retailRate
+      return value !== null ? `${getX(i)},${getY(value)}` : null
+    }).filter(p => p !== null)
+
+    const targetY = chartType === 'material' ? getY(BASE_RATE) : null
+
+    return (
+      <svg width="100%" viewBox={`0 0 ${width} ${height}`} style={{ maxWidth: '400px' }}>
+        {/* 背景のグリッド */}
+        {[0, 5, 10, 15, 20, 25].filter(v => v <= maxValue).map(v => (
+          <g key={v}>
+            <line x1={padding.left} y1={getY(v)} x2={width - padding.right} y2={getY(v)} stroke="#e5e7eb" strokeWidth="1" />
+            <text x={padding.left - 5} y={getY(v) + 4} textAnchor="end" fontSize="10" fill="#6b7280">{v}%</text>
+          </g>
+        ))}
+        
+        {/* 目標ライン（材料費率のみ） */}
+        {chartType === 'material' && targetY && (
+          <line x1={padding.left} y1={targetY} x2={width - padding.right} y2={targetY} stroke="#ef4444" strokeWidth="2" strokeDasharray="5,5" />
+        )}
+        
+        {/* 折れ線 */}
+        {points.length > 1 && (
+          <polyline
+            fill="none"
+            stroke={chartType === 'material' ? '#3b82f6' : '#10b981'}
+            strokeWidth="2"
+            points={points.join(' ')}
+          />
+        )}
+        
+        {/* データポイント */}
+        {data.map((d, i) => {
+          const value = chartType === 'material' ? d.materialRate : d.retailRate
+          if (value === null) return null
+          const isGood = chartType === 'material' ? value <= BASE_RATE : true
+          return (
+            <g key={i}>
+              <circle
+                cx={getX(i)}
+                cy={getY(value)}
+                r="5"
+                fill={chartType === 'material' ? (isGood ? '#10b981' : '#ef4444') : '#10b981'}
+                stroke="white"
+                strokeWidth="2"
+              />
+              <text x={getX(i)} y={getY(value) - 10} textAnchor="middle" fontSize="9" fill="#374151">
+                {value.toFixed(1)}%
+              </text>
+            </g>
+          )
+        })}
+        
+        {/* X軸ラベル */}
+        {data.map((d, i) => (
+          <text key={i} x={getX(i)} y={height - 5} textAnchor="middle" fontSize="9" fill="#6b7280">
+            {d.label}
+          </text>
+        ))}
+      </svg>
+    )
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* グラフ */}
+      <div className="card">
+        <h3 className="text-lg font-bold mb-4">📊 推移グラフ</h3>
+        
+        {/* 切り替えボタン */}
+        <div className="flex gap-2 mb-4">
+          <button 
+            onClick={() => setChartType('material')} 
+            className={`btn flex-1 ${chartType === 'material' ? 'btn-blue' : 'btn-gray'}`}
+          >
+            材料費率
+          </button>
+          <button 
+            onClick={() => setChartType('retail')} 
+            className={`btn flex-1 ${chartType === 'retail' ? 'btn-green' : 'btn-gray'}`}
+          >
+            店販比率
+          </button>
+        </div>
+        
+        {/* グラフ表示 */}
+        <div className="flex justify-center">
+          {renderChart()}
+        </div>
+        
+        {chartType === 'material' && (
+          <div className="text-center text-sm text-gray-500 mt-2">
+            <span className="inline-block w-3 h-0.5 bg-red-500 mr-1"></span>
+            目標ライン（{BASE_RATE}%）
+          </div>
+        )}
+      </div>
+
+      {/* 月次データ入力（管理者のみ） */}
+      {isAdmin && (
+        <div className="card">
+          <h3 className="text-lg font-bold mb-4">✏️ 月次データ入力</h3>
+          
+          <div className="grid-2 mb-4">
+            <div>
+              <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>年</label>
+              <select value={selectedYear} onChange={e => setSelectedYear(parseInt(e.target.value))} className="select">
+                {[2024, 2025, 2026, 2027].map(y => <option key={y} value={y}>{y}年</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>月</label>
+              <select value={selectedMonth} onChange={e => setSelectedMonth(parseInt(e.target.value))} className="select">
+                {[1,2,3,4,5,6,7,8,9,10,11,12].map(m => <option key={m} value={m}>{m}月</option>)}
+              </select>
+            </div>
+          </div>
+          
+          {existingReport && (
+            <div className="bg-blue-50 p-3 rounded mb-4 text-sm">
+              <p className="font-semibold text-blue-700">📝 {selectedYear}年{selectedMonth}月のデータが登録済み</p>
+            </div>
+          )}
+          
+          <div className="grid-2 mb-4">
+            <div>
+              <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>値引き後総売上</label>
+              <input type="number" value={totalSales} onChange={e => setTotalSales(e.target.value)} placeholder="例: 7500000" className="input" />
+            </div>
+            <div>
+              <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>店販売上</label>
+              <input type="number" value={retailSales} onChange={e => setRetailSales(e.target.value)} placeholder="例: 800000" className="input" />
+            </div>
+          </div>
+          
+          <div className="bg-gray-50 p-3 rounded mb-4 text-sm">
+            <p className="font-semibold mb-1">材料費（自動計算）</p>
+            <p>入荷: ¥{calcMonthlyStockIn(selectedYear, selectedMonth).toLocaleString()}</p>
+            <p>スタッフ購入: -¥{calcMonthlyStaffPurchases(selectedYear, selectedMonth).toLocaleString()}</p>
+            <p className="font-bold">= ¥{autoMaterial.toLocaleString()}</p>
+          </div>
+          
+          <div className="mb-4">
+            <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>−）プロラボ分</label>
+            <input type="number" value={prolaboPurchase} onChange={e => setProlaboPurchase(e.target.value)} placeholder="例: 80000" className="input" />
+          </div>
+          
+          {totalSales && (
+            <div className="bg-green-50 p-3 rounded mb-4">
+              <div className="grid-2 gap-4">
+                <div className="text-center">
+                  <div className="text-sm text-gray-600">材料費率</div>
+                  <div className={`text-2xl font-bold ${((autoMaterial - (parseInt(prolaboPurchase) || 0)) / parseInt(totalSales) * 100) <= BASE_RATE ? 'text-green-600' : 'text-red-600'}`}>
+                    {((autoMaterial - (parseInt(prolaboPurchase) || 0)) / parseInt(totalSales) * 100).toFixed(1)}%
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-sm text-gray-600">店販比率</div>
+                  <div className="text-2xl font-bold text-green-600">
+                    {((parseInt(retailSales) || 0) / parseInt(totalSales) * 100).toFixed(1)}%
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <button onClick={saveReport} className="btn btn-blue w-full">
+            {existingReport ? '更新する' : '保存する'}
+          </button>
+        </div>
+      )}
+
+      {/* 月次データ一覧 */}
+      <div className="card">
+        <h4 className="font-bold mb-4">📋 月次データ一覧</h4>
+        {monthlyReports.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            <p>データがありません</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {[...monthlyReports].sort((a, b) => b.year - a.year || b.month - a.month).map(report => {
+              const materialRate = calcMaterialRate(report)
+              const retailRate = calcRetailRate(report)
+              const effectiveCost = (report.materialCost || 0) - (report.prolaboPurchase || 0)
+              const isGood = materialRate <= BASE_RATE
+              
+              return (
+                <div key={report.id} className="border rounded p-3">
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="font-bold">{report.year}年{report.month}月</div>
+                    {isAdmin && (
+                      <button onClick={() => deleteReport(report.id)} className="text-red-500 text-sm">削除</button>
+                    )}
+                  </div>
+                  <div className="grid-2 gap-2 text-sm">
+                    <div>
+                      <span className="text-gray-500">売上: </span>
+                      <span className="font-semibold">¥{report.totalSales?.toLocaleString()}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">店販: </span>
+                      <span className="font-semibold">¥{report.retailSales?.toLocaleString()}</span>
+                      <span className="text-green-600 text-xs ml-1">({retailRate.toFixed(1)}%)</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">材料費: </span>
+                      <span className="font-semibold">¥{effectiveCost.toLocaleString()}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">材料費率: </span>
+                      <span className={`font-bold ${isGood ? 'text-green-600' : 'text-red-600'}`}>
+                        {materialRate.toFixed(1)}% {isGood ? '✅' : '⚠️'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
