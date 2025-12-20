@@ -128,6 +128,7 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
   const [dealerAllocations, setDealerAllocations] = useState([])
   const [bonusSettings, setBonusSettings] = useState([])
   const [monthlyReports, setMonthlyReports] = useState([])
+  const [timeRecords, setTimeRecords] = useState([])
   const [lossRecords, setLossRecords] = useState([])
   const [lossPrices, setLossPrices] = useState([])
   const [loading, setLoading] = useState(true)
@@ -137,7 +138,7 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
   const loadAllData = async () => {
     setLoading(true)
     try {
-      const [staffRes, productsRes, categoriesRes, usageRes, stockInRes, inventoryRes, favoritesRes, purchasesRes, budgetsRes, allocationsRes, bonusRes, lossRes, lossPricesRes, monthlyRes] = await Promise.all([
+      const [staffRes, productsRes, categoriesRes, usageRes, stockInRes, inventoryRes, favoritesRes, purchasesRes, budgetsRes, allocationsRes, bonusRes, lossRes, lossPricesRes, monthlyRes, timeRes] = await Promise.all([
         supabase.from('staff').select('*').order('id'),
         supabase.from('products').select('*').order('id'),
         supabase.from('categories').select('*').order('id'),
@@ -152,6 +153,7 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
         supabase.from('loss_records').select('*').order('id'),
         supabase.from('loss_price_settings').select('*').order('id'),
         supabase.from('monthly_reports').select('*').order('year').order('month'),
+        supabase.from('time_records').select('*').order('record_date', { ascending: false }),
       ])
       if (staffRes.data) setStaff(staffRes.data.map(s => ({
         id: s.id, name: s.name, dealer: s.dealer || '',
@@ -181,6 +183,7 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
       if (lossRes.data) setLossRecords(lossRes.data.map(l => ({ id: l.id, date: l.record_date, categoryName: l.category_name, pricePerGram: parseFloat(l.price_per_gram), lossGrams: parseFloat(l.loss_grams), lossAmount: parseFloat(l.loss_amount), memo: l.memo })))
       if (lossPricesRes.data) setLossPrices(lossPricesRes.data.map(p => ({ id: p.id, categoryName: p.category_name, pricePerGram: parseFloat(p.price_per_gram) })))
       if (monthlyRes.data) setMonthlyReports(monthlyRes.data.map(m => ({ id: m.id, year: m.year, month: m.month, totalSales: m.total_sales, retailSales: m.retail_sales, materialCost: m.material_cost, prolaboPurchase: m.prolabo_purchase })))
+      if (timeRes.data) setTimeRecords(timeRes.data.map(t => ({ id: t.id, staffId: t.staff_id, staffName: t.staff_name, date: t.record_date, clockIn: t.clock_in, clockOut: t.clock_out, isSpecial: t.is_special, specialNote: t.special_note, inputType: t.input_type })))
     } catch (e) { console.error('データ読み込みエラー:', e) }
     setLoading(false)
   }
@@ -190,6 +193,7 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
   const mainTabs = [
     { key: 'usage', label: '使用入力' },
     { key: 'stockin', label: '入荷' },
+    { key: 'timecard', label: '🕐 打刻' },
     { key: 'order', label: '発注リンク' }
   ]
   const otherTabs = [
@@ -243,6 +247,7 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
 
       {tab === 'usage' && <UsageInput products={products} usage={usage} setUsage={setUsage} favorites={favorites} setFavorites={setFavorites} />}
       {tab === 'stockin' && <StockInInput products={products} stockIn={stockIn} setStockIn={setStockIn} categories={categories} />}
+      {tab === 'timecard' && <TimeCard staff={staff} timeRecords={timeRecords} setTimeRecords={setTimeRecords} isAdmin={isAdmin} />}
       {tab === 'order' && <OrderLinks categories={categories} setCategories={setCategories} />}
       {tab === 'inventory' && <InventoryInput products={products} staff={staff} usage={usage} stockIn={stockIn} inventoryHistory={inventoryHistory} setInventoryHistory={setInventoryHistory} />}
       {tab === 'dealer' && <DealerBudget products={products} usage={usage} stockIn={stockIn} categories={categories} dealerBudgets={dealerBudgets} setDealerBudgets={setDealerBudgets} dealerAllocations={dealerAllocations} setDealerAllocations={setDealerAllocations} isAdmin={isAdmin} />}
@@ -1173,6 +1178,400 @@ function DataExport({ products, staff, usage, stockIn, inventoryHistory }) {
     <div className="card">
       <h3 className="text-lg font-bold mb-4">📊 データ出力</h3>
       <div className="space-y-3">{items.map((item, i) => (<div key={i} className="flex justify-between items-center p-4 bg-gray-50 rounded"><div><span className="font-semibold">{item.label}</span><span className="text-sm text-gray-500 ml-2">({item.count}件)</span></div><button onClick={item.fn} className="btn btn-green">CSV出力</button></div>))}</div>
+    </div>
+  )
+}
+
+// ==================== タイムカード ====================
+function TimeCard({ staff, timeRecords, setTimeRecords, isAdmin }) {
+  const [selectedStaff, setSelectedStaff] = useState('')
+  const [mode, setMode] = useState('punch') // 'punch' or 'manual' or 'list'
+  const [manualDate, setManualDate] = useState('')
+  const [manualClockIn, setManualClockIn] = useState('09:00')
+  const [manualClockOut, setManualClockOut] = useState('15:00')
+  const [isSpecial, setIsSpecial] = useState(false)
+  const [specialNote, setSpecialNote] = useState('')
+  const [viewMonth, setViewMonth] = useState(`${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`)
+
+  const today = new Date().toISOString().split('T')[0]
+  const now = new Date()
+
+  // 15分単位の時間オプションを生成
+  const timeOptions = []
+  for (let h = 5; h <= 23; h++) {
+    for (let m = 0; m < 60; m += 15) {
+      timeOptions.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`)
+    }
+  }
+
+  // 今日の記録を取得
+  const getTodayRecord = (staffId) => {
+    return timeRecords.find(r => r.staffId === staffId && r.date === today)
+  }
+
+  // 現在時刻を取得（HH:MM形式）
+  const getCurrentTime = () => {
+    return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+  }
+
+  // 出勤打刻
+  const punchIn = async () => {
+    if (!selectedStaff) { alert('スタッフを選択してください'); return }
+    const staffMember = staff.find(s => s.id === parseInt(selectedStaff))
+    const existing = getTodayRecord(parseInt(selectedStaff))
+    
+    if (existing) {
+      alert('今日は既に出勤打刻されています')
+      return
+    }
+
+    const currentTime = getCurrentTime()
+    const { data, error } = await supabase.from('time_records').insert({
+      staff_id: parseInt(selectedStaff),
+      staff_name: staffMember.name,
+      record_date: today,
+      clock_in: currentTime,
+      input_type: 'punch'
+    }).select()
+
+    if (!error && data) {
+      setTimeRecords([...timeRecords, {
+        id: data[0].id,
+        staffId: parseInt(selectedStaff),
+        staffName: staffMember.name,
+        date: today,
+        clockIn: currentTime,
+        clockOut: null,
+        isSpecial: false,
+        specialNote: '',
+        inputType: 'punch'
+      }])
+      alert(`${staffMember.name}さん、出勤しました！ (${currentTime})`)
+    }
+  }
+
+  // 退勤打刻
+  const punchOut = async () => {
+    if (!selectedStaff) { alert('スタッフを選択してください'); return }
+    const staffMember = staff.find(s => s.id === parseInt(selectedStaff))
+    const existing = getTodayRecord(parseInt(selectedStaff))
+    
+    if (!existing) {
+      alert('先に出勤打刻をしてください')
+      return
+    }
+    if (existing.clockOut) {
+      alert('今日は既に退勤打刻されています')
+      return
+    }
+
+    const currentTime = getCurrentTime()
+    const { error } = await supabase.from('time_records').update({
+      clock_out: currentTime
+    }).eq('id', existing.id)
+
+    if (!error) {
+      setTimeRecords(timeRecords.map(r => r.id === existing.id ? { ...r, clockOut: currentTime } : r))
+      alert(`${staffMember.name}さん、お疲れ様でした！ (${currentTime})`)
+    }
+  }
+
+  // 手入力で保存
+  const saveManual = async () => {
+    if (!selectedStaff || !manualDate) { alert('スタッフと日付を選択してください'); return }
+    const staffMember = staff.find(s => s.id === parseInt(selectedStaff))
+    const existing = timeRecords.find(r => r.staffId === parseInt(selectedStaff) && r.date === manualDate)
+
+    if (existing) {
+      // 更新
+      const { error } = await supabase.from('time_records').update({
+        clock_in: manualClockIn,
+        clock_out: manualClockOut,
+        is_special: isSpecial,
+        special_note: specialNote,
+        input_type: 'manual'
+      }).eq('id', existing.id)
+
+      if (!error) {
+        setTimeRecords(timeRecords.map(r => r.id === existing.id ? {
+          ...r,
+          clockIn: manualClockIn,
+          clockOut: manualClockOut,
+          isSpecial,
+          specialNote,
+          inputType: 'manual'
+        } : r))
+        alert('更新しました！')
+      }
+    } else {
+      // 新規
+      const { data, error } = await supabase.from('time_records').insert({
+        staff_id: parseInt(selectedStaff),
+        staff_name: staffMember.name,
+        record_date: manualDate,
+        clock_in: manualClockIn,
+        clock_out: manualClockOut,
+        is_special: isSpecial,
+        special_note: specialNote,
+        input_type: 'manual'
+      }).select()
+
+      if (!error && data) {
+        setTimeRecords([...timeRecords, {
+          id: data[0].id,
+          staffId: parseInt(selectedStaff),
+          staffName: staffMember.name,
+          date: manualDate,
+          clockIn: manualClockIn,
+          clockOut: manualClockOut,
+          isSpecial,
+          specialNote,
+          inputType: 'manual'
+        }])
+        alert('保存しました！')
+      }
+    }
+    setManualDate('')
+    setIsSpecial(false)
+    setSpecialNote('')
+  }
+
+  // レコード削除
+  const deleteRecord = async (id) => {
+    if (!confirm('この記録を削除しますか？')) return
+    const { error } = await supabase.from('time_records').delete().eq('id', id)
+    if (!error) setTimeRecords(timeRecords.filter(r => r.id !== id))
+  }
+
+  // 労働時間を計算（分）
+  const calcWorkMinutes = (clockIn, clockOut) => {
+    if (!clockIn || !clockOut) return 0
+    const [inH, inM] = clockIn.split(':').map(Number)
+    const [outH, outM] = clockOut.split(':').map(Number)
+    return (outH * 60 + outM) - (inH * 60 + inM)
+  }
+
+  // 分を「○時間○分」形式に変換
+  const formatMinutes = (minutes) => {
+    if (minutes <= 0) return '-'
+    const h = Math.floor(minutes / 60)
+    const m = minutes % 60
+    return `${h}h${String(m).padStart(2, '0')}m`
+  }
+
+  // 月次集計
+  const getMonthlyStats = (staffId, yearMonth) => {
+    const [year, month] = yearMonth.split('-').map(Number)
+    const records = timeRecords.filter(r => {
+      if (staffId && r.staffId !== staffId) return false
+      const d = new Date(r.date)
+      return d.getFullYear() === year && d.getMonth() + 1 === month
+    })
+    
+    const totalMinutes = records.reduce((sum, r) => sum + calcWorkMinutes(r.clockIn, r.clockOut), 0)
+    const workDays = records.filter(r => r.clockIn && r.clockOut).length
+    
+    return { records, totalMinutes, workDays }
+  }
+
+  const todayRecord = selectedStaff ? getTodayRecord(parseInt(selectedStaff)) : null
+  const monthlyStats = getMonthlyStats(selectedStaff ? parseInt(selectedStaff) : null, viewMonth)
+
+  return (
+    <div className="space-y-4">
+      {/* スタッフ選択 */}
+      <div className="card">
+        <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>スタッフ</label>
+        <select value={selectedStaff} onChange={e => setSelectedStaff(e.target.value)} className="select">
+          <option value="">選択してください</option>
+          {staff.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+        </select>
+      </div>
+
+      {/* モード切替 */}
+      <div className="flex gap-2">
+        <button onClick={() => setMode('punch')} className={`btn flex-1 ${mode === 'punch' ? 'btn-blue' : 'btn-gray'}`}>🕐 打刻</button>
+        <button onClick={() => setMode('manual')} className={`btn flex-1 ${mode === 'manual' ? 'btn-blue' : 'btn-gray'}`}>✏️ 手入力</button>
+        <button onClick={() => setMode('list')} className={`btn flex-1 ${mode === 'list' ? 'btn-blue' : 'btn-gray'}`}>📋 一覧</button>
+      </div>
+
+      {/* 打刻モード */}
+      {mode === 'punch' && (
+        <div className="card">
+          <h3 className="text-lg font-bold mb-4">🕐 出勤・退勤打刻</h3>
+          
+          {!selectedStaff ? (
+            <p className="text-gray-500 text-center py-4">スタッフを選択してください</p>
+          ) : (
+            <div className="text-center">
+              <p className="text-2xl font-bold mb-4">{getCurrentTime()}</p>
+              <p className="text-gray-500 mb-4">{today}</p>
+              
+              {todayRecord ? (
+                <div className="bg-gray-50 p-4 rounded mb-4">
+                  <p>出勤: <span className="font-bold text-green-600">{todayRecord.clockIn}</span></p>
+                  {todayRecord.clockOut ? (
+                    <p>退勤: <span className="font-bold text-blue-600">{todayRecord.clockOut}</span></p>
+                  ) : (
+                    <p className="text-gray-400">退勤: 未打刻</p>
+                  )}
+                  {todayRecord.clockIn && todayRecord.clockOut && (
+                    <p className="mt-2 font-bold">労働時間: {formatMinutes(calcWorkMinutes(todayRecord.clockIn, todayRecord.clockOut))}</p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-gray-400 mb-4">今日の記録はありません</p>
+              )}
+              
+              <div className="grid-2 gap-4">
+                <button 
+                  onClick={punchIn} 
+                  disabled={todayRecord?.clockIn}
+                  className={`btn py-4 text-lg ${todayRecord?.clockIn ? 'btn-gray opacity-50' : 'btn-green'}`}
+                >
+                  出勤
+                </button>
+                <button 
+                  onClick={punchOut} 
+                  disabled={!todayRecord?.clockIn || todayRecord?.clockOut}
+                  className={`btn py-4 text-lg ${!todayRecord?.clockIn || todayRecord?.clockOut ? 'btn-gray opacity-50' : 'btn-blue'}`}
+                >
+                  退勤
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 手入力モード */}
+      {mode === 'manual' && (
+        <div className="card">
+          <h3 className="text-lg font-bold mb-4">✏️ 手入力（15分単位）</h3>
+          
+          {!selectedStaff ? (
+            <p className="text-gray-500 text-center py-4">スタッフを選択してください</p>
+          ) : (
+            <>
+              <div className="mb-4">
+                <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>日付</label>
+                <input type="date" value={manualDate} onChange={e => setManualDate(e.target.value)} max={today} className="input" />
+              </div>
+              
+              <div className="grid-2 gap-4 mb-4">
+                <div>
+                  <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>出勤</label>
+                  <select value={manualClockIn} onChange={e => setManualClockIn(e.target.value)} className="select">
+                    {timeOptions.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>退勤</label>
+                  <select value={manualClockOut} onChange={e => setManualClockOut(e.target.value)} className="select">
+                    {timeOptions.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
+              </div>
+              
+              {isAdmin && (
+                <div className="mb-4 bg-yellow-50 p-3 rounded">
+                  <label className="flex items-center gap-2 cursor-pointer mb-2">
+                    <input type="checkbox" checked={isSpecial} onChange={e => setIsSpecial(e.target.checked)} />
+                    <span className="font-semibold">特殊勤務（早朝・ブライダル等）</span>
+                  </label>
+                  {isSpecial && (
+                    <input 
+                      type="text" 
+                      value={specialNote} 
+                      onChange={e => setSpecialNote(e.target.value)} 
+                      placeholder="メモ（例：ブライダル出張）" 
+                      className="input mt-2" 
+                    />
+                  )}
+                </div>
+              )}
+              
+              {manualDate && (
+                <div className="bg-gray-50 p-3 rounded mb-4 text-center">
+                  <p className="text-sm text-gray-600">労働時間</p>
+                  <p className="text-2xl font-bold">{formatMinutes(calcWorkMinutes(manualClockIn, manualClockOut))}</p>
+                </div>
+              )}
+              
+              <button onClick={saveManual} className="btn btn-blue w-full">保存</button>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* 一覧モード */}
+      {mode === 'list' && (
+        <div className="card">
+          <h3 className="text-lg font-bold mb-4">📋 勤務記録</h3>
+          
+          <div className="mb-4">
+            <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>表示月</label>
+            <input type="month" value={viewMonth} onChange={e => setViewMonth(e.target.value)} className="input" />
+          </div>
+          
+          {/* 月次集計 */}
+          <div className="bg-blue-50 p-4 rounded mb-4">
+            <div className="grid-2 gap-4 text-center">
+              <div>
+                <p className="text-sm text-gray-600">出勤日数</p>
+                <p className="text-2xl font-bold text-blue-600">{monthlyStats.workDays}日</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">総労働時間</p>
+                <p className="text-2xl font-bold text-blue-600">
+                  {Math.floor(monthlyStats.totalMinutes / 60)}時間{monthlyStats.totalMinutes % 60}分
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          {/* 記録一覧 */}
+          {monthlyStats.records.length === 0 ? (
+            <p className="text-gray-500 text-center py-4">この月の記録はありません</p>
+          ) : (
+            <div className="space-y-2">
+              {[...monthlyStats.records].sort((a, b) => new Date(b.date) - new Date(a.date)).map(record => {
+                const d = new Date(record.date)
+                const dayNames = ['日', '月', '火', '水', '木', '金', '土']
+                const dayName = dayNames[d.getDay()]
+                const isWeekend = d.getDay() === 0 || d.getDay() === 6
+                
+                return (
+                  <div key={record.id} className={`border rounded p-3 ${record.isSpecial ? 'bg-yellow-50 border-yellow-300' : ''}`}>
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <span className={`font-bold ${isWeekend ? 'text-red-500' : ''}`}>
+                          {record.date.slice(5)} ({dayName})
+                        </span>
+                        {!selectedStaff && <span className="text-gray-500 text-sm ml-2">{record.staffName}</span>}
+                        {record.isSpecial && <span className="ml-2 text-yellow-600 text-xs">⚡特殊</span>}
+                        {record.inputType === 'punch' && <span className="ml-2 text-green-600 text-xs">●打刻</span>}
+                      </div>
+                      {isAdmin && (
+                        <button onClick={() => deleteRecord(record.id)} className="text-red-500 text-sm">削除</button>
+                      )}
+                    </div>
+                    <div className="text-sm mt-1">
+                      <span className="text-green-600">{record.clockIn || '-'}</span>
+                      <span className="text-gray-400 mx-2">→</span>
+                      <span className="text-blue-600">{record.clockOut || '-'}</span>
+                      <span className="text-gray-600 ml-4 font-semibold">
+                        {formatMinutes(calcWorkMinutes(record.clockIn, record.clockOut))}
+                      </span>
+                    </div>
+                    {record.specialNote && <p className="text-xs text-yellow-700 mt-1">{record.specialNote}</p>}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
