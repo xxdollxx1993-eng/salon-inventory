@@ -129,6 +129,8 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
   const [bonusSettings, setBonusSettings] = useState([])
   const [monthlyReports, setMonthlyReports] = useState([])
   const [timeRecords, setTimeRecords] = useState([])
+  const [leaveGrants, setLeaveGrants] = useState([])
+  const [leaveRequests, setLeaveRequests] = useState([])
   const [lossRecords, setLossRecords] = useState([])
   const [lossPrices, setLossPrices] = useState([])
   const [loading, setLoading] = useState(true)
@@ -138,7 +140,7 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
   const loadAllData = async () => {
     setLoading(true)
     try {
-      const [staffRes, productsRes, categoriesRes, usageRes, stockInRes, inventoryRes, favoritesRes, purchasesRes, budgetsRes, allocationsRes, bonusRes, lossRes, lossPricesRes, monthlyRes, timeRes] = await Promise.all([
+      const [staffRes, productsRes, categoriesRes, usageRes, stockInRes, inventoryRes, favoritesRes, purchasesRes, budgetsRes, allocationsRes, bonusRes, lossRes, lossPricesRes, monthlyRes, timeRes, leaveGrantsRes, leaveRequestsRes] = await Promise.all([
         supabase.from('staff').select('*').order('id'),
         supabase.from('products').select('*').order('id'),
         supabase.from('categories').select('*').order('id'),
@@ -154,13 +156,15 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
         supabase.from('loss_price_settings').select('*').order('id'),
         supabase.from('monthly_reports').select('*').order('year').order('month'),
         supabase.from('time_records').select('*').order('record_date', { ascending: false }),
+        supabase.from('leave_grants').select('*').order('fiscal_year', { ascending: false }),
+        supabase.from('leave_requests').select('*').order('leave_date', { ascending: false }),
       ])
       if (staffRes.data) setStaff(staffRes.data.map(s => ({
         id: s.id, name: s.name, dealer: s.dealer || '',
         joinDate: s.join_date, tenureRate: s.tenure_rate || 100,
         workType: s.work_type || 'full', partTimeRate: s.part_time_rate || 100,
         isOpeningStaff: s.is_opening_staff || false, specialRate: s.special_rate || 0,
-        isManagement: s.is_management || false
+        isManagement: s.is_management || false, workDaysPerWeek: s.work_days_per_week || 5
       })))
       if (productsRes.data) setProducts(productsRes.data.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)).map(p => ({ id: p.id, largeCategory: p.large_category, mediumCategory: p.medium_category, name: p.name, purchasePrice: p.purchase_price, sellingPrice: p.selling_price, productType: p.product_type || 'business', sortOrder: p.sort_order || 0 })))
       if (categoriesRes.data) {
@@ -184,6 +188,8 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
       if (lossPricesRes.data) setLossPrices(lossPricesRes.data.map(p => ({ id: p.id, categoryName: p.category_name, pricePerGram: parseFloat(p.price_per_gram) })))
       if (monthlyRes.data) setMonthlyReports(monthlyRes.data.map(m => ({ id: m.id, year: m.year, month: m.month, totalSales: m.total_sales, retailSales: m.retail_sales, materialCost: m.material_cost, prolaboPurchase: m.prolabo_purchase })))
       if (timeRes.data) setTimeRecords(timeRes.data.map(t => ({ id: t.id, staffId: t.staff_id, staffName: t.staff_name, date: t.record_date, clockIn: t.clock_in, clockOut: t.clock_out, isSpecial: t.is_special, specialNote: t.special_note, inputType: t.input_type })))
+      if (leaveGrantsRes.data) setLeaveGrants(leaveGrantsRes.data.map(g => ({ id: g.id, staffId: g.staff_id, staffName: g.staff_name, fiscalYear: g.fiscal_year, leaveType: g.leave_type, grantedDays: parseFloat(g.granted_days), carriedDays: parseFloat(g.carried_days) })))
+      if (leaveRequestsRes.data) setLeaveRequests(leaveRequestsRes.data.map(r => ({ id: r.id, staffId: r.staff_id, staffName: r.staff_name, leaveType: r.leave_type, leaveDate: r.leave_date, dayType: r.day_type, dayValue: parseFloat(r.day_value), status: r.status, memo: r.memo, approvedBy: r.approved_by, approvedAt: r.approved_at })))
     } catch (e) { console.error('データ読み込みエラー:', e) }
     setLoading(false)
   }
@@ -203,6 +209,7 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
     { key: 'loss', label: 'ロス入力' },
     { key: 'monthly', label: '📊 月次レポート' },
     { key: 'bonus', label: '材料費達成率' },
+    { key: 'leave', label: '🏖️ 有給管理' },
     { key: 'products', label: '商品管理' },
     { key: 'staff', label: 'スタッフ' },
     { key: 'export', label: '出力' },
@@ -256,6 +263,7 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
       {tab === 'staff' && <StaffManagement staff={staff} setStaff={setStaff} categories={categories} isAdmin={isAdmin} />}
       {tab === 'export' && <DataExport products={products} staff={staff} usage={usage} stockIn={stockIn} inventoryHistory={inventoryHistory} />}
       {tab === 'bonus' && <BonusManagement staff={staff} bonusSettings={bonusSettings} setBonusSettings={setBonusSettings} stockIn={stockIn} products={products} staffPurchases={staffPurchases} isAdmin={isAdmin} />}
+      {tab === 'leave' && <LeaveManagement staff={staff} leaveGrants={leaveGrants} setLeaveGrants={setLeaveGrants} leaveRequests={leaveRequests} setLeaveRequests={setLeaveRequests} isAdmin={isAdmin} />}
       {tab === 'monthly' && <MonthlyReport monthlyReports={monthlyReports} setMonthlyReports={setMonthlyReports} stockIn={stockIn} products={products} staffPurchases={staffPurchases} isAdmin={isAdmin} />}
       {tab === 'loss' && <LossInput lossRecords={lossRecords} setLossRecords={setLossRecords} lossPrices={lossPrices} isAdmin={isAdmin} />}
       {tab === 'lossprice' && isAdmin && <LossPriceSettings lossPrices={lossPrices} setLossPrices={setLossPrices} />}
@@ -990,6 +998,7 @@ function StaffManagement({ staff, setStaff, categories, isAdmin }) {
   const [newJoinDate, setNewJoinDate] = useState('')
   const [newTenureRate, setNewTenureRate] = useState(100)
   const [newWorkType, setNewWorkType] = useState('full')
+  const [newWorkDaysPerWeek, setNewWorkDaysPerWeek] = useState(5)
   const [newPartTimeRate, setNewPartTimeRate] = useState(100)
   const [newIsOpening, setNewIsOpening] = useState(false)
   const [newSpecialRate, setNewSpecialRate] = useState(0)
@@ -1019,18 +1028,18 @@ function StaffManagement({ staff, setStaff, categories, isAdmin }) {
   const addStaff = async () => {
     if (!newStaff || staff.find(s => s.name === newStaff)) return
     const dealerStr = newDealers.join(',')
-    const { data, error } = await supabase.from('staff').insert({ name: newStaff, dealer: dealerStr, join_date: newJoinDate || null, tenure_rate: newTenureRate, work_type: newWorkType, part_time_rate: newPartTimeRate, is_opening_staff: newIsOpening, special_rate: newSpecialRate, is_management: newIsManagement }).select()
+    const { data, error } = await supabase.from('staff').insert({ name: newStaff, dealer: dealerStr, join_date: newJoinDate || null, tenure_rate: newTenureRate, work_type: newWorkType, part_time_rate: newPartTimeRate, work_days_per_week: newWorkDaysPerWeek, is_opening_staff: newIsOpening, special_rate: newSpecialRate, is_management: newIsManagement }).select()
     if (!error && data) {
-      setStaff([...staff, { id: data[0].id, name: newStaff, dealer: dealerStr, joinDate: newJoinDate || null, tenureRate: newTenureRate, workType: newWorkType, partTimeRate: newPartTimeRate, isOpeningStaff: newIsOpening, specialRate: newSpecialRate, isManagement: newIsManagement }])
-      setNewStaff(''); setNewDealers([]); setNewJoinDate(''); setNewTenureRate(100); setNewWorkType('full'); setNewPartTimeRate(100); setNewIsOpening(false); setNewSpecialRate(0); setNewIsManagement(false)
+      setStaff([...staff, { id: data[0].id, name: newStaff, dealer: dealerStr, joinDate: newJoinDate || null, tenureRate: newTenureRate, workType: newWorkType, partTimeRate: newPartTimeRate, workDaysPerWeek: newWorkDaysPerWeek, isOpeningStaff: newIsOpening, specialRate: newSpecialRate, isManagement: newIsManagement }])
+      setNewStaff(''); setNewDealers([]); setNewJoinDate(''); setNewTenureRate(100); setNewWorkType('full'); setNewPartTimeRate(100); setNewWorkDaysPerWeek(5); setNewIsOpening(false); setNewSpecialRate(0); setNewIsManagement(false)
     }
   }
   const deleteStaff = async (id, name) => { if (!confirm(`「${name}」を削除しますか？`)) return; const { error } = await supabase.from('staff').delete().eq('id', id); if (!error) setStaff(staff.filter(s => s.id !== id)) }
-  const startEdit = (s) => { setEditingId(s.id); setEditData({ name: s.name, dealers: s.dealer ? s.dealer.split(',').filter(d => d) : [], joinDate: s.joinDate || '', tenureRate: s.tenureRate || 100, workType: s.workType || 'full', partTimeRate: s.partTimeRate || 100, isOpeningStaff: s.isOpeningStaff || false, specialRate: s.specialRate || 0, isManagement: s.isManagement || false }) }
+  const startEdit = (s) => { setEditingId(s.id); setEditData({ name: s.name, dealers: s.dealer ? s.dealer.split(',').filter(d => d) : [], joinDate: s.joinDate || '', tenureRate: s.tenureRate || 100, workType: s.workType || 'full', partTimeRate: s.partTimeRate || 100, workDaysPerWeek: s.workDaysPerWeek || 5, isOpeningStaff: s.isOpeningStaff || false, specialRate: s.specialRate || 0, isManagement: s.isManagement || false }) }
   const saveEdit = async (id) => {
     const dealerStr = editData.dealers.join(',')
-    const { error } = await supabase.from('staff').update({ name: editData.name, dealer: dealerStr, join_date: editData.joinDate || null, tenure_rate: editData.tenureRate, work_type: editData.workType, part_time_rate: editData.partTimeRate, is_opening_staff: editData.isOpeningStaff, special_rate: editData.specialRate, is_management: editData.isManagement }).eq('id', id)
-    if (!error) { setStaff(staff.map(s => s.id === id ? { ...s, name: editData.name, dealer: dealerStr, joinDate: editData.joinDate || null, tenureRate: editData.tenureRate, workType: editData.workType, partTimeRate: editData.partTimeRate, isOpeningStaff: editData.isOpeningStaff, specialRate: editData.specialRate, isManagement: editData.isManagement } : s)); setEditingId(null) }
+    const { error } = await supabase.from('staff').update({ name: editData.name, dealer: dealerStr, join_date: editData.joinDate || null, tenure_rate: editData.tenureRate, work_type: editData.workType, part_time_rate: editData.partTimeRate, work_days_per_week: editData.workDaysPerWeek, is_opening_staff: editData.isOpeningStaff, special_rate: editData.specialRate, is_management: editData.isManagement }).eq('id', id)
+    if (!error) { setStaff(staff.map(s => s.id === id ? { ...s, name: editData.name, dealer: dealerStr, joinDate: editData.joinDate || null, tenureRate: editData.tenureRate, workType: editData.workType, partTimeRate: editData.partTimeRate, workDaysPerWeek: editData.workDaysPerWeek, isOpeningStaff: editData.isOpeningStaff, specialRate: editData.specialRate, isManagement: editData.isManagement } : s)); setEditingId(null) }
   }
 
   // スタッフ用のシンプル表示
@@ -1071,6 +1080,7 @@ function StaffManagement({ staff, setStaff, categories, isAdmin }) {
         <div className="grid-2 mb-4">
           <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>勤続係数</label><select value={newTenureRate} onChange={e => setNewTenureRate(parseInt(e.target.value))} className="select">{tenureRateOptions.map(r => <option key={r} value={r}>{r}%</option>)}</select></div>
           <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>勤務形態</label><select value={newWorkType} onChange={e => setNewWorkType(e.target.value)} className="select"><option value="full">フル</option><option value="part">時短</option></select></div>
+          <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>週勤務日数</label><select value={newWorkDaysPerWeek} onChange={e => setNewWorkDaysPerWeek(parseInt(e.target.value))} className="select"><option value={5}>5日</option><option value={4}>4日</option><option value={3}>3日</option></select></div>
         </div>
         {newWorkType === 'part' && (
           <div className="mb-4"><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>時短係数</label><select value={newPartTimeRate} onChange={e => setNewPartTimeRate(parseInt(e.target.value))} className="select">{partTimeRateOptions.map(r => <option key={r} value={r}>{r}%</option>)}</select></div>
@@ -1113,6 +1123,7 @@ function StaffManagement({ staff, setStaff, categories, isAdmin }) {
                   <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>勤務形態</label><select value={editData.workType} onChange={e => setEditData({...editData, workType: e.target.value})} className="select"><option value="full">フル</option><option value="part">時短</option></select></div>
                 </div>
                 {editData.workType === 'part' && (<div className="mb-3"><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>時短係数</label><select value={editData.partTimeRate} onChange={e => setEditData({...editData, partTimeRate: parseInt(e.target.value)})} className="select" style={{ width: 'auto' }}>{partTimeRateOptions.map(r => <option key={r} value={r}>{r}%</option>)}</select></div>)}
+                <div className="mb-3"><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>週勤務日数</label><select value={editData.workDaysPerWeek} onChange={e => setEditData({...editData, workDaysPerWeek: parseInt(e.target.value)})} className="select" style={{ width: 'auto' }}><option value={5}>5日</option><option value={4}>4日</option><option value={3}>3日</option></select></div>
                 <div className="grid-2 mb-3">
                   <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>オープニング</label><label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={editData.isOpeningStaff} onChange={e => setEditData({...editData, isOpeningStaff: e.target.checked})} /><span>はい</span></label></div>
                   <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>特別係数</label><select value={editData.specialRate} onChange={e => setEditData({...editData, specialRate: parseInt(e.target.value)})} className="select">{specialRateOptions.map(r => <option key={r} value={r}>+{r}%</option>)}</select></div>
@@ -1570,6 +1581,478 @@ function TimeCard({ staff, timeRecords, setTimeRecords, isAdmin }) {
               })}
             </div>
           )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ==================== 有給管理 ====================
+function LeaveManagement({ staff, leaveGrants, setLeaveGrants, leaveRequests, setLeaveRequests, isAdmin }) {
+  const [selectedStaff, setSelectedStaff] = useState('')
+  const [mode, setMode] = useState('status') // 'status', 'request', 'approve', 'settings'
+  const [requestDate, setRequestDate] = useState('')
+  const [requestType, setRequestType] = useState('paid') // 'paid' or 'summer'
+  const [dayType, setDayType] = useState('full') // 'full', 'am', 'pm'
+  const [requestMemo, setRequestMemo] = useState('')
+
+  // 現在の年度を取得（4月始まり）
+  const getCurrentFiscalYear = () => {
+    const now = new Date()
+    const month = now.getMonth() + 1
+    return month >= 4 ? now.getFullYear() : now.getFullYear() - 1
+  }
+
+  const fiscalYear = getCurrentFiscalYear()
+
+  // 勤続年数を計算（月単位）
+  const calcTenureMonths = (joinDate) => {
+    if (!joinDate) return 0
+    const join = new Date(joinDate)
+    const now = new Date()
+    return (now.getFullYear() - join.getFullYear()) * 12 + (now.getMonth() - join.getMonth())
+  }
+
+  // フルタイムの有給日数（法定）
+  const getPaidLeaveDaysFull = (tenureMonths) => {
+    if (tenureMonths < 6) return 0
+    if (tenureMonths < 18) return 10
+    if (tenureMonths < 30) return 11
+    if (tenureMonths < 42) return 12
+    if (tenureMonths < 54) return 14
+    if (tenureMonths < 66) return 16
+    if (tenureMonths < 78) return 18
+    return 20
+  }
+
+  // 週4日の有給日数（比例付与）
+  const getPaidLeaveDaysPartTime = (tenureMonths) => {
+    if (tenureMonths < 6) return 0
+    if (tenureMonths < 18) return 7
+    if (tenureMonths < 30) return 8
+    if (tenureMonths < 42) return 9
+    if (tenureMonths < 54) return 10
+    if (tenureMonths < 66) return 12
+    if (tenureMonths < 78) return 13
+    return 15
+  }
+
+  // スタッフの有給日数を取得
+  const getGrantedDays = (staffMember) => {
+    const tenureMonths = calcTenureMonths(staffMember.joinDate)
+    if (staffMember.workDaysPerWeek <= 4) {
+      return getPaidLeaveDaysPartTime(tenureMonths)
+    }
+    return getPaidLeaveDaysFull(tenureMonths)
+  }
+
+  // 年度内の使用日数を取得
+  const getUsedDays = (staffId, year, leaveType) => {
+    const startDate = `${year}-04-01`
+    const endDate = `${year + 1}-03-31`
+    return leaveRequests
+      .filter(r => r.staffId === staffId && r.leaveType === leaveType && r.status === 'approved' && r.leaveDate >= startDate && r.leaveDate <= endDate)
+      .reduce((sum, r) => sum + r.dayValue, 0)
+  }
+
+  // 残日数を取得
+  const getRemainingDays = (staffId, year, leaveType) => {
+    const grant = leaveGrants.find(g => g.staffId === staffId && g.fiscalYear === year && g.leaveType === leaveType)
+    const total = grant ? (grant.grantedDays + grant.carriedDays) : 0
+    const used = getUsedDays(staffId, year, leaveType)
+    return total - used
+  }
+
+  // 有給申請
+  const submitRequest = async () => {
+    if (!selectedStaff || !requestDate) { alert('スタッフと日付を選択してください'); return }
+    const staffMember = staff.find(s => s.id === parseInt(selectedStaff))
+    const dayValue = dayType === 'full' ? 1.0 : 0.5
+    
+    // 残日数チェック
+    const remaining = getRemainingDays(parseInt(selectedStaff), fiscalYear, requestType)
+    if (remaining < dayValue) {
+      alert('残日数が足りません')
+      return
+    }
+
+    const { data, error } = await supabase.from('leave_requests').insert({
+      staff_id: parseInt(selectedStaff),
+      staff_name: staffMember.name,
+      leave_type: requestType,
+      leave_date: requestDate,
+      day_type: dayType,
+      day_value: dayValue,
+      status: 'pending',
+      memo: requestMemo
+    }).select()
+
+    if (!error && data) {
+      setLeaveRequests([{
+        id: data[0].id,
+        staffId: parseInt(selectedStaff),
+        staffName: staffMember.name,
+        leaveType: requestType,
+        leaveDate: requestDate,
+        dayType,
+        dayValue,
+        status: 'pending',
+        memo: requestMemo,
+        approvedBy: null,
+        approvedAt: null
+      }, ...leaveRequests])
+      alert('申請しました！')
+      setRequestDate('')
+      setRequestMemo('')
+    }
+  }
+
+  // 承認
+  const approveRequest = async (id) => {
+    const { error } = await supabase.from('leave_requests').update({
+      status: 'approved',
+      approved_by: '管理者',
+      approved_at: new Date().toISOString()
+    }).eq('id', id)
+
+    if (!error) {
+      setLeaveRequests(leaveRequests.map(r => r.id === id ? {
+        ...r,
+        status: 'approved',
+        approvedBy: '管理者',
+        approvedAt: new Date().toISOString()
+      } : r))
+      alert('承認しました')
+    }
+  }
+
+  // 却下
+  const rejectRequest = async (id) => {
+    if (!confirm('この申請を却下しますか？')) return
+    const { error } = await supabase.from('leave_requests').update({
+      status: 'rejected'
+    }).eq('id', id)
+
+    if (!error) {
+      setLeaveRequests(leaveRequests.map(r => r.id === id ? { ...r, status: 'rejected' } : r))
+    }
+  }
+
+  // 付与設定を保存
+  const saveGrant = async (staffId, staffName, leaveType, grantedDays, carriedDays) => {
+    const existing = leaveGrants.find(g => g.staffId === staffId && g.fiscalYear === fiscalYear && g.leaveType === leaveType)
+    
+    if (existing) {
+      const { error } = await supabase.from('leave_grants').update({
+        granted_days: grantedDays,
+        carried_days: carriedDays
+      }).eq('id', existing.id)
+      
+      if (!error) {
+        setLeaveGrants(leaveGrants.map(g => g.id === existing.id ? { ...g, grantedDays, carriedDays } : g))
+      }
+    } else {
+      const { data, error } = await supabase.from('leave_grants').insert({
+        staff_id: staffId,
+        staff_name: staffName,
+        fiscal_year: fiscalYear,
+        leave_type: leaveType,
+        granted_days: grantedDays,
+        carried_days: carriedDays
+      }).select()
+      
+      if (!error && data) {
+        setLeaveGrants([...leaveGrants, {
+          id: data[0].id,
+          staffId,
+          staffName,
+          fiscalYear,
+          leaveType,
+          grantedDays,
+          carriedDays
+        }])
+      }
+    }
+  }
+
+  // 全スタッフに自動付与
+  const autoGrantAll = async () => {
+    if (!confirm(`${fiscalYear}年度の有給・夏休みを全スタッフに付与しますか？`)) return
+    
+    for (const s of staff) {
+      const paidDays = getGrantedDays(s)
+      // 前年度の残りを繰越（最大で付与日数まで）
+      const prevRemaining = getRemainingDays(s.id, fiscalYear - 1, 'paid')
+      const carriedDays = Math.min(prevRemaining, paidDays)
+      
+      await saveGrant(s.id, s.name, 'paid', paidDays, carriedDays > 0 ? carriedDays : 0)
+      await saveGrant(s.id, s.name, 'summer', 3, 0)
+    }
+    alert('付与完了！')
+  }
+
+  const pendingRequests = leaveRequests.filter(r => r.status === 'pending')
+  const myRequests = selectedStaff ? leaveRequests.filter(r => r.staffId === parseInt(selectedStaff)) : []
+
+  const dayTypeLabel = { full: '全休', am: '午前休', pm: '午後休' }
+  const statusLabel = { pending: '申請中', approved: '承認済', rejected: '却下' }
+  const statusColor = { pending: 'text-yellow-600', approved: 'text-green-600', rejected: 'text-red-600' }
+
+  return (
+    <div className="space-y-4">
+      {/* スタッフ選択 */}
+      <div className="card">
+        <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>スタッフ</label>
+        <select value={selectedStaff} onChange={e => setSelectedStaff(e.target.value)} className="select">
+          <option value="">選択してください</option>
+          {staff.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+        </select>
+      </div>
+
+      {/* モード切替 */}
+      <div className="flex gap-2 flex-wrap">
+        <button onClick={() => setMode('status')} className={`btn flex-1 ${mode === 'status' ? 'btn-blue' : 'btn-gray'}`}>📊 残日数</button>
+        <button onClick={() => setMode('request')} className={`btn flex-1 ${mode === 'request' ? 'btn-blue' : 'btn-gray'}`}>📝 申請</button>
+        {isAdmin && <button onClick={() => setMode('approve')} className={`btn flex-1 ${mode === 'approve' ? 'btn-blue' : 'btn-gray'}`}>✅ 承認{pendingRequests.length > 0 && <span className="ml-1 bg-red-500 text-white text-xs px-1 rounded">{pendingRequests.length}</span>}</button>}
+        {isAdmin && <button onClick={() => setMode('settings')} className={`btn flex-1 ${mode === 'settings' ? 'btn-blue' : 'btn-gray'}`}>⚙️ 設定</button>}
+      </div>
+
+      {/* 残日数表示 */}
+      {mode === 'status' && (
+        <div className="card">
+          <h3 className="text-lg font-bold mb-4">📊 {fiscalYear}年度 有給残日数</h3>
+          
+          {!selectedStaff ? (
+            <div className="space-y-3">
+              {staff.map(s => {
+                const paidGrant = leaveGrants.find(g => g.staffId === s.id && g.fiscalYear === fiscalYear && g.leaveType === 'paid')
+                const summerGrant = leaveGrants.find(g => g.staffId === s.id && g.fiscalYear === fiscalYear && g.leaveType === 'summer')
+                const paidTotal = paidGrant ? (paidGrant.grantedDays + paidGrant.carriedDays) : 0
+                const summerTotal = summerGrant ? summerGrant.grantedDays : 0
+                const paidUsed = getUsedDays(s.id, fiscalYear, 'paid')
+                const summerUsed = getUsedDays(s.id, fiscalYear, 'summer')
+                
+                return (
+                  <div key={s.id} className="border rounded p-3">
+                    <div className="font-bold mb-2">{s.name}</div>
+                    <div className="grid-2 gap-2 text-sm">
+                      <div>
+                        <span className="text-gray-500">有給: </span>
+                        <span className="font-bold text-blue-600">{paidTotal - paidUsed}日</span>
+                        <span className="text-gray-400 text-xs ml-1">/ {paidTotal}日</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">夏休: </span>
+                        <span className="font-bold text-green-600">{summerTotal - summerUsed}日</span>
+                        <span className="text-gray-400 text-xs ml-1">/ {summerTotal}日</span>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          ) : (
+            <div>
+              {(() => {
+                const s = staff.find(st => st.id === parseInt(selectedStaff))
+                if (!s) return null
+                const paidGrant = leaveGrants.find(g => g.staffId === s.id && g.fiscalYear === fiscalYear && g.leaveType === 'paid')
+                const summerGrant = leaveGrants.find(g => g.staffId === s.id && g.fiscalYear === fiscalYear && g.leaveType === 'summer')
+                const paidTotal = paidGrant ? (paidGrant.grantedDays + paidGrant.carriedDays) : 0
+                const summerTotal = summerGrant ? summerGrant.grantedDays : 0
+                const paidUsed = getUsedDays(s.id, fiscalYear, 'paid')
+                const summerUsed = getUsedDays(s.id, fiscalYear, 'summer')
+                const paidRemaining = paidTotal - paidUsed
+                const summerRemaining = summerTotal - summerUsed
+                
+                return (
+                  <>
+                    <div className="text-center mb-4">
+                      <p className="text-gray-500 text-sm">入社日: {s.joinDate || '未設定'}</p>
+                      <p className="text-gray-500 text-sm">週{s.workDaysPerWeek}日勤務</p>
+                    </div>
+                    
+                    <div className="grid-2 gap-4 mb-4">
+                      <div className="bg-blue-50 p-4 rounded text-center">
+                        <p className="text-sm text-gray-600 mb-1">有給休暇</p>
+                        <p className="text-3xl font-bold text-blue-600">{paidRemaining}日</p>
+                        <p className="text-xs text-gray-500">付与{paidGrant?.grantedDays || 0} + 繰越{paidGrant?.carriedDays || 0} - 使用{paidUsed}</p>
+                        <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                          <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${paidTotal > 0 ? (paidRemaining / paidTotal) * 100 : 0}%` }}></div>
+                        </div>
+                      </div>
+                      <div className="bg-green-50 p-4 rounded text-center">
+                        <p className="text-sm text-gray-600 mb-1">夏季休暇</p>
+                        <p className="text-3xl font-bold text-green-600">{summerRemaining}日</p>
+                        <p className="text-xs text-gray-500">付与{summerTotal} - 使用{summerUsed}</p>
+                        <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                          <div className="bg-green-500 h-2 rounded-full" style={{ width: `${summerTotal > 0 ? (summerRemaining / summerTotal) * 100 : 0}%` }}></div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* 履歴 */}
+                    <h4 className="font-bold mb-2">取得履歴</h4>
+                    {myRequests.filter(r => r.status === 'approved').length === 0 ? (
+                      <p className="text-gray-500 text-center py-4">まだ取得履歴がありません</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {myRequests.filter(r => r.status === 'approved').map(r => (
+                          <div key={r.id} className="border rounded p-2 text-sm">
+                            <span className="font-semibold">{r.leaveDate}</span>
+                            <span className={`ml-2 ${r.leaveType === 'paid' ? 'text-blue-600' : 'text-green-600'}`}>
+                              {r.leaveType === 'paid' ? '有給' : '夏休'}
+                            </span>
+                            <span className="ml-2">{dayTypeLabel[r.dayType]}</span>
+                            {r.memo && <span className="ml-2 text-gray-500">({r.memo})</span>}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )
+              })()}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 申請フォーム */}
+      {mode === 'request' && (
+        <div className="card">
+          <h3 className="text-lg font-bold mb-4">📝 有給申請</h3>
+          
+          {!selectedStaff ? (
+            <p className="text-gray-500 text-center py-4">スタッフを選択してください</p>
+          ) : (
+            <>
+              <div className="mb-4">
+                <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>休暇種類</label>
+                <div className="flex gap-2">
+                  <button onClick={() => setRequestType('paid')} className={`btn flex-1 ${requestType === 'paid' ? 'btn-blue' : 'btn-gray'}`}>有給休暇</button>
+                  <button onClick={() => setRequestType('summer')} className={`btn flex-1 ${requestType === 'summer' ? 'btn-green' : 'btn-gray'}`}>夏季休暇</button>
+                </div>
+              </div>
+              
+              <div className="mb-4">
+                <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>日付</label>
+                <input type="date" value={requestDate} onChange={e => setRequestDate(e.target.value)} className="input" />
+              </div>
+              
+              <div className="mb-4">
+                <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>種別</label>
+                <div className="flex gap-2">
+                  <button onClick={() => setDayType('full')} className={`btn flex-1 ${dayType === 'full' ? 'btn-blue' : 'btn-gray'}`}>全休</button>
+                  <button onClick={() => setDayType('am')} className={`btn flex-1 ${dayType === 'am' ? 'btn-blue' : 'btn-gray'}`}>午前休</button>
+                  <button onClick={() => setDayType('pm')} className={`btn flex-1 ${dayType === 'pm' ? 'btn-blue' : 'btn-gray'}`}>午後休</button>
+                </div>
+              </div>
+              
+              <div className="mb-4">
+                <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>メモ（任意）</label>
+                <input type="text" value={requestMemo} onChange={e => setRequestMemo(e.target.value)} placeholder="理由など" className="input" />
+              </div>
+              
+              <div className="bg-gray-50 p-3 rounded mb-4 text-sm">
+                <p>申請内容: {requestType === 'paid' ? '有給休暇' : '夏季休暇'} {dayTypeLabel[dayType]}（{dayType === 'full' ? '1日' : '0.5日'}）</p>
+                <p>残日数: {getRemainingDays(parseInt(selectedStaff), fiscalYear, requestType)}日</p>
+              </div>
+              
+              <button onClick={submitRequest} className="btn btn-blue w-full">申請する</button>
+              
+              {/* 自分の申請履歴 */}
+              {myRequests.length > 0 && (
+                <div className="mt-4">
+                  <h4 className="font-bold mb-2">申請履歴</h4>
+                  <div className="space-y-2">
+                    {myRequests.slice(0, 5).map(r => (
+                      <div key={r.id} className="border rounded p-2 text-sm flex justify-between items-center">
+                        <div>
+                          <span className="font-semibold">{r.leaveDate}</span>
+                          <span className={`ml-2 ${r.leaveType === 'paid' ? 'text-blue-600' : 'text-green-600'}`}>
+                            {r.leaveType === 'paid' ? '有給' : '夏休'}
+                          </span>
+                          <span className="ml-2">{dayTypeLabel[r.dayType]}</span>
+                        </div>
+                        <span className={`font-bold ${statusColor[r.status]}`}>{statusLabel[r.status]}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
+      {/* 承認画面（管理者のみ） */}
+      {mode === 'approve' && isAdmin && (
+        <div className="card">
+          <h3 className="text-lg font-bold mb-4">✅ 承認待ち</h3>
+          
+          {pendingRequests.length === 0 ? (
+            <p className="text-gray-500 text-center py-4">承認待ちの申請はありません</p>
+          ) : (
+            <div className="space-y-3">
+              {pendingRequests.map(r => (
+                <div key={r.id} className="border rounded p-3 bg-yellow-50">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <span className="font-bold">{r.staffName}</span>
+                      <span className={`ml-2 ${r.leaveType === 'paid' ? 'text-blue-600' : 'text-green-600'}`}>
+                        {r.leaveType === 'paid' ? '有給' : '夏休'}
+                      </span>
+                    </div>
+                    <span className="text-yellow-600 font-bold">申請中</span>
+                  </div>
+                  <p className="text-sm mb-2">
+                    {r.leaveDate} {dayTypeLabel[r.dayType]}
+                    {r.memo && <span className="text-gray-500 ml-2">({r.memo})</span>}
+                  </p>
+                  <div className="flex gap-2">
+                    <button onClick={() => approveRequest(r.id)} className="btn btn-green flex-1">承認</button>
+                    <button onClick={() => rejectRequest(r.id)} className="btn btn-red flex-1">却下</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 設定画面（管理者のみ） */}
+      {mode === 'settings' && isAdmin && (
+        <div className="card">
+          <h3 className="text-lg font-bold mb-4">⚙️ {fiscalYear}年度 付与設定</h3>
+          
+          <button onClick={autoGrantAll} className="btn btn-blue w-full mb-4">
+            🎁 全スタッフに自動付与（法定日数）
+          </button>
+          
+          <div className="space-y-3">
+            {staff.map(s => {
+              const paidGrant = leaveGrants.find(g => g.staffId === s.id && g.fiscalYear === fiscalYear && g.leaveType === 'paid')
+              const summerGrant = leaveGrants.find(g => g.staffId === s.id && g.fiscalYear === fiscalYear && g.leaveType === 'summer')
+              const suggestedDays = getGrantedDays(s)
+              
+              return (
+                <div key={s.id} className="border rounded p-3">
+                  <div className="font-bold mb-2">{s.name} <span className="text-sm text-gray-500 font-normal">（週{s.workDaysPerWeek}日）</span></div>
+                  <div className="grid-2 gap-2 text-sm">
+                    <div>
+                      <span className="text-gray-500">有給: </span>
+                      <span className="font-bold">{paidGrant ? `${paidGrant.grantedDays}日 + 繰越${paidGrant.carriedDays}日` : '未設定'}</span>
+                      <span className="text-gray-400 text-xs ml-1">(法定{suggestedDays}日)</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">夏休: </span>
+                      <span className="font-bold">{summerGrant ? `${summerGrant.grantedDays}日` : '未設定'}</span>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
         </div>
       )}
     </div>
