@@ -1906,18 +1906,33 @@ function LeaveManagement({ staff, leaveGrants, setLeaveGrants, leaveRequests, se
       {mode === 'calendar' && (
         <div className="card">
           <div className="flex justify-between items-center mb-4">
-            <button onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1))} className="btn btn-gray">◀</button>
-            <h3 className="text-lg font-bold">{calendarMonth.getFullYear()}年{calendarMonth.getMonth() + 1}月</h3>
-            <button onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1))} className="btn btn-gray">▶</button>
+            <button onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1))} className="btn btn-gray" style={{ padding: '0.5rem 1rem' }}>◀</button>
+            <h3 className="text-xl font-bold">{calendarMonth.getFullYear()}年{calendarMonth.getMonth() + 1}月</h3>
+            <button onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1))} className="btn btn-gray" style={{ padding: '0.5rem 1rem' }}>▶</button>
           </div>
           
-          <div className="grid grid-cols-7 gap-1 text-center text-sm mb-2">
+          {/* 凡例 */}
+          <div className="flex gap-3 mb-3 text-xs justify-center flex-wrap">
+            <span><span className="inline-block w-3 h-3 bg-gray-300 rounded mr-1"></span>定休日</span>
+            <span><span className="inline-block w-3 h-3 bg-blue-100 rounded mr-1"></span>有給</span>
+            <span><span className="inline-block w-3 h-3 bg-green-100 rounded mr-1"></span>夏休み</span>
+          </div>
+          
+          {/* 曜日ヘッダー */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px', marginBottom: '2px' }}>
             {['日', '月', '火', '水', '木', '金', '土'].map((d, i) => (
-              <div key={d} className={`font-bold ${i === 0 ? 'text-red-500' : i === 6 ? 'text-blue-500' : ''}`}>{d}</div>
+              <div key={d} style={{ 
+                textAlign: 'center', 
+                padding: '8px 0', 
+                fontWeight: 'bold',
+                backgroundColor: i === 1 || i === 2 ? '#e5e7eb' : '#f9fafb',
+                color: i === 0 ? '#ef4444' : i === 6 ? '#3b82f6' : i === 1 || i === 2 ? '#9ca3af' : '#374151'
+              }}>{d}</div>
             ))}
           </div>
           
-          <div className="grid grid-cols-7 gap-1">
+          {/* カレンダー本体 */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px' }}>
             {(() => {
               const year = calendarMonth.getFullYear()
               const month = calendarMonth.getMonth()
@@ -1925,9 +1940,19 @@ function LeaveManagement({ staff, leaveGrants, setLeaveGrants, leaveRequests, se
               const lastDate = new Date(year, month + 1, 0).getDate()
               const cells = []
               
+              // 第三日曜日を計算
+              let sundayCount = 0
+              let thirdSunday = null
+              for (let d = 1; d <= lastDate; d++) {
+                if (new Date(year, month, d).getDay() === 0) {
+                  sundayCount++
+                  if (sundayCount === 3) { thirdSunday = d; break }
+                }
+              }
+              
               // 空白セル
               for (let i = 0; i < firstDay; i++) {
-                cells.push(<div key={`empty-${i}`} className="h-16"></div>)
+                cells.push(<div key={`empty-${i}`} style={{ minHeight: '70px', backgroundColor: '#f9fafb' }}></div>)
               }
               
               // 日付セル
@@ -1935,29 +1960,61 @@ function LeaveManagement({ staff, leaveGrants, setLeaveGrants, leaveRequests, se
                 const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`
                 const dayRequests = leaveRequests.filter(r => r.leaveDate === dateStr && r.status === 'approved')
                 const dayOfWeek = new Date(year, month, date).getDay()
+                const isHoliday = dayOfWeek === 1 || dayOfWeek === 2 || date === thirdSunday
+                const isToday = dateStr === new Date().toISOString().split('T')[0]
+                
+                let bgColor = '#ffffff'
+                if (isHoliday) bgColor = '#d1d5db'
+                else if (dayOfWeek === 0) bgColor = '#fef2f2'
+                else if (dayOfWeek === 6) bgColor = '#eff6ff'
                 
                 cells.push(
-                  <div key={date} className={`h-16 border rounded p-1 text-xs ${dayOfWeek === 0 ? 'bg-red-50' : dayOfWeek === 6 ? 'bg-blue-50' : ''}`}>
-                    <div className={`font-bold ${dayOfWeek === 0 ? 'text-red-500' : dayOfWeek === 6 ? 'text-blue-500' : ''}`}>{date}</div>
-                    <div className="overflow-hidden">
-                      {dayRequests.slice(0, 2).map(r => (
-                        <div key={r.id} className={`truncate ${r.leaveType === 'paid' ? 'text-blue-600' : 'text-green-600'}`}>
-                          {r.staffName.slice(0, 2)}{r.dayType !== 'full' && (r.dayType === 'am' ? '午前' : '午後')}
-                        </div>
-                      ))}
-                      {dayRequests.length > 2 && <div className="text-gray-400">+{dayRequests.length - 2}</div>}
+                  <div key={date} style={{ 
+                    minHeight: '70px', 
+                    backgroundColor: bgColor,
+                    border: isToday ? '2px solid #3b82f6' : '1px solid #e5e7eb',
+                    padding: '4px',
+                    position: 'relative'
+                  }}>
+                    <div style={{ 
+                      fontWeight: 'bold', 
+                      fontSize: '14px',
+                      color: isHoliday ? '#9ca3af' : dayOfWeek === 0 ? '#ef4444' : dayOfWeek === 6 ? '#3b82f6' : '#374151',
+                      marginBottom: '2px'
+                    }}>
+                      {date}
+                      {isToday && <span style={{ marginLeft: '4px', fontSize: '10px', color: '#3b82f6' }}>今日</span>}
                     </div>
+                    {!isHoliday && dayRequests.length > 0 && (
+                      <div style={{ fontSize: '11px', lineHeight: '1.3' }}>
+                        {dayRequests.slice(0, 3).map(r => (
+                          <div key={r.id} style={{ 
+                            backgroundColor: r.leaveType === 'paid' ? '#dbeafe' : '#dcfce7',
+                            color: r.leaveType === 'paid' ? '#1d4ed8' : '#166534',
+                            padding: '1px 3px',
+                            borderRadius: '2px',
+                            marginBottom: '1px',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                          }}>
+                            {r.staffName}{r.dayType === 'am' ? '(午前)' : r.dayType === 'pm' ? '(午後)' : ''}
+                          </div>
+                        ))}
+                        {dayRequests.length > 3 && (
+                          <div style={{ color: '#6b7280', fontSize: '10px' }}>+{dayRequests.length - 3}人</div>
+                        )}
+                      </div>
+                    )}
+                    {isHoliday && (
+                      <div style={{ fontSize: '10px', color: '#9ca3af' }}>定休日</div>
+                    )}
                   </div>
                 )
               }
               
               return cells
             })()}
-          </div>
-          
-          <div className="mt-4 text-sm text-gray-500">
-            <span className="text-blue-600">■</span> 有給　
-            <span className="text-green-600">■</span> 夏休み
           </div>
         </div>
       )}
