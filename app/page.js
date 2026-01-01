@@ -826,6 +826,15 @@ function StaffPurchase({ products, staff, staffPurchases, setStaffPurchases }) {
   const [editingId, setEditingId] = useState(null)
   const [editData, setEditData] = useState({})
   const [cart, setCart] = useState([])
+  const [filterDealer, setFilterDealer] = useState('')
+
+  // ディーラー一覧を取得
+  const dealers = [...new Set(products.map(p => p.largeCategory).filter(Boolean))]
+  
+  // フィルター済み商品
+  const filteredProducts = filterDealer 
+    ? products.filter(p => p.largeCategory === filterDealer)
+    : products
 
   // 商品選択時に価格をセット
   const handleProductChange = (productId) => {
@@ -1023,10 +1032,17 @@ function StaffPurchase({ products, staff, staffPurchases, setStaffPurchases }) {
           <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>購入日</label><input type="date" value={date} onChange={e => setDate(e.target.value)} className="input" /></div>
         </div>
         <div className="mb-4">
-          <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>商品</label>
+          <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>ディーラー</label>
+          <select value={filterDealer} onChange={e => { setFilterDealer(e.target.value); setSelectedProduct('') }} className="select">
+            <option value="">すべて</option>
+            {dealers.map(d => <option key={d} value={d}>{d}</option>)}
+          </select>
+        </div>
+        <div className="mb-4">
+          <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>商品 {filterDealer && `（${filteredProducts.length}件）`}</label>
           <select value={selectedProduct} onChange={e => handleProductChange(e.target.value)} className="select">
             <option value="">選択</option>
-            {products.map(p => <option key={p.id} value={p.id}>{p.name}（通常¥{p.purchasePrice.toLocaleString()}）</option>)}
+            {filteredProducts.map(p => <option key={p.id} value={p.id}>{p.name}（通常¥{p.purchasePrice.toLocaleString()}）</option>)}
           </select>
         </div>
         {selectedProductData && (
