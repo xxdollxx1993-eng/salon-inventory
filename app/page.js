@@ -825,6 +825,7 @@ function StaffPurchase({ products, staff, staffPurchases, setStaffPurchases }) {
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7))
   const [editingId, setEditingId] = useState(null)
   const [editData, setEditData] = useState({})
+  const [cart, setCart] = useState([])
 
   // 商品選択時に価格をセット
   const handleProductChange = (productId) => {
@@ -841,7 +842,81 @@ function StaffPurchase({ products, staff, staffPurchases, setStaffPurchases }) {
     }
   }
 
-  const recordPurchase = async () => {
+  // カートに追加
+  const addToCart = () => {
+    if (!selectedProduct) { alert('商品を選択してください'); return }
+    const product = products.find(p => p.id === parseInt(selectedProduct))
+    if (!product) return
+    const finalPrice = parseInt(customPrice) || product.purchasePrice
+    const tag = finalPrice !== product.purchasePrice ? (saleTag || 'セール') : ''
+    
+    setCart([...cart, {
+      tempId: Date.now(),
+      productId: product.id,
+      productName: product.name,
+      largeCategory: product.largeCategory,
+      mediumCategory: product.mediumCategory,
+      purchasePrice: finalPrice,
+      originalPrice: product.purchasePrice,
+      quantity,
+      saleTag: tag
+    }])
+    
+    // リセット
+    setSelectedProduct('')
+    setCustomPrice('')
+    setSaleTag('')
+    setQuantity(1)
+  }
+
+  // カートから削除
+  const removeFromCart = (tempId) => {
+    setCart(cart.filter(item => item.tempId !== tempId))
+  }
+
+  // カート合計
+  const cartTotal = cart.reduce((sum, item) => sum + (item.purchasePrice * item.quantity), 0)
+
+  // まとめて登録
+  const submitCart = async () => {
+    if (!selectedStaff) { alert('スタッフを選択してください'); return }
+    if (cart.length === 0) { alert('カートに商品がありません'); return }
+    
+    const insertData = cart.map(item => ({
+      staff_name: selectedStaff,
+      product_id: item.productId,
+      product_name: item.productName,
+      large_category: item.largeCategory,
+      medium_category: item.mediumCategory,
+      purchase_price: item.purchasePrice,
+      quantity: item.quantity,
+      purchase_date: date,
+      sale_tag: item.saleTag
+    }))
+    
+    const { data, error } = await supabase.from('staff_purchases').insert(insertData).select()
+    
+    if (!error && data) {
+      const newPurchases = data.map((d, i) => ({
+        id: d.id,
+        staff: selectedStaff,
+        productId: cart[i].productId,
+        productName: cart[i].productName,
+        largeCategory: cart[i].largeCategory,
+        mediumCategory: cart[i].mediumCategory,
+        purchasePrice: cart[i].purchasePrice,
+        quantity: cart[i].quantity,
+        date,
+        saleTag: cart[i].saleTag
+      }))
+      setStaffPurchases([...staffPurchases, ...newPurchases])
+      setCart([])
+      alert(`${data.length}件の購入を記録しました！`)
+    }
+  }
+
+  // 単品登録（従来機能も残す）
+  const recordSingle = async () => {
     if (!selectedStaff || !selectedProduct) { alert('スタッフと商品を選択してください'); return }
     const product = products.find(p => p.id === parseInt(selectedProduct))
     if (!product) return
@@ -987,16 +1062,46 @@ function StaffPurchase({ products, staff, staffPurchases, setStaffPurchases }) {
                 />
               </div>
             )}
-            <div className="bg-white p-2 rounded text-center">
-              <span className="text-gray-500">合計: </span>
+            <div className="bg-white p-2 rounded text-center mb-3">
+              <span className="text-gray-500">小計: </span>
               <span className="text-xl font-bold text-blue-600">¥{((parseInt(customPrice) || selectedProductData.purchasePrice) * quantity).toLocaleString()}</span>
               {parseInt(customPrice) !== selectedProductData.purchasePrice && customPrice && (
                 <span className="ml-2 text-xs bg-red-100 text-red-600 px-2 py-1 rounded">{saleTag || 'セール'}</span>
               )}
             </div>
+            <div className="grid-2 gap-2">
+              <button onClick={addToCart} className="btn btn-green py-2">🛒 カートに追加</button>
+              <button onClick={recordSingle} className="btn btn-blue py-2">⚡ 直接登録</button>
+            </div>
           </div>
         )}
-        <button onClick={recordPurchase} className="btn btn-blue w-full py-3">購入を記録</button>
+        
+        {/* カート表示 */}
+        {cart.length > 0 && (
+          <div className="bg-yellow-50 border-2 border-yellow-300 rounded p-3 mt-4">
+            <h4 className="font-bold mb-2">🛒 カート（{cart.length}件）</h4>
+            <div className="space-y-2 mb-3">
+              {cart.map(item => (
+                <div key={item.tempId} className="flex justify-between items-center bg-white p-2 rounded text-sm">
+                  <div className="flex-1">
+                    <span className="font-semibold">{item.productName}</span>
+                    {item.saleTag && <span className="ml-1 text-xs bg-red-100 text-red-600 px-1 rounded">{item.saleTag}</span>}
+                    <span className="text-gray-500 ml-2">×{item.quantity}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold">¥{(item.purchasePrice * item.quantity).toLocaleString()}</span>
+                    <button onClick={() => removeFromCart(item.tempId)} className="text-red-500 text-xs">✕</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="bg-white p-3 rounded mb-3 text-center">
+              <span className="text-gray-500">合計: </span>
+              <span className="text-2xl font-bold text-green-600">¥{cartTotal.toLocaleString()}</span>
+            </div>
+            <button onClick={submitCart} className="btn btn-green w-full py-3 text-lg">✓ まとめて登録（{cart.length}件）</button>
+          </div>
+        )}
       </div>
       <div className="card">
         <div className="flex justify-between items-center mb-4 flex-wrap gap-2"><h3 className="text-lg font-bold">📊 月次集計</h3><input type="month" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="input" style={{ width: 'auto' }} /></div>
