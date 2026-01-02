@@ -255,7 +255,12 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
         </div>
       </div>
 
-      {tab === 'usage' && <UsageInput products={products} usage={usage} setUsage={setUsage} favorites={favorites} setFavorites={setFavorites} />}
+      {tab === 'usage' && (
+        <>
+          <MiniLeaveCalendar leaveRequests={leaveRequests} />
+          <UsageInput products={products} usage={usage} setUsage={setUsage} favorites={favorites} setFavorites={setFavorites} />
+        </>
+      )}
       {tab === 'stockin' && <StockInInput products={products} stockIn={stockIn} setStockIn={setStockIn} categories={categories} />}
       {tab === 'timecard' && <TimeCard staff={staff} timeRecords={timeRecords} setTimeRecords={setTimeRecords} isAdmin={isAdmin} />}
       {tab === 'order' && <OrderLinks categories={categories} setCategories={setCategories} />}
@@ -271,6 +276,118 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
       {tab === 'loss' && <LossInput lossRecords={lossRecords} setLossRecords={setLossRecords} lossPrices={lossPrices} isAdmin={isAdmin} />}
       {tab === 'lossprice' && isAdmin && <LossPriceSettings lossPrices={lossPrices} setLossPrices={setLossPrices} />}
       {tab === 'settings' && isAdmin && <AppSettings passwords={passwords} setPasswords={setPasswords} />}
+    </div>
+  )
+}
+
+// ==================== ミニ有給カレンダー ====================
+function MiniLeaveCalendar({ leaveRequests }) {
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = today.getMonth()
+  const todayStr = today.toISOString().split('T')[0]
+  
+  // 第三日曜日を計算
+  let sundayCount = 0
+  let thirdSunday = null
+  const lastDate = new Date(year, month + 1, 0).getDate()
+  for (let d = 1; d <= lastDate; d++) {
+    if (new Date(year, month, d).getDay() === 0) {
+      sundayCount++
+      if (sundayCount === 3) { thirdSunday = d; break }
+    }
+  }
+  
+  // 今月の承認済み休み
+  const monthRequests = leaveRequests.filter(r => {
+    if (r.status !== 'approved') return false
+    const d = new Date(r.leaveDate)
+    return d.getFullYear() === year && d.getMonth() === month
+  })
+  
+  // 今日の休み
+  const todayRequests = monthRequests.filter(r => r.leaveDate === todayStr)
+  
+  const firstDay = new Date(year, month, 1).getDay()
+  const dayNames = ['日', '月', '火', '水', '木', '金', '土']
+  
+  return (
+    <div className="card mb-4">
+      <div className="flex justify-between items-center mb-3">
+        <h3 className="font-bold">📅 {month + 1}月の休み</h3>
+        {todayRequests.length > 0 && (
+          <div className="text-sm bg-blue-100 text-blue-700 px-2 py-1 rounded">
+            今日: {todayRequests.map(r => r.staffName + (r.dayType !== 'full' ? (r.dayType === 'am' ? '(午前)' : '(午後)') : '')).join(', ')}
+          </div>
+        )}
+      </div>
+      
+      {/* ミニカレンダー */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '1px', fontSize: '12px' }}>
+        {/* 曜日ヘッダー */}
+        {dayNames.map((d, i) => (
+          <div key={d} style={{ 
+            textAlign: 'center', 
+            padding: '4px 0', 
+            fontWeight: 'bold',
+            backgroundColor: i === 1 || i === 2 ? '#e5e7eb' : '#f9fafb',
+            color: i === 0 ? '#ef4444' : i === 6 ? '#3b82f6' : i === 1 || i === 2 ? '#9ca3af' : '#374151'
+          }}>{d}</div>
+        ))}
+        
+        {/* 空白セル */}
+        {[...Array(firstDay)].map((_, i) => (
+          <div key={`empty-${i}`} style={{ height: '32px', backgroundColor: '#f9fafb' }}></div>
+        ))}
+        
+        {/* 日付セル */}
+        {[...Array(lastDate)].map((_, i) => {
+          const date = i + 1
+          const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`
+          const dayOfWeek = new Date(year, month, date).getDay()
+          const isHoliday = dayOfWeek === 1 || dayOfWeek === 2 || date === thirdSunday
+          const isToday = dateStr === todayStr
+          const dayRequests = monthRequests.filter(r => r.leaveDate === dateStr)
+          
+          let bgColor = '#ffffff'
+          if (isHoliday) bgColor = '#d1d5db'
+          else if (dayRequests.length > 0) bgColor = dayRequests[0].leaveType === 'paid' ? '#dbeafe' : '#dcfce7'
+          else if (dayOfWeek === 0) bgColor = '#fef2f2'
+          else if (dayOfWeek === 6) bgColor = '#eff6ff'
+          
+          return (
+            <div key={date} style={{ 
+              height: '32px', 
+              backgroundColor: bgColor,
+              border: isToday ? '2px solid #3b82f6' : '1px solid #e5e7eb',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'relative'
+            }}>
+              <span style={{ 
+                fontWeight: isToday ? 'bold' : 'normal',
+                color: isHoliday ? '#9ca3af' : dayOfWeek === 0 ? '#ef4444' : dayOfWeek === 6 ? '#3b82f6' : '#374151'
+              }}>{date}</span>
+              {dayRequests.length > 0 && !isHoliday && (
+                <span style={{ 
+                  fontSize: '8px', 
+                  color: dayRequests[0].leaveType === 'paid' ? '#1d4ed8' : '#166534',
+                  lineHeight: '1'
+                }}>{dayRequests.length > 1 ? `${dayRequests.length}人` : dayRequests[0].staffName.slice(0, 2)}</span>
+              )}
+            </div>
+          )
+        })}
+      </div>
+      
+      {/* 凡例 */}
+      <div className="flex gap-3 mt-2 text-xs text-gray-500 justify-center">
+        <span><span className="inline-block w-2 h-2 bg-gray-300 rounded mr-1"></span>定休</span>
+        <span><span className="inline-block w-2 h-2 bg-blue-200 rounded mr-1"></span>有給</span>
+        <span><span className="inline-block w-2 h-2 bg-green-200 rounded mr-1"></span>夏休</span>
+      </div>
     </div>
   )
 }
