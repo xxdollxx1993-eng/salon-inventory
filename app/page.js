@@ -134,6 +134,10 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
   const [notifications, setNotifications] = useState([])
   const [practiceReservations, setPracticeReservations] = useState([])
   const [modelRules, setModelRules] = useState('')
+  const [contactGoals, setContactGoals] = useState([])
+  const [contactWeekly, setContactWeekly] = useState([])
+  const [contactReplies, setContactReplies] = useState([])
+  const [contactMonthly, setContactMonthly] = useState([])
   const [lossRecords, setLossRecords] = useState([])
   const [lossPrices, setLossPrices] = useState([])
   const [loading, setLoading] = useState(true)
@@ -143,7 +147,7 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
   const loadAllData = async () => {
     setLoading(true)
     try {
-      const [staffRes, productsRes, categoriesRes, usageRes, stockInRes, inventoryRes, favoritesRes, purchasesRes, budgetsRes, allocationsRes, bonusRes, lossRes, lossPricesRes, monthlyRes, timeRes, leaveGrantsRes, leaveRequestsRes, notificationsRes, practiceRes, modelRulesRes] = await Promise.all([
+      const [staffRes, productsRes, categoriesRes, usageRes, stockInRes, inventoryRes, favoritesRes, purchasesRes, budgetsRes, allocationsRes, bonusRes, lossRes, lossPricesRes, monthlyRes, timeRes, leaveGrantsRes, leaveRequestsRes, notificationsRes, practiceRes, modelRulesRes, contactGoalsRes, contactWeeklyRes, contactRepliesRes, contactMonthlyRes] = await Promise.all([
         supabase.from('staff').select('*').order('id'),
         supabase.from('products').select('*').order('id'),
         supabase.from('categories').select('*').order('id'),
@@ -164,6 +168,10 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
         supabase.from('notifications').select('*').order('created_at', { ascending: false }),
         supabase.from('practice_reservations').select('*').order('practice_date', { ascending: true }),
         supabase.from('app_settings').select('*').eq('key', 'model_rules').single(),
+        supabase.from('contact_goals').select('*').order('id'),
+        supabase.from('contact_weekly').select('*').order('week_start', { ascending: false }),
+        supabase.from('contact_replies').select('*').order('created_at', { ascending: false }),
+        supabase.from('contact_monthly').select('*').order('year_month', { ascending: false }),
       ])
       if (staffRes.data) setStaff(staffRes.data.map(s => ({
         id: s.id, name: s.name, dealer: s.dealer || '',
@@ -199,6 +207,10 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
       if (notificationsRes.data) setNotifications(notificationsRes.data.map(n => ({ id: n.id, targetRole: n.target_role, targetStaffId: n.target_staff_id, message: n.message, linkTo: n.link_to, isRead: n.is_read, createdAt: n.created_at })))
       if (practiceRes.data) setPracticeReservations(practiceRes.data.map(p => ({ id: p.id, staffId: p.staff_id, staffName: p.staff_name, date: p.practice_date, time: p.practice_time, menu: p.menu, memo: p.memo })))
       if (modelRulesRes?.data?.value) setModelRules(modelRulesRes.data.value)
+      if (contactGoalsRes.data) setContactGoals(contactGoalsRes.data.map(g => ({ id: g.id, staffId: g.staff_id, staffName: g.staff_name, yearMonth: g.year_month, monthlyGoal: g.monthly_goal, weeklyTask: g.weekly_task })))
+      if (contactWeeklyRes.data) setContactWeekly(contactWeeklyRes.data.map(w => ({ id: w.id, staffId: w.staff_id, staffName: w.staff_name, weekStart: w.week_start, checks: [w.check_mon, w.check_tue, w.check_wed, w.check_thu, w.check_fri, w.check_sat, w.check_sun], zeroReason: w.zero_reason, nextAction: w.next_action, nextActionDetail: w.next_action_detail, submittedAt: w.submitted_at })))
+      if (contactRepliesRes.data) setContactReplies(contactRepliesRes.data.map(r => ({ id: r.id, weeklyId: r.weekly_id, replyText: r.reply_text, repliedBy: r.replied_by, createdAt: r.created_at })))
+      if (contactMonthlyRes.data) setContactMonthly(contactMonthlyRes.data.map(m => ({ id: m.id, staffId: m.staff_id, staffName: m.staff_name, yearMonth: m.year_month, q1: m.q1_answer, q2: m.q2_answer, q3: m.q3_answer, submittedAt: m.submitted_at })))
     } catch (e) { console.error('データ読み込みエラー:', e) }
     setLoading(false)
   }
@@ -210,6 +222,7 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
     { key: 'stockin', label: '入荷' },
     { key: 'timecard', label: '🕐 打刻' },
     { key: 'practice', label: '🎨 練習予約' },
+    { key: 'contact', label: '📓 連絡帳' },
     { key: 'order', label: '発注リンク' }
   ]
   const otherTabs = [
@@ -271,6 +284,7 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
       {tab === 'stockin' && <StockInInput products={products} stockIn={stockIn} setStockIn={setStockIn} categories={categories} />}
       {tab === 'timecard' && <TimeCard staff={staff} timeRecords={timeRecords} setTimeRecords={setTimeRecords} isAdmin={isAdmin} />}
       {tab === 'practice' && <PracticeReservation staff={staff} practiceReservations={practiceReservations} setPracticeReservations={setPracticeReservations} modelRules={modelRules} setModelRules={setModelRules} isAdmin={isAdmin} />}
+      {tab === 'contact' && <ContactBook staff={staff} contactGoals={contactGoals} setContactGoals={setContactGoals} contactWeekly={contactWeekly} setContactWeekly={setContactWeekly} contactReplies={contactReplies} setContactReplies={setContactReplies} contactMonthly={contactMonthly} setContactMonthly={setContactMonthly} notifications={notifications} setNotifications={setNotifications} isAdmin={isAdmin} />}
       {tab === 'order' && <OrderLinks categories={categories} setCategories={setCategories} />}
       {tab === 'inventory' && <InventoryInput products={products} staff={staff} usage={usage} stockIn={stockIn} inventoryHistory={inventoryHistory} setInventoryHistory={setInventoryHistory} />}
       {tab === 'dealer' && <DealerBudget products={products} usage={usage} stockIn={stockIn} categories={categories} dealerBudgets={dealerBudgets} setDealerBudgets={setDealerBudgets} dealerAllocations={dealerAllocations} setDealerAllocations={setDealerAllocations} isAdmin={isAdmin} />}
@@ -1657,6 +1671,1413 @@ function DataExport({ products, staff, usage, stockIn, inventoryHistory }) {
     <div className="card">
       <h3 className="text-lg font-bold mb-4">📊 データ出力</h3>
       <div className="space-y-3">{items.map((item, i) => (<div key={i} className="flex justify-between items-center p-4 bg-gray-50 rounded"><div><span className="font-semibold">{item.label}</span><span className="text-sm text-gray-500 ml-2">({item.count}件)</span></div><button onClick={item.fn} className="btn btn-green">CSV出力</button></div>))}</div>
+    </div>
+  )
+}
+
+// ==================== 連絡帳 ====================
+function ContactBook({ staff, contactGoals, setContactGoals, contactWeekly, setContactWeekly, contactReplies, setContactReplies, contactMonthly, setContactMonthly, isAdmin }) {
+  const [selectedStaff, setSelectedStaff] = useState('')
+  const [mode, setMode] = useState('weekly') // 'weekly', 'monthly', 'admin', 'detail'
+  const [detailStaffId, setDetailStaffId] = useState(null)
+  const [replyText, setReplyText] = useState('')
+  const [replyingTo, setReplyingTo] = useState(null)
+
+  // 今日の日付
+  const today = new Date()
+  const todayStr = today.toISOString().split('T')[0]
+
+  // 今月の年月
+  const currentYearMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`
+
+  // 第三日曜日を計算
+  const getThirdSunday = (year, month) => {
+    let sundayCount = 0
+    const lastDate = new Date(year, month + 1, 0).getDate()
+    for (let d = 1; d <= lastDate; d++) {
+      if (new Date(year, month, d).getDay() === 0) {
+        sundayCount++
+        if (sundayCount === 3) return d
+      }
+    }
+    return null
+  }
+
+  // 週の開始日（月曜）を取得
+  const getWeekStart = (date) => {
+    const d = new Date(date)
+    const day = d.getDay()
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1)
+    return new Date(d.setDate(diff)).toISOString().split('T')[0]
+  }
+
+  // 今週の開始日
+  const currentWeekStart = getWeekStart(today)
+
+  // 提出期限（基本日曜、第三日曜の週は土曜）
+  const getSubmitDeadline = (weekStartStr) => {
+    const weekStart = new Date(weekStartStr)
+    const year = weekStart.getFullYear()
+    const month = weekStart.getMonth()
+    const thirdSunday = getThirdSunday(year, month)
+    
+    // 週の日曜日
+    const sunday = new Date(weekStart)
+    sunday.setDate(sunday.getDate() + 6)
+    
+    // 第三日曜かどうか
+    if (sunday.getDate() === thirdSunday && sunday.getMonth() === month) {
+      // 土曜に前倒し
+      const saturday = new Date(weekStart)
+      saturday.setDate(saturday.getDate() + 5)
+      return saturday.toISOString().split('T')[0]
+    }
+    return sunday.toISOString().split('T')[0]
+  }
+
+  // 理由の選択肢
+  const zeroReasons = [
+    '時間が取れなかった',
+    '体調／メンタル',
+    '忘れていた',
+    '優先順位が下がった',
+    'その他'
+  ]
+
+  // 来週どうするかの選択肢
+  const nextActions = [
+    '同じ内容で続ける',
+    '少し下げて続ける',
+    '一旦止める'
+  ]
+
+  // スタッフの目標を取得
+  const getGoal = (staffId, yearMonth) => {
+    return contactGoals.find(g => g.staffId === staffId && g.yearMonth === yearMonth)
+  }
+
+  // スタッフの週次データを取得
+  const getWeeklyData = (staffId, weekStart) => {
+    return contactWeekly.find(w => w.staffId === staffId && w.weekStart === weekStart)
+  }
+
+  // 達成日数を計算
+  const getCheckCount = (checks) => {
+    if (!checks) return 0
+    return checks.filter(c => c).length
+  }
+
+  // 赤信号判定（2週連続0 or 2週連続未提出）
+  const isRedFlag = (staffId) => {
+    const weeks = contactWeekly
+      .filter(w => w.staffId === staffId)
+      .sort((a, b) => b.weekStart.localeCompare(a.weekStart))
+      .slice(0, 2)
+    
+    if (weeks.length < 2) return false
+    
+    const bothZero = weeks.every(w => w.submittedAt && getCheckCount(w.checks) === 0)
+    const bothNotSubmitted = weeks.every(w => !w.submittedAt)
+    
+    return bothZero || bothNotSubmitted
+  }
+
+  // 返信があるか
+  const hasReply = (weeklyId) => {
+    return contactReplies.some(r => r.weeklyId === weeklyId)
+  }
+
+  // 週次チェックを保存
+  const saveWeeklyCheck = async (checks, zeroReason, nextAction, nextActionDetail) => {
+    if (!selectedStaff) return
+    const staffMember = staff.find(s => s.id === parseInt(selectedStaff))
+    const existing = getWeeklyData(parseInt(selectedStaff), currentWeekStart)
+    
+    const checkCount = getCheckCount(checks)
+    
+    if (existing) {
+      const { error } = await supabase.from('contact_weekly').update({
+        check_mon: checks[0],
+        check_tue: checks[1],
+        check_wed: checks[2],
+        check_thu: checks[3],
+        check_fri: checks[4],
+        check_sat: checks[5],
+        check_sun: checks[6],
+        zero_reason: checkCount === 0 ? zeroReason : null,
+        next_action: checkCount === 0 ? nextAction : null,
+        next_action_detail: checkCount === 0 ? nextActionDetail : null,
+        submitted_at: new Date().toISOString()
+      }).eq('id', existing.id)
+      
+      if (!error) {
+        setContactWeekly(contactWeekly.map(w => w.id === existing.id ? {
+          ...w,
+          checks,
+          zeroReason: checkCount === 0 ? zeroReason : null,
+          nextAction: checkCount === 0 ? nextAction : null,
+          nextActionDetail: checkCount === 0 ? nextActionDetail : null,
+          submittedAt: new Date().toISOString()
+        } : w))
+        alert('提出しました！')
+      }
+    } else {
+      const { data, error } = await supabase.from('contact_weekly').insert({
+        staff_id: parseInt(selectedStaff),
+        staff_name: staffMember.name,
+        week_start: currentWeekStart,
+        check_mon: checks[0],
+        check_tue: checks[1],
+        check_wed: checks[2],
+        check_thu: checks[3],
+        check_fri: checks[4],
+        check_sat: checks[5],
+        check_sun: checks[6],
+        zero_reason: checkCount === 0 ? zeroReason : null,
+        next_action: checkCount === 0 ? nextAction : null,
+        next_action_detail: checkCount === 0 ? nextActionDetail : null,
+        submitted_at: new Date().toISOString()
+      }).select()
+      
+      if (!error && data) {
+        setContactWeekly([{
+          id: data[0].id,
+          staffId: parseInt(selectedStaff),
+          staffName: staffMember.name,
+          weekStart: currentWeekStart,
+          checks,
+          zeroReason: checkCount === 0 ? zeroReason : null,
+          nextAction: checkCount === 0 ? nextAction : null,
+          nextActionDetail: checkCount === 0 ? nextActionDetail : null,
+          submittedAt: new Date().toISOString()
+        }, ...contactWeekly])
+        alert('提出しました！')
+      }
+    }
+  }
+
+  // 月次の問いを保存
+  const saveMonthly = async (q1, q2, q3) => {
+    if (!selectedStaff) return
+    const staffMember = staff.find(s => s.id === parseInt(selectedStaff))
+    const existing = contactMonthly.find(m => m.staffId === parseInt(selectedStaff) && m.yearMonth === currentYearMonth)
+    
+    if (existing) {
+      const { error } = await supabase.from('contact_monthly').update({
+        q1_answer: q1,
+        q2_answer: q2,
+        q3_answer: q3,
+        submitted_at: new Date().toISOString()
+      }).eq('id', existing.id)
+      
+      if (!error) {
+        setContactMonthly(contactMonthly.map(m => m.id === existing.id ? {
+          ...m, q1, q2, q3, submittedAt: new Date().toISOString()
+        } : m))
+        alert('提出しました！')
+      }
+    } else {
+      const { data, error } = await supabase.from('contact_monthly').insert({
+        staff_id: parseInt(selectedStaff),
+        staff_name: staffMember.name,
+        year_month: currentYearMonth,
+        q1_answer: q1,
+        q2_answer: q2,
+        q3_answer: q3,
+        submitted_at: new Date().toISOString()
+      }).select()
+      
+      if (!error && data) {
+        setContactMonthly([{
+          id: data[0].id,
+          staffId: parseInt(selectedStaff),
+          staffName: staffMember.name,
+          yearMonth: currentYearMonth,
+          q1, q2, q3,
+          submittedAt: new Date().toISOString()
+        }, ...contactMonthly])
+        alert('提出しました！')
+      }
+    }
+  }
+
+  // 返信を送信
+  const sendReply = async (weeklyId) => {
+    if (!replyText.trim()) return
+    
+    const { data, error } = await supabase.from('contact_replies').insert({
+      weekly_id: weeklyId,
+      reply_text: replyText,
+      replied_by: '綾華'
+    }).select()
+    
+    if (!error && data) {
+      setContactReplies([{
+        id: data[0].id,
+        weeklyId,
+        replyText,
+        repliedBy: '綾華',
+        createdAt: data[0].created_at
+      }, ...contactReplies])
+      setReplyText('')
+      setReplyingTo(null)
+      alert('返信しました')
+    }
+  }
+
+  // 目標を保存（管理者）
+  const saveGoal = async (staffId, staffName, monthlyGoal, weeklyTask) => {
+    const existing = getGoal(staffId, currentYearMonth)
+    
+    if (existing) {
+      const { error } = await supabase.from('contact_goals').update({
+        monthly_goal: monthlyGoal,
+        weekly_task: weeklyTask
+      }).eq('id', existing.id)
+      
+      if (!error) {
+        setContactGoals(contactGoals.map(g => g.id === existing.id ? {
+          ...g, monthlyGoal, weeklyTask
+        } : g))
+      }
+    } else {
+      const { data, error } = await supabase.from('contact_goals').insert({
+        staff_id: staffId,
+        staff_name: staffName,
+        year_month: currentYearMonth,
+        monthly_goal: monthlyGoal,
+        weekly_task: weeklyTask
+      }).select()
+      
+      if (!error && data) {
+        setContactGoals([...contactGoals, {
+          id: data[0].id,
+          staffId,
+          staffName,
+          yearMonth: currentYearMonth,
+          monthlyGoal,
+          weeklyTask
+        }])
+      }
+    }
+  }
+
+  // 赤信号のスタッフ
+  const redFlagStaff = staff.filter(s => isRedFlag(s.id))
+
+  // 今週の提出状況
+  const thisWeekSubmissions = staff.map(s => {
+    const weekly = getWeeklyData(s.id, currentWeekStart)
+    return {
+      staff: s,
+      weekly,
+      checkCount: weekly ? getCheckCount(weekly.checks) : null,
+      submitted: !!weekly?.submittedAt,
+      hasReply: weekly ? hasReply(weekly.id) : false
+    }
+  })
+
+  const submittedCount = thisWeekSubmissions.filter(s => s.submitted).length
+  const avgCheckCount = thisWeekSubmissions.filter(s => s.submitted).reduce((sum, s) => sum + s.checkCount, 0) / (submittedCount || 1)
+
+  return (
+    <div className="space-y-4">
+      {/* モード切替 */}
+      <div className="flex gap-2 flex-wrap">
+        <button onClick={() => setMode('weekly')} className={`btn flex-1 ${mode === 'weekly' ? 'btn-blue' : 'btn-gray'}`}>📝 週次</button>
+        <button onClick={() => setMode('monthly')} className={`btn flex-1 ${mode === 'monthly' ? 'btn-blue' : 'btn-gray'}`}>💭 月次</button>
+        {isAdmin && <button onClick={() => setMode('admin')} className={`btn flex-1 ${mode === 'admin' ? 'btn-blue' : 'btn-gray'}`}>
+          📊 管理
+          {redFlagStaff.length > 0 && <span className="ml-1 bg-red-500 text-white text-xs px-1 rounded">{redFlagStaff.length}</span>}
+        </button>}
+      </div>
+
+      {/* スタッフ選択（週次・月次モード） */}
+      {(mode === 'weekly' || mode === 'monthly') && (
+        <div className="card">
+          <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>スタッフ</label>
+          <select value={selectedStaff} onChange={e => setSelectedStaff(e.target.value)} className="select">
+            <option value="">選択してください</option>
+            {staff.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
+        </div>
+      )}
+
+      {/* 週次モード */}
+      {mode === 'weekly' && selectedStaff && (
+        <WeeklyCheckForm 
+          staffId={parseInt(selectedStaff)}
+          goal={getGoal(parseInt(selectedStaff), currentYearMonth)}
+          weeklyData={getWeeklyData(parseInt(selectedStaff), currentWeekStart)}
+          weekStart={currentWeekStart}
+          deadline={getSubmitDeadline(currentWeekStart)}
+          zeroReasons={zeroReasons}
+          nextActions={nextActions}
+          onSave={saveWeeklyCheck}
+          replies={contactReplies.filter(r => {
+            const weekly = getWeeklyData(parseInt(selectedStaff), currentWeekStart)
+            return weekly && r.weeklyId === weekly.id
+          })}
+        />
+      )}
+
+      {/* 月次モード */}
+      {mode === 'monthly' && selectedStaff && (
+        <MonthlyQuestionForm
+          staffId={parseInt(selectedStaff)}
+          yearMonth={currentYearMonth}
+          existingData={contactMonthly.find(m => m.staffId === parseInt(selectedStaff) && m.yearMonth === currentYearMonth)}
+          onSave={saveMonthly}
+        />
+      )}
+
+      {/* 管理者モード */}
+      {mode === 'admin' && isAdmin && (
+        <AdminDashboard
+          staff={staff}
+          contactGoals={contactGoals}
+          contactWeekly={contactWeekly}
+          contactReplies={contactReplies}
+          contactMonthly={contactMonthly}
+          currentWeekStart={currentWeekStart}
+          currentYearMonth={currentYearMonth}
+          redFlagStaff={redFlagStaff}
+          thisWeekSubmissions={thisWeekSubmissions}
+          submittedCount={submittedCount}
+          avgCheckCount={avgCheckCount}
+          getCheckCount={getCheckCount}
+          hasReply={hasReply}
+          onReply={(weeklyId) => { setReplyingTo(weeklyId); setReplyText('') }}
+          replyingTo={replyingTo}
+          replyText={replyText}
+          setReplyText={setReplyText}
+          sendReply={sendReply}
+          onViewDetail={(staffId) => { setDetailStaffId(staffId); setMode('detail') }}
+          saveGoal={saveGoal}
+        />
+      )}
+
+      {/* 個人詳細モード */}
+      {mode === 'detail' && detailStaffId && (
+        <StaffDetailView
+          staff={staff.find(s => s.id === detailStaffId)}
+          contactWeekly={contactWeekly.filter(w => w.staffId === detailStaffId)}
+          contactMonthly={contactMonthly.filter(m => m.staffId === detailStaffId)}
+          contactReplies={contactReplies}
+          getCheckCount={getCheckCount}
+          onBack={() => setMode('admin')}
+        />
+      )}
+    </div>
+  )
+}
+
+// 週次チェックフォーム
+function WeeklyCheckForm({ staffId, goal, weeklyData, weekStart, deadline, zeroReasons, nextActions, onSave, replies }) {
+  const [checks, setChecks] = useState(weeklyData?.checks || [false, false, false, false, false, false, false])
+  const [zeroReason, setZeroReason] = useState(weeklyData?.zeroReason || '')
+  const [nextAction, setNextAction] = useState(weeklyData?.nextAction || '')
+  const [nextActionDetail, setNextActionDetail] = useState(weeklyData?.nextActionDetail || '')
+
+  const dayNames = ['月', '火', '水', '木', '金', '土', '日']
+  const checkCount = checks.filter(c => c).length
+  const isSubmitted = !!weeklyData?.submittedAt
+
+  const toggleCheck = (index) => {
+    const newChecks = [...checks]
+    newChecks[index] = !newChecks[index]
+    setChecks(newChecks)
+  }
+
+  return (
+    <div className="card">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="font-bold">📝 週次チェック</h3>
+        <span className="text-sm text-gray-500">提出期限: {deadline}</span>
+      </div>
+
+      {/* 目標表示 */}
+      {goal ? (
+        <div className="bg-blue-50 p-3 rounded mb-4">
+          <p className="text-sm text-gray-600">今月の目標</p>
+          <p className="font-bold text-blue-700">{goal.monthlyGoal}</p>
+          <p className="text-sm text-gray-600 mt-2">今週やること</p>
+          <p className="font-semibold">{goal.weeklyTask}</p>
+        </div>
+      ) : (
+        <div className="bg-gray-50 p-3 rounded mb-4 text-gray-500 text-sm">
+          目標が設定されていません
+        </div>
+      )}
+
+      {/* チェックボックス */}
+      <div className="mb-4">
+        <p className="text-sm font-semibold mb-2">できた日にチェック</p>
+        <div className="grid grid-cols-7 gap-2">
+          {dayNames.map((day, i) => (
+            <div key={day} className="text-center">
+              <div className="text-xs text-gray-500 mb-1">{day}</div>
+              <button
+                onClick={() => toggleCheck(i)}
+                className={`w-10 h-10 rounded-lg border-2 flex items-center justify-center text-lg ${
+                  checks[i] ? 'bg-green-500 border-green-500 text-white' : 'bg-white border-gray-300'
+                }`}
+              >
+                {checks[i] ? '✓' : ''}
+              </button>
+            </div>
+          ))}
+        </div>
+        <p className="text-center mt-2 font-bold text-lg">{checkCount}/7日</p>
+      </div>
+
+      {/* 0日の場合の追加入力 */}
+      {checkCount === 0 && (
+        <div className="bg-yellow-50 p-3 rounded mb-4">
+          <p className="text-sm font-semibold mb-2">できなかった理由</p>
+          <div className="flex flex-wrap gap-2 mb-3">
+            {zeroReasons.map(r => (
+              <button
+                key={r}
+                onClick={() => setZeroReason(r)}
+                className={`btn text-sm ${zeroReason === r ? 'btn-blue' : 'btn-gray'}`}
+                style={{ padding: '4px 10px' }}
+              >
+                {r}
+              </button>
+            ))}
+          </div>
+          {zeroReason === 'その他' && (
+            <input
+              type="text"
+              value={nextActionDetail}
+              onChange={e => setNextActionDetail(e.target.value)}
+              placeholder="理由を入力"
+              className="input mb-3"
+            />
+          )}
+
+          <p className="text-sm font-semibold mb-2">来週どうするか</p>
+          <div className="flex flex-wrap gap-2 mb-3">
+            {nextActions.map(a => (
+              <button
+                key={a}
+                onClick={() => setNextAction(a)}
+                className={`btn text-sm ${nextAction === a ? 'btn-green' : 'btn-gray'}`}
+                style={{ padding: '4px 10px' }}
+              >
+                {a}
+              </button>
+            ))}
+          </div>
+          {nextAction && (
+            <input
+              type="text"
+              value={nextActionDetail}
+              onChange={e => setNextActionDetail(e.target.value)}
+              placeholder="具体的に1行"
+              className="input"
+            />
+          )}
+        </div>
+      )}
+
+      {/* 返信表示 */}
+      {replies.length > 0 && (
+        <div className="bg-pink-50 p-3 rounded mb-4">
+          <p className="text-sm font-semibold mb-2">💬 綾華より</p>
+          {replies.map(r => (
+            <div key={r.id} className="text-sm">
+              <p>{r.replyText}</p>
+              <p className="text-gray-400 text-xs mt-1">{new Date(r.createdAt).toLocaleDateString()}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* 提出ボタン */}
+      <button
+        onClick={() => onSave(checks, zeroReason, nextAction, nextActionDetail)}
+        className={`btn w-full py-3 ${isSubmitted ? 'btn-gray' : 'btn-green'}`}
+      >
+        {isSubmitted ? '✓ 提出済み（再提出する）' : '提出する'}
+      </button>
+    </div>
+  )
+}
+
+// 月次の問いフォーム
+function MonthlyQuestionForm({ staffId, yearMonth, existingData, onSave }) {
+  const [q1, setQ1] = useState(existingData?.q1 || '')
+  const [q2, setQ2] = useState(existingData?.q2 || '')
+  const [q3, setQ3] = useState(existingData?.q3 || '')
+
+  const isSubmitted = !!existingData?.submittedAt
+
+  return (
+    <div className="card">
+      <h3 className="font-bold mb-4">💭 月次の問い（{yearMonth}）</h3>
+      <p className="text-sm text-gray-500 mb-4">月末に一度だけ、振り返りの時間を。</p>
+
+      <div className="space-y-4">
+        <div>
+          <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>
+            Q1. 今月いちばん止まった（または重かった）行動はどれ？
+          </label>
+          <input
+            type="text"
+            value={q1}
+            onChange={e => setQ1(e.target.value)}
+            className="input"
+            placeholder="3行以内で"
+          />
+        </div>
+
+        <div>
+          <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>
+            Q2. それが止まった一番の理由は何だったと思う？
+          </label>
+          <input
+            type="text"
+            value={q2}
+            onChange={e => setQ2(e.target.value)}
+            className="input"
+            placeholder="3行以内で"
+          />
+        </div>
+
+        <div>
+          <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>
+            Q3. 来月、同じ目標なら最初に何を変える？
+          </label>
+          <input
+            type="text"
+            value={q3}
+            onChange={e => setQ3(e.target.value)}
+            className="input"
+            placeholder="3行以内で"
+          />
+        </div>
+      </div>
+
+      <button
+        onClick={() => onSave(q1, q2, q3)}
+        className={`btn w-full py-3 mt-4 ${isSubmitted ? 'btn-gray' : 'btn-green'}`}
+      >
+        {isSubmitted ? '✓ 提出済み（再提出する）' : '提出する'}
+      </button>
+    </div>
+  )
+}
+
+// 管理者ダッシュボード
+function AdminDashboard({ staff, contactGoals, contactWeekly, contactReplies, contactMonthly, currentWeekStart, currentYearMonth, redFlagStaff, thisWeekSubmissions, submittedCount, avgCheckCount, getCheckCount, hasReply, onReply, replyingTo, replyText, setReplyText, sendReply, onViewDetail, saveGoal }) {
+  const [editingGoal, setEditingGoal] = useState(null)
+  const [goalForm, setGoalForm] = useState({ monthlyGoal: '', weeklyTask: '' })
+  const [viewTab, setViewTab] = useState('status') // 'status', 'goals'
+
+  return (
+    <div className="space-y-4">
+      {/* 赤信号 */}
+      {redFlagStaff.length > 0 && (
+        <div className="card bg-red-50 border-2 border-red-300">
+          <h3 className="font-bold text-red-700 mb-2">⚠️ 要注意（2週連続0 or 未提出）</h3>
+          <div className="space-y-2">
+            {redFlagStaff.map(s => (
+              <div key={s.id} className="flex justify-between items-center bg-white p-2 rounded">
+                <span className="font-semibold">{s.name}</span>
+                <button onClick={() => onViewDetail(s.id)} className="text-blue-500 text-sm">詳細</button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* タブ切替 */}
+      <div className="flex gap-2">
+        <button onClick={() => setViewTab('status')} className={`btn flex-1 ${viewTab === 'status' ? 'btn-blue' : 'btn-gray'}`}>📋 提出状況</button>
+        <button onClick={() => setViewTab('goals')} className={`btn flex-1 ${viewTab === 'goals' ? 'btn-blue' : 'btn-gray'}`}>🎯 目標設定</button>
+      </div>
+
+      {/* 提出状況タブ */}
+      {viewTab === 'status' && (
+        <>
+          {/* 今週のサマリー */}
+          <div className="card">
+            <h3 className="font-bold mb-3">📊 今週（{currentWeekStart}〜）</h3>
+            <div className="grid-3 gap-3 text-center">
+              <div className="bg-blue-50 p-3 rounded">
+                <p className="text-2xl font-bold text-blue-600">{submittedCount}/{staff.length}</p>
+                <p className="text-xs text-gray-500">提出</p>
+              </div>
+              <div className="bg-green-50 p-3 rounded">
+                <p className="text-2xl font-bold text-green-600">{avgCheckCount.toFixed(1)}</p>
+                <p className="text-xs text-gray-500">平均達成</p>
+              </div>
+              <div className="bg-yellow-50 p-3 rounded">
+                <p className="text-2xl font-bold text-yellow-600">{thisWeekSubmissions.filter(s => s.checkCount === 0 && s.submitted).length}</p>
+                <p className="text-xs text-gray-500">0日</p>
+              </div>
+            </div>
+          </div>
+
+          {/* 個別状況 */}
+          <div className="card">
+            <h3 className="font-bold mb-3">📝 個別状況</h3>
+            <div className="space-y-2">
+              {thisWeekSubmissions.map(({ staff: s, weekly, checkCount, submitted, hasReply: replied }) => (
+                <div key={s.id} className={`p-3 rounded border ${!submitted ? 'bg-gray-50' : checkCount === 0 ? 'bg-yellow-50 border-yellow-300' : 'bg-white'}`}>
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      {submitted ? (
+                        checkCount === 0 ? (
+                          <span className="text-yellow-600">⚠️</span>
+                        ) : (
+                          <span className="text-green-600">✅</span>
+                        )
+                      ) : (
+                        <span className="text-gray-400">❌</span>
+                      )}
+                      <span className="font-semibold">{s.name}</span>
+                      {submitted && <span className="text-sm text-gray-500">{checkCount}/7日</span>}
+                      {replied && <span className="text-xs bg-pink-100 text-pink-600 px-1 rounded">返信済</span>}
+                    </div>
+                    <div className="flex gap-2">
+                      {submitted && checkCount === 0 && !replied && (
+                        <button onClick={() => onReply(weekly.id)} className="text-pink-500 text-sm">返信</button>
+                      )}
+                      <button onClick={() => onViewDetail(s.id)} className="text-blue-500 text-sm">詳細</button>
+                    </div>
+                  </div>
+                  
+                  {/* 返信フォーム */}
+                  {replyingTo === weekly?.id && (
+                    <div className="mt-3 bg-white p-2 rounded">
+                      <textarea
+                        value={replyText}
+                        onChange={e => setReplyText(e.target.value)}
+                        placeholder="事実確認＋質問1つまで"
+                        className="input w-full"
+                        rows={2}
+                      />
+                      <div className="flex gap-2 mt-2">
+                        <button onClick={() => sendReply(weekly.id)} className="btn btn-pink flex-1">送信</button>
+                        <button onClick={() => onReply(null)} className="btn btn-gray flex-1">取消</button>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* 0日の理由表示 */}
+                  {submitted && checkCount === 0 && weekly?.zeroReason && (
+                    <div className="mt-2 text-sm text-gray-600">
+                      <span className="text-gray-400">理由:</span> {weekly.zeroReason}<br/>
+                      <span className="text-gray-400">来週:</span> {weekly.nextAction} {weekly.nextActionDetail && `- ${weekly.nextActionDetail}`}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* 目標設定タブ */}
+      {viewTab === 'goals' && (
+        <div className="card">
+          <h3 className="font-bold mb-3">🎯 {currentYearMonth} 目標設定</h3>
+          <div className="space-y-3">
+            {staff.map(s => {
+              const goal = contactGoals.find(g => g.staffId === s.id && g.yearMonth === currentYearMonth)
+              const isEditing = editingGoal === s.id
+              
+              return (
+                <div key={s.id} className="border rounded p-3">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-semibold">{s.name}</span>
+                    {!isEditing && (
+                      <button onClick={() => {
+                        setEditingGoal(s.id)
+                        setGoalForm({
+                          monthlyGoal: goal?.monthlyGoal || '',
+                          weeklyTask: goal?.weeklyTask || ''
+                        })
+                      }} className="text-blue-500 text-sm">編集</button>
+                    )}
+                  </div>
+                  
+                  {isEditing ? (
+                    <div className="space-y-2">
+                      <input
+                        type="text"
+                        value={goalForm.monthlyGoal}
+                        onChange={e => setGoalForm({ ...goalForm, monthlyGoal: e.target.value })}
+                        placeholder="今月の目標"
+                        className="input"
+                      />
+                      <input
+                        type="text"
+                        value={goalForm.weeklyTask}
+                        onChange={e => setGoalForm({ ...goalForm, weeklyTask: e.target.value })}
+                        placeholder="毎日やること"
+                        className="input"
+                      />
+                      <div className="flex gap-2">
+                        <button onClick={() => {
+                          saveGoal(s.id, s.name, goalForm.monthlyGoal, goalForm.weeklyTask)
+                          setEditingGoal(null)
+                        }} className="btn btn-green flex-1">保存</button>
+                        <button onClick={() => setEditingGoal(null)} className="btn btn-gray flex-1">取消</button>
+                      </div>
+                    </div>
+                  ) : (
+                    goal ? (
+                      <div className="text-sm">
+                        <p><span className="text-gray-400">目標:</span> {goal.monthlyGoal}</p>
+                        <p><span className="text-gray-400">毎日:</span> {goal.weeklyTask}</p>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-400">未設定</p>
+                    )
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// スタッフ詳細ビュー
+function StaffDetailView({ staff, contactWeekly, contactMonthly, contactReplies, getCheckCount, onBack }) {
+  if (!staff) return null
+
+  return (
+    <div className="space-y-4">
+      <button onClick={onBack} className="btn btn-gray">← 戻る</button>
+      
+      <div className="card">
+        <h3 className="font-bold text-lg mb-4">{staff.name}さんの推移</h3>
+        
+        {/* 週次履歴 */}
+        <h4 className="font-semibold mb-2">📝 週次履歴</h4>
+        {contactWeekly.length === 0 ? (
+          <p className="text-gray-400 text-sm mb-4">まだ記録がありません</p>
+        ) : (
+          <div className="space-y-2 mb-4">
+            {contactWeekly.slice(0, 8).map(w => {
+              const count = getCheckCount(w.checks)
+              const replies = contactReplies.filter(r => r.weeklyId === w.id)
+              
+              return (
+                <div key={w.id} className={`p-2 rounded text-sm ${count === 0 ? 'bg-yellow-50' : 'bg-gray-50'}`}>
+                  <div className="flex justify-between">
+                    <span className="font-semibold">{w.weekStart}週</span>
+                    <span className={count === 0 ? 'text-yellow-600 font-bold' : 'text-green-600'}>{count}/7日</span>
+                  </div>
+                  {count === 0 && w.zeroReason && (
+                    <p className="text-gray-500 text-xs mt-1">理由: {w.zeroReason} / 来週: {w.nextAction}</p>
+                  )}
+                  {replies.length > 0 && (
+                    <p className="text-pink-600 text-xs mt-1">💬 {replies[0].replyText}</p>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {/* 月次履歴 */}
+        <h4 className="font-semibold mb-2">💭 月次の問い</h4>
+        {contactMonthly.length === 0 ? (
+          <p className="text-gray-400 text-sm">まだ記録がありません</p>
+        ) : (
+          <div className="space-y-3">
+            {contactMonthly.slice(0, 3).map(m => (
+              <div key={m.id} className="bg-gray-50 p-3 rounded text-sm">
+                <p className="font-semibold mb-2">{m.yearMonth}</p>
+                <p><span className="text-gray-400">Q1:</span> {m.q1}</p>
+                <p><span className="text-gray-400">Q2:</span> {m.q2}</p>
+                <p><span className="text-gray-400">Q3:</span> {m.q3}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ==================== 連絡帳 ====================
+function ContactBook({ staff, contactGoals, setContactGoals, contactWeekly, setContactWeekly, contactReplies, setContactReplies, contactMonthly, setContactMonthly, notifications, setNotifications, isAdmin }) {
+  const [selectedStaff, setSelectedStaff] = useState('')
+  const [mode, setMode] = useState(isAdmin ? 'admin' : 'weekly') // 'weekly', 'monthly', 'admin', 'detail'
+  const [detailStaffId, setDetailStaffId] = useState(null)
+  const [replyText, setReplyText] = useState('')
+  const [replyingTo, setReplyingTo] = useState(null)
+  
+  // 目標設定用
+  const [editingGoal, setEditingGoal] = useState(null)
+  const [goalData, setGoalData] = useState({ monthlyGoal: '', weeklyTask: '' })
+  
+  // 週次入力用
+  const [weeklyChecks, setWeeklyChecks] = useState([false, false, false, false, false, false, false])
+  const [zeroReason, setZeroReason] = useState('')
+  const [nextAction, setNextAction] = useState('')
+  const [nextActionDetail, setNextActionDetail] = useState('')
+  
+  // 月次入力用
+  const [q1Answer, setQ1Answer] = useState('')
+  const [q2Answer, setQ2Answer] = useState('')
+  const [q3Answer, setQ3Answer] = useState('')
+
+  const today = new Date()
+  const currentYearMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`
+
+  // 今週の月曜日を取得
+  const getWeekStart = (date) => {
+    const d = new Date(date)
+    const day = d.getDay()
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1)
+    const monday = new Date(d.setDate(diff))
+    return monday.toISOString().split('T')[0]
+  }
+
+  // 第三日曜日かどうか
+  const isThirdSunday = (date) => {
+    const d = new Date(date)
+    if (d.getDay() !== 0) return false
+    const firstDay = new Date(d.getFullYear(), d.getMonth(), 1)
+    let sundayCount = 0
+    for (let i = 1; i <= d.getDate(); i++) {
+      if (new Date(d.getFullYear(), d.getMonth(), i).getDay() === 0) sundayCount++
+    }
+    return sundayCount === 3
+  }
+
+  // 今週の提出日（通常は日曜、第三日曜の週は土曜）
+  const getSubmitDay = (weekStart) => {
+    const start = new Date(weekStart)
+    const sunday = new Date(start)
+    sunday.setDate(start.getDate() + 6)
+    if (isThirdSunday(sunday)) {
+      const saturday = new Date(start)
+      saturday.setDate(start.getDate() + 5)
+      return saturday.toISOString().split('T')[0]
+    }
+    return sunday.toISOString().split('T')[0]
+  }
+
+  const currentWeekStart = getWeekStart(today)
+  const dayNames = ['月', '火', '水', '木', '金', '土', '日']
+
+  // 理由の選択肢
+  const reasonOptions = ['時間が取れなかった', '体調／メンタル', '忘れていた', '優先順位が下がった', 'その他']
+  const actionOptions = ['同じ内容で続ける', '少し下げて続ける', '一旦止める']
+
+  // 選択中スタッフの今月の目標
+  const currentGoal = contactGoals.find(g => g.staffId === parseInt(selectedStaff) && g.yearMonth === currentYearMonth)
+  
+  // 選択中スタッフの今週の記録
+  const currentWeekly = contactWeekly.find(w => w.staffId === parseInt(selectedStaff) && w.weekStart === currentWeekStart)
+
+  // チェック数を計算
+  const countChecks = (checks) => checks.filter(c => c).length
+
+  // 赤信号判定（2週連続0 or 未提出2週）
+  const isRedFlag = (staffId) => {
+    const records = contactWeekly.filter(w => w.staffId === staffId).sort((a, b) => b.weekStart.localeCompare(a.weekStart))
+    if (records.length < 2) return records.length === 0 // 記録なし
+    const last2 = records.slice(0, 2)
+    const zeroCount = last2.filter(r => countChecks(r.checks) === 0 || !r.submittedAt).length
+    return zeroCount >= 2
+  }
+
+  // 週次提出
+  const submitWeekly = async () => {
+    if (!selectedStaff) return
+    const staffMember = staff.find(s => s.id === parseInt(selectedStaff))
+    const checkCount = countChecks(weeklyChecks)
+    
+    // 0日の場合は理由必須
+    if (checkCount === 0 && (!zeroReason || !nextAction)) {
+      alert('0日の場合は理由と来週の対応を入力してください')
+      return
+    }
+
+    const existing = contactWeekly.find(w => w.staffId === parseInt(selectedStaff) && w.weekStart === currentWeekStart)
+    
+    if (existing) {
+      const { error } = await supabase.from('contact_weekly').update({
+        check_mon: weeklyChecks[0], check_tue: weeklyChecks[1], check_wed: weeklyChecks[2],
+        check_thu: weeklyChecks[3], check_fri: weeklyChecks[4], check_sat: weeklyChecks[5], check_sun: weeklyChecks[6],
+        zero_reason: checkCount === 0 ? zeroReason : null,
+        next_action: checkCount === 0 ? nextAction : null,
+        next_action_detail: checkCount === 0 ? nextActionDetail : null,
+        submitted_at: new Date().toISOString()
+      }).eq('id', existing.id)
+      
+      if (!error) {
+        setContactWeekly(contactWeekly.map(w => w.id === existing.id ? {
+          ...w, checks: weeklyChecks, zeroReason: checkCount === 0 ? zeroReason : null,
+          nextAction: checkCount === 0 ? nextAction : null, nextActionDetail: checkCount === 0 ? nextActionDetail : null,
+          submittedAt: new Date().toISOString()
+        } : w))
+        alert('提出しました！')
+      }
+    } else {
+      const { data, error } = await supabase.from('contact_weekly').insert({
+        staff_id: parseInt(selectedStaff), staff_name: staffMember.name, week_start: currentWeekStart,
+        check_mon: weeklyChecks[0], check_tue: weeklyChecks[1], check_wed: weeklyChecks[2],
+        check_thu: weeklyChecks[3], check_fri: weeklyChecks[4], check_sat: weeklyChecks[5], check_sun: weeklyChecks[6],
+        zero_reason: checkCount === 0 ? zeroReason : null,
+        next_action: checkCount === 0 ? nextAction : null,
+        next_action_detail: checkCount === 0 ? nextActionDetail : null,
+        submitted_at: new Date().toISOString()
+      }).select()
+      
+      if (!error && data) {
+        setContactWeekly([{
+          id: data[0].id, staffId: parseInt(selectedStaff), staffName: staffMember.name,
+          weekStart: currentWeekStart, checks: weeklyChecks,
+          zeroReason: checkCount === 0 ? zeroReason : null,
+          nextAction: checkCount === 0 ? nextAction : null,
+          nextActionDetail: checkCount === 0 ? nextActionDetail : null,
+          submittedAt: new Date().toISOString()
+        }, ...contactWeekly])
+        
+        // 管理者へ通知
+        await supabase.from('notifications').insert({
+          target_role: 'admin', message: `${staffMember.name}さんが連絡帳を提出（${countChecks(weeklyChecks)}日）`,
+          link_to: 'contact', is_read: false
+        })
+        alert('提出しました！')
+      }
+    }
+  }
+
+  // 月次提出
+  const submitMonthly = async () => {
+    if (!selectedStaff || !q1Answer || !q2Answer || !q3Answer) {
+      alert('すべての質問に回答してください')
+      return
+    }
+    const staffMember = staff.find(s => s.id === parseInt(selectedStaff))
+    const existing = contactMonthly.find(m => m.staffId === parseInt(selectedStaff) && m.yearMonth === currentYearMonth)
+    
+    if (existing) {
+      const { error } = await supabase.from('contact_monthly').update({
+        q1_answer: q1Answer, q2_answer: q2Answer, q3_answer: q3Answer,
+        submitted_at: new Date().toISOString()
+      }).eq('id', existing.id)
+      
+      if (!error) {
+        setContactMonthly(contactMonthly.map(m => m.id === existing.id ? {
+          ...m, q1: q1Answer, q2: q2Answer, q3: q3Answer, submittedAt: new Date().toISOString()
+        } : m))
+        alert('提出しました！')
+      }
+    } else {
+      const { data, error } = await supabase.from('contact_monthly').insert({
+        staff_id: parseInt(selectedStaff), staff_name: staffMember.name, year_month: currentYearMonth,
+        q1_answer: q1Answer, q2_answer: q2Answer, q3_answer: q3Answer,
+        submitted_at: new Date().toISOString()
+      }).select()
+      
+      if (!error && data) {
+        setContactMonthly([{
+          id: data[0].id, staffId: parseInt(selectedStaff), staffName: staffMember.name,
+          yearMonth: currentYearMonth, q1: q1Answer, q2: q2Answer, q3: q3Answer,
+          submittedAt: new Date().toISOString()
+        }, ...contactMonthly])
+        alert('提出しました！')
+      }
+    }
+  }
+
+  // 返信を送信
+  const submitReply = async (weeklyId) => {
+    if (!replyText) return
+    const { data, error } = await supabase.from('contact_replies').insert({
+      weekly_id: weeklyId, reply_text: replyText, replied_by: '綾華'
+    }).select()
+    
+    if (!error && data) {
+      setContactReplies([{
+        id: data[0].id, weeklyId, replyText, repliedBy: '綾華', createdAt: data[0].created_at
+      }, ...contactReplies])
+      
+      // スタッフへ通知
+      const weekly = contactWeekly.find(w => w.id === weeklyId)
+      if (weekly) {
+        await supabase.from('notifications').insert({
+          target_role: 'staff', target_staff_id: weekly.staffId,
+          message: '連絡帳に返信がありました', link_to: 'contact', is_read: false
+        })
+      }
+      setReplyText('')
+      setReplyingTo(null)
+      alert('返信しました')
+    }
+  }
+
+  // 目標を保存
+  const saveGoal = async (staffId, staffName) => {
+    const existing = contactGoals.find(g => g.staffId === staffId && g.yearMonth === currentYearMonth)
+    
+    if (existing) {
+      const { error } = await supabase.from('contact_goals').update({
+        monthly_goal: goalData.monthlyGoal, weekly_task: goalData.weeklyTask
+      }).eq('id', existing.id)
+      
+      if (!error) {
+        setContactGoals(contactGoals.map(g => g.id === existing.id ? {
+          ...g, monthlyGoal: goalData.monthlyGoal, weeklyTask: goalData.weeklyTask
+        } : g))
+      }
+    } else {
+      const { data, error } = await supabase.from('contact_goals').insert({
+        staff_id: staffId, staff_name: staffName, year_month: currentYearMonth,
+        monthly_goal: goalData.monthlyGoal, weekly_task: goalData.weeklyTask
+      }).select()
+      
+      if (!error && data) {
+        setContactGoals([...contactGoals, {
+          id: data[0].id, staffId, staffName, yearMonth: currentYearMonth,
+          monthlyGoal: goalData.monthlyGoal, weeklyTask: goalData.weeklyTask
+        }])
+      }
+    }
+    setEditingGoal(null)
+    alert('保存しました')
+  }
+
+  // 今週提出したスタッフ一覧
+  const thisWeekSubmissions = contactWeekly.filter(w => w.weekStart === currentWeekStart && w.submittedAt)
+  const redFlagStaff = staff.filter(s => isRedFlag(s.id))
+
+  return (
+    <div className="space-y-4">
+      {/* スタッフモード：スタッフ選択 */}
+      {!isAdmin && (
+        <div className="card">
+          <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>スタッフ</label>
+          <select value={selectedStaff} onChange={e => {
+            setSelectedStaff(e.target.value)
+            const weekly = contactWeekly.find(w => w.staffId === parseInt(e.target.value) && w.weekStart === currentWeekStart)
+            if (weekly) setWeeklyChecks(weekly.checks)
+            else setWeeklyChecks([false, false, false, false, false, false, false])
+          }} className="select">
+            <option value="">選択してください</option>
+            {staff.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
+        </div>
+      )}
+
+      {/* モード切替 */}
+      <div className="flex gap-2">
+        {!isAdmin && (
+          <>
+            <button onClick={() => setMode('weekly')} className={`btn flex-1 ${mode === 'weekly' ? 'btn-blue' : 'btn-gray'}`}>週次</button>
+            <button onClick={() => setMode('monthly')} className={`btn flex-1 ${mode === 'monthly' ? 'btn-blue' : 'btn-gray'}`}>月次</button>
+          </>
+        )}
+        {isAdmin && (
+          <>
+            <button onClick={() => setMode('admin')} className={`btn flex-1 ${mode === 'admin' ? 'btn-blue' : 'btn-gray'}`}>📊 管理</button>
+            <button onClick={() => setMode('goals')} className={`btn flex-1 ${mode === 'goals' ? 'btn-blue' : 'btn-gray'}`}>🎯 目標設定</button>
+            <button onClick={() => setMode('detail')} className={`btn flex-1 ${mode === 'detail' ? 'btn-blue' : 'btn-gray'}`}>👤 個人詳細</button>
+          </>
+        )}
+      </div>
+
+      {/* ===== スタッフ：週次 ===== */}
+      {mode === 'weekly' && !isAdmin && selectedStaff && (
+        <div className="card">
+          <h3 className="font-bold mb-3">📓 今週の連絡帳</h3>
+          <p className="text-sm text-gray-500 mb-2">週: {currentWeekStart} 〜</p>
+          
+          {currentGoal ? (
+            <div className="bg-blue-50 p-3 rounded mb-4">
+              <p className="text-sm"><span className="font-semibold">今月の目標:</span> {currentGoal.monthlyGoal}</p>
+              <p className="text-sm"><span className="font-semibold">今週やること:</span> {currentGoal.weeklyTask}</p>
+            </div>
+          ) : (
+            <p className="text-gray-400 text-sm mb-4">目標が設定されていません</p>
+          )}
+          
+          <div className="mb-4">
+            <p className="text-sm font-semibold mb-2">できた日にチェック</p>
+            <div className="grid grid-cols-7 gap-1">
+              {dayNames.map((day, i) => (
+                <div key={day} className="text-center">
+                  <div className="text-xs text-gray-500 mb-1">{day}</div>
+                  <button 
+                    onClick={() => {
+                      const newChecks = [...weeklyChecks]
+                      newChecks[i] = !newChecks[i]
+                      setWeeklyChecks(newChecks)
+                    }}
+                    className={`w-10 h-10 rounded-full text-lg ${weeklyChecks[i] ? 'bg-green-500 text-white' : 'bg-gray-200'}`}
+                  >
+                    {weeklyChecks[i] ? '✓' : ''}
+                  </button>
+                </div>
+              ))}
+            </div>
+            <p className="text-center mt-2 font-bold text-lg">{countChecks(weeklyChecks)}日 / 7日</p>
+          </div>
+          
+          {/* 0日の場合のみ追加入力 */}
+          {countChecks(weeklyChecks) === 0 && (
+            <div className="bg-yellow-50 p-3 rounded mb-4">
+              <p className="text-sm font-semibold mb-2">できなかった理由</p>
+              <div className="flex flex-wrap gap-2 mb-3">
+                {reasonOptions.map(r => (
+                  <button key={r} onClick={() => setZeroReason(r)} className={`btn text-xs ${zeroReason === r ? 'btn-blue' : 'btn-gray'}`}>{r}</button>
+                ))}
+              </div>
+              {zeroReason === 'その他' && (
+                <input type="text" placeholder="理由を入力" className="input mb-3" onChange={e => setZeroReason(e.target.value)} />
+              )}
+              
+              <p className="text-sm font-semibold mb-2">来週どうする？</p>
+              <div className="flex flex-wrap gap-2 mb-3">
+                {actionOptions.map(a => (
+                  <button key={a} onClick={() => setNextAction(a)} className={`btn text-xs ${nextAction === a ? 'btn-blue' : 'btn-gray'}`}>{a}</button>
+                ))}
+              </div>
+              <input type="text" value={nextActionDetail} onChange={e => setNextActionDetail(e.target.value)} placeholder="補足（1行）" className="input" />
+            </div>
+          )}
+          
+          <button onClick={submitWeekly} className="btn btn-green w-full py-3">
+            {currentWeekly?.submittedAt ? '再提出する' : '提出する'}
+          </button>
+          
+          {currentWeekly?.submittedAt && (
+            <p className="text-center text-sm text-gray-500 mt-2">提出済: {new Date(currentWeekly.submittedAt).toLocaleString('ja-JP')}</p>
+          )}
+
+          {/* 返信表示 */}
+          {currentWeekly && contactReplies.filter(r => r.weeklyId === currentWeekly.id).length > 0 && (
+            <div className="mt-4 bg-purple-50 p-3 rounded">
+              <p className="font-semibold text-sm mb-2">💬 返信</p>
+              {contactReplies.filter(r => r.weeklyId === currentWeekly.id).map(r => (
+                <div key={r.id} className="text-sm">
+                  <span className="text-purple-600">{r.repliedBy}:</span> {r.replyText}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ===== スタッフ：月次 ===== */}
+      {mode === 'monthly' && !isAdmin && selectedStaff && (
+        <div className="card">
+          <h3 className="font-bold mb-3">📝 今月の振り返り</h3>
+          <p className="text-sm text-gray-500 mb-4">{currentYearMonth}</p>
+          
+          <div className="space-y-4">
+            <div>
+              <p className="text-sm font-semibold mb-1">Q1. 今月いちばん止まった（または重かった）行動はどれ？</p>
+              <input type="text" value={q1Answer} onChange={e => setQ1Answer(e.target.value)} className="input" placeholder="3行以内で" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold mb-1">Q2. それが止まった一番の理由は何だったと思う？</p>
+              <input type="text" value={q2Answer} onChange={e => setQ2Answer(e.target.value)} className="input" placeholder="3行以内で" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold mb-1">Q3. 来月、同じ目標なら最初に何を変える？</p>
+              <input type="text" value={q3Answer} onChange={e => setQ3Answer(e.target.value)} className="input" placeholder="3行以内で" />
+            </div>
+          </div>
+          
+          <button onClick={submitMonthly} className="btn btn-green w-full py-3 mt-4">提出する</button>
+        </div>
+      )}
+
+      {/* ===== 管理者：ダッシュボード ===== */}
+      {mode === 'admin' && isAdmin && (
+        <div className="space-y-4">
+          {/* 赤信号 */}
+          {redFlagStaff.length > 0 && (
+            <div className="card bg-red-50 border-red-300">
+              <h3 className="font-bold text-red-600 mb-2">⚠️ 赤信号</h3>
+              <div className="space-y-1">
+                {redFlagStaff.map(s => (
+                  <div key={s.id} className="text-sm">
+                    <span className="font-semibold">{s.name}</span> - 2週連続0日 or 未提出
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {/* 今週の状況 */}
+          <div className="card">
+            <h3 className="font-bold mb-3">📊 今週（{currentWeekStart}〜）</h3>
+            <div className="grid-2 gap-4 mb-4">
+              <div className="bg-blue-50 p-3 rounded text-center">
+                <div className="text-2xl font-bold text-blue-600">{thisWeekSubmissions.length}/{staff.length}</div>
+                <div className="text-sm text-gray-500">提出</div>
+              </div>
+              <div className="bg-green-50 p-3 rounded text-center">
+                <div className="text-2xl font-bold text-green-600">
+                  {thisWeekSubmissions.length > 0 ? (thisWeekSubmissions.reduce((sum, w) => sum + countChecks(w.checks), 0) / thisWeekSubmissions.length).toFixed(1) : 0}日
+                </div>
+                <div className="text-sm text-gray-500">平均達成</div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              {staff.map(s => {
+                const weekly = contactWeekly.find(w => w.staffId === s.id && w.weekStart === currentWeekStart)
+                const hasReply = weekly && contactReplies.some(r => r.weeklyId === weekly.id)
+                const checkCount = weekly ? countChecks(weekly.checks) : null
+                
+                return (
+                  <div key={s.id} className={`flex justify-between items-center p-2 rounded ${weekly?.submittedAt ? 'bg-gray-50' : 'bg-yellow-50'}`}>
+                    <div>
+                      <span className="font-semibold">{s.name}</span>
+                      {weekly?.submittedAt ? (
+                        <span className={`ml-2 ${checkCount === 0 ? 'text-red-500' : 'text-green-600'}`}>{checkCount}日</span>
+                      ) : (
+                        <span className="ml-2 text-gray-400">未提出</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {weekly?.submittedAt && checkCount === 0 && !hasReply && (
+                        <button onClick={() => { setReplyingTo(weekly.id); setReplyText('') }} className="text-purple-500 text-xs">返信する</button>
+                      )}
+                      {hasReply && <span className="text-xs text-purple-500">返信済</span>}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+            
+            {/* 返信入力 */}
+            {replyingTo && (
+              <div className="mt-4 bg-purple-50 p-3 rounded">
+                <p className="text-sm font-semibold mb-2">💬 返信を書く</p>
+                <textarea value={replyText} onChange={e => setReplyText(e.target.value)} className="input w-full" rows={2} placeholder="事実確認＋質問1つまで" />
+                <div className="flex gap-2 mt-2">
+                  <button onClick={() => submitReply(replyingTo)} className="btn btn-purple flex-1">送信</button>
+                  <button onClick={() => setReplyingTo(null)} className="btn btn-gray flex-1">キャンセル</button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ===== 管理者：目標設定 ===== */}
+      {mode === 'goals' && isAdmin && (
+        <div className="card">
+          <h3 className="font-bold mb-3">🎯 {currentYearMonth} 目標設定</h3>
+          <div className="space-y-3">
+            {staff.map(s => {
+              const goal = contactGoals.find(g => g.staffId === s.id && g.yearMonth === currentYearMonth)
+              const isEditing = editingGoal === s.id
+              
+              return (
+                <div key={s.id} className="border rounded p-3">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-semibold">{s.name}</span>
+                    {!isEditing && (
+                      <button onClick={() => {
+                        setEditingGoal(s.id)
+                        setGoalData({ monthlyGoal: goal?.monthlyGoal || '', weeklyTask: goal?.weeklyTask || '' })
+                      }} className="text-blue-500 text-sm">編集</button>
+                    )}
+                  </div>
+                  
+                  {isEditing ? (
+                    <div className="space-y-2">
+                      <input type="text" value={goalData.monthlyGoal} onChange={e => setGoalData({...goalData, monthlyGoal: e.target.value})} placeholder="今月の目標" className="input" />
+                      <input type="text" value={goalData.weeklyTask} onChange={e => setGoalData({...goalData, weeklyTask: e.target.value})} placeholder="毎日やること" className="input" />
+                      <div className="flex gap-2">
+                        <button onClick={() => saveGoal(s.id, s.name)} className="btn btn-green flex-1">保存</button>
+                        <button onClick={() => setEditingGoal(null)} className="btn btn-gray flex-1">キャンセル</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-sm text-gray-600">
+                      {goal ? (
+                        <>
+                          <p><span className="text-gray-400">目標:</span> {goal.monthlyGoal}</p>
+                          <p><span className="text-gray-400">毎日:</span> {goal.weeklyTask}</p>
+                        </>
+                      ) : (
+                        <p className="text-gray-400">未設定</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ===== 管理者：個人詳細 ===== */}
+      {mode === 'detail' && isAdmin && (
+        <div className="space-y-4">
+          <div className="card">
+            <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>スタッフを選択</label>
+            <select value={detailStaffId || ''} onChange={e => setDetailStaffId(parseInt(e.target.value))} className="select">
+              <option value="">選択してください</option>
+              {staff.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+          </div>
+          
+          {detailStaffId && (
+            <>
+              {/* 週次推移 */}
+              <div className="card">
+                <h3 className="font-bold mb-3">📈 週次推移</h3>
+                <div className="space-y-2">
+                  {contactWeekly.filter(w => w.staffId === detailStaffId).slice(0, 8).map(w => {
+                    const checkCount = countChecks(w.checks)
+                    const hasReply = contactReplies.some(r => r.weeklyId === w.id)
+                    return (
+                      <div key={w.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                        <div>
+                          <span className="font-semibold">{w.weekStart}</span>
+                          <span className={`ml-2 ${checkCount === 0 ? 'text-red-500 font-bold' : 'text-green-600'}`}>{checkCount}日</span>
+                          {checkCount === 0 && w.zeroReason && (
+                            <span className="ml-2 text-xs text-gray-500">({w.zeroReason})</span>
+                          )}
+                        </div>
+                        {hasReply && <span className="text-xs text-purple-500">返信済</span>}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+              
+              {/* 月次の問い */}
+              <div className="card">
+                <h3 className="font-bold mb-3">📝 月次の問い</h3>
+                {contactMonthly.filter(m => m.staffId === detailStaffId).slice(0, 3).map(m => (
+                  <div key={m.id} className="bg-gray-50 p-3 rounded mb-2">
+                    <p className="font-semibold text-sm mb-2">{m.yearMonth}</p>
+                    <p className="text-sm"><span className="text-gray-500">Q1:</span> {m.q1}</p>
+                    <p className="text-sm"><span className="text-gray-500">Q2:</span> {m.q2}</p>
+                    <p className="text-sm"><span className="text-gray-500">Q3:</span> {m.q3}</p>
+                  </div>
+                ))}
+                {contactMonthly.filter(m => m.staffId === detailStaffId).length === 0 && (
+                  <p className="text-gray-400 text-sm">まだ回答がありません</p>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      )}
     </div>
   )
 }
