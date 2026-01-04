@@ -178,7 +178,8 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
         joinDate: s.join_date, tenureRate: s.tenure_rate || 100,
         workType: s.work_type || 'full', partTimeRate: s.part_time_rate || 100,
         isOpeningStaff: s.is_opening_staff || false, specialRate: s.special_rate || 0,
-        isManagement: s.is_management || false, workDaysPerWeek: s.work_days_per_week || 5
+        isManagement: s.is_management || false, workDaysPerWeek: s.work_days_per_week || 5,
+        contactEnabled: s.contact_enabled || false
       })))
       if (productsRes.data) setProducts(productsRes.data.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)).map(p => ({ id: p.id, largeCategory: p.large_category, mediumCategory: p.medium_category, name: p.name, purchasePrice: p.purchase_price, sellingPrice: p.selling_price, productType: p.product_type || 'business', sortOrder: p.sort_order || 0 })))
       if (categoriesRes.data) {
@@ -284,7 +285,7 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
       {tab === 'stockin' && <StockInInput products={products} stockIn={stockIn} setStockIn={setStockIn} categories={categories} />}
       {tab === 'timecard' && <TimeCard staff={staff} timeRecords={timeRecords} setTimeRecords={setTimeRecords} isAdmin={isAdmin} />}
       {tab === 'practice' && <PracticeReservation staff={staff} practiceReservations={practiceReservations} setPracticeReservations={setPracticeReservations} modelRules={modelRules} setModelRules={setModelRules} isAdmin={isAdmin} />}
-      {tab === 'contact' && <ContactBook staff={staff} contactGoals={contactGoals} setContactGoals={setContactGoals} contactWeekly={contactWeekly} setContactWeekly={setContactWeekly} contactReplies={contactReplies} setContactReplies={setContactReplies} contactMonthly={contactMonthly} setContactMonthly={setContactMonthly} notifications={notifications} setNotifications={setNotifications} isAdmin={isAdmin} />}
+      {tab === 'contact' && <ContactBook staff={staff} setStaff={setStaff} contactGoals={contactGoals} setContactGoals={setContactGoals} contactWeekly={contactWeekly} setContactWeekly={setContactWeekly} contactReplies={contactReplies} setContactReplies={setContactReplies} contactMonthly={contactMonthly} setContactMonthly={setContactMonthly} notifications={notifications} setNotifications={setNotifications} isAdmin={isAdmin} />}
       {tab === 'order' && <OrderLinks categories={categories} setCategories={setCategories} />}
       {tab === 'inventory' && <InventoryInput products={products} staff={staff} usage={usage} stockIn={stockIn} inventoryHistory={inventoryHistory} setInventoryHistory={setInventoryHistory} />}
       {tab === 'dealer' && <DealerBudget products={products} usage={usage} stockIn={stockIn} categories={categories} dealerBudgets={dealerBudgets} setDealerBudgets={setDealerBudgets} dealerAllocations={dealerAllocations} setDealerAllocations={setDealerAllocations} isAdmin={isAdmin} />}
@@ -1677,30 +1678,30 @@ function DataExport({ products, staff, usage, stockIn, inventoryHistory }) {
 
 
 // ==================== 連絡帳 ====================
-function ContactBook({ staff, contactGoals, setContactGoals, contactWeekly, setContactWeekly, contactReplies, setContactReplies, contactMonthly, setContactMonthly, notifications, setNotifications, isAdmin }) {
+function ContactBook({ staff, setStaff, contactGoals, setContactGoals, contactWeekly, setContactWeekly, contactReplies, setContactReplies, contactMonthly, setContactMonthly, notifications, setNotifications, isAdmin }) {
   const [selectedStaff, setSelectedStaff] = useState('')
-  const [mode, setMode] = useState(isAdmin ? 'admin' : 'weekly') // 'weekly', 'monthly', 'admin', 'detail'
+  const [mode, setMode] = useState(isAdmin ? 'admin' : 'weekly')
   const [detailStaffId, setDetailStaffId] = useState(null)
   const [replyText, setReplyText] = useState('')
   const [replyingTo, setReplyingTo] = useState(null)
   
-  // 目標設定用
   const [editingGoal, setEditingGoal] = useState(null)
   const [goalData, setGoalData] = useState({ monthlyGoal: '', weeklyTask: '' })
   
-  // 週次入力用
   const [weeklyChecks, setWeeklyChecks] = useState([false, false, false, false, false, false, false])
   const [zeroReason, setZeroReason] = useState('')
   const [nextAction, setNextAction] = useState('')
   const [nextActionDetail, setNextActionDetail] = useState('')
   
-  // 月次入力用
   const [q1Answer, setQ1Answer] = useState('')
   const [q2Answer, setQ2Answer] = useState('')
   const [q3Answer, setQ3Answer] = useState('')
 
   const today = new Date()
   const currentYearMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`
+
+  // 連絡帳対象スタッフのみ
+  const contactStaff = staff.filter(s => s.contactEnabled)
 
   // 今週の月曜日を取得
   const getWeekStart = (date) => {
@@ -1711,11 +1712,24 @@ function ContactBook({ staff, contactGoals, setContactGoals, contactWeekly, setC
     return monday.toISOString().split('T')[0]
   }
 
+  const currentWeekStart = getWeekStart(today)
+
+  // 今週の各曜日の日付を取得
+  const getWeekDates = (weekStart) => {
+    const dates = []
+    const start = new Date(weekStart)
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(start)
+      d.setDate(start.getDate() + i)
+      dates.push(d)
+    }
+    return dates
+  }
+
   // 第三日曜日かどうか
   const isThirdSunday = (date) => {
     const d = new Date(date)
     if (d.getDay() !== 0) return false
-    const firstDay = new Date(d.getFullYear(), d.getMonth(), 1)
     let sundayCount = 0
     for (let i = 1; i <= d.getDate(); i++) {
       if (new Date(d.getFullYear(), d.getMonth(), i).getDay() === 0) sundayCount++
@@ -1723,39 +1737,37 @@ function ContactBook({ staff, contactGoals, setContactGoals, contactWeekly, setC
     return sundayCount === 3
   }
 
-  // 今週の提出日（通常は日曜、第三日曜の週は土曜）
-  const getSubmitDay = (weekStart) => {
-    const start = new Date(weekStart)
-    const sunday = new Date(start)
-    sunday.setDate(start.getDate() + 6)
-    if (isThirdSunday(sunday)) {
-      const saturday = new Date(start)
-      saturday.setDate(start.getDate() + 5)
-      return saturday.toISOString().split('T')[0]
-    }
-    return sunday.toISOString().split('T')[0]
+  // 定休日かどうか（月火 + 第三日曜）
+  const isHoliday = (date) => {
+    const d = new Date(date)
+    const dayOfWeek = d.getDay()
+    if (dayOfWeek === 1 || dayOfWeek === 2) return true // 月火
+    if (isThirdSunday(d)) return true
+    return false
   }
 
-  const currentWeekStart = getWeekStart(today)
+  const weekDates = getWeekDates(currentWeekStart)
   const dayNames = ['月', '火', '水', '木', '金', '土', '日']
 
-  // 理由の選択肢
+  // 稼働日数を計算
+  const workingDays = weekDates.filter(d => !isHoliday(d)).length
+
+  // チェック数を計算（稼働日のみ）
+  const countChecks = (checks, dates) => {
+    if (!dates) return checks.filter(c => c).length
+    return checks.filter((c, i) => c && !isHoliday(dates[i])).length
+  }
+
   const reasonOptions = ['時間が取れなかった', '体調／メンタル', '忘れていた', '優先順位が下がった', 'その他']
   const actionOptions = ['同じ内容で続ける', '少し下げて続ける', '一旦止める']
 
-  // 選択中スタッフの今月の目標
   const currentGoal = contactGoals.find(g => g.staffId === parseInt(selectedStaff) && g.yearMonth === currentYearMonth)
-  
-  // 選択中スタッフの今週の記録
   const currentWeekly = contactWeekly.find(w => w.staffId === parseInt(selectedStaff) && w.weekStart === currentWeekStart)
 
-  // チェック数を計算
-  const countChecks = (checks) => checks.filter(c => c).length
-
-  // 赤信号判定（2週連続0 or 未提出2週）
+  // 赤信号判定
   const isRedFlag = (staffId) => {
     const records = contactWeekly.filter(w => w.staffId === staffId).sort((a, b) => b.weekStart.localeCompare(a.weekStart))
-    if (records.length < 2) return records.length === 0 // 記録なし
+    if (records.length < 2) return records.length === 0
     const last2 = records.slice(0, 2)
     const zeroCount = last2.filter(r => countChecks(r.checks) === 0 || !r.submittedAt).length
     return zeroCount >= 2
@@ -1765,9 +1777,8 @@ function ContactBook({ staff, contactGoals, setContactGoals, contactWeekly, setC
   const submitWeekly = async () => {
     if (!selectedStaff) return
     const staffMember = staff.find(s => s.id === parseInt(selectedStaff))
-    const checkCount = countChecks(weeklyChecks)
+    const checkCount = countChecks(weeklyChecks, weekDates)
     
-    // 0日の場合は理由必須
     if (checkCount === 0 && (!zeroReason || !nextAction)) {
       alert('0日の場合は理由と来週の対応を入力してください')
       return
@@ -1814,9 +1825,8 @@ function ContactBook({ staff, contactGoals, setContactGoals, contactWeekly, setC
           submittedAt: new Date().toISOString()
         }, ...contactWeekly])
         
-        // 管理者へ通知
         await supabase.from('notifications').insert({
-          target_role: 'admin', message: `${staffMember.name}さんが連絡帳を提出（${countChecks(weeklyChecks)}日）`,
+          target_role: 'admin', message: `${staffMember.name}さんが連絡帳を提出（${checkCount}日）`,
           link_to: 'contact', is_read: false
         })
         alert('提出しました！')
@@ -1871,11 +1881,7 @@ function ContactBook({ staff, contactGoals, setContactGoals, contactWeekly, setC
     }).select()
     
     if (!error && data) {
-      setContactReplies([{
-        id: data[0].id, weeklyId, replyText, repliedBy: '綾華', createdAt: data[0].created_at
-      }, ...contactReplies])
-      
-      // スタッフへ通知
+      setContactReplies([{ id: data[0].id, weeklyId, replyText, repliedBy: '綾華', createdAt: data[0].created_at }, ...contactReplies])
       const weekly = contactWeekly.find(w => w.id === weeklyId)
       if (weekly) {
         await supabase.from('notifications').insert({
@@ -1897,32 +1903,28 @@ function ContactBook({ staff, contactGoals, setContactGoals, contactWeekly, setC
       const { error } = await supabase.from('contact_goals').update({
         monthly_goal: goalData.monthlyGoal, weekly_task: goalData.weeklyTask
       }).eq('id', existing.id)
-      
-      if (!error) {
-        setContactGoals(contactGoals.map(g => g.id === existing.id ? {
-          ...g, monthlyGoal: goalData.monthlyGoal, weeklyTask: goalData.weeklyTask
-        } : g))
-      }
+      if (!error) setContactGoals(contactGoals.map(g => g.id === existing.id ? { ...g, monthlyGoal: goalData.monthlyGoal, weeklyTask: goalData.weeklyTask } : g))
     } else {
       const { data, error } = await supabase.from('contact_goals').insert({
         staff_id: staffId, staff_name: staffName, year_month: currentYearMonth,
         monthly_goal: goalData.monthlyGoal, weekly_task: goalData.weeklyTask
       }).select()
-      
-      if (!error && data) {
-        setContactGoals([...contactGoals, {
-          id: data[0].id, staffId, staffName, yearMonth: currentYearMonth,
-          monthlyGoal: goalData.monthlyGoal, weeklyTask: goalData.weeklyTask
-        }])
-      }
+      if (!error && data) setContactGoals([...contactGoals, { id: data[0].id, staffId, staffName, yearMonth: currentYearMonth, monthlyGoal: goalData.monthlyGoal, weeklyTask: goalData.weeklyTask }])
     }
     setEditingGoal(null)
     alert('保存しました')
   }
 
-  // 今週提出したスタッフ一覧
+  // 対象スタッフ切り替え
+  const toggleContactEnabled = async (staffId) => {
+    const s = staff.find(x => x.id === staffId)
+    const newVal = !s.contactEnabled
+    const { error } = await supabase.from('staff').update({ contact_enabled: newVal }).eq('id', staffId)
+    if (!error) setStaff(staff.map(x => x.id === staffId ? { ...x, contactEnabled: newVal } : x))
+  }
+
   const thisWeekSubmissions = contactWeekly.filter(w => w.weekStart === currentWeekStart && w.submittedAt)
-  const redFlagStaff = staff.filter(s => isRedFlag(s.id))
+  const redFlagStaff = contactStaff.filter(s => isRedFlag(s.id))
 
   return (
     <div className="space-y-4">
@@ -1937,13 +1939,13 @@ function ContactBook({ staff, contactGoals, setContactGoals, contactWeekly, setC
             else setWeeklyChecks([false, false, false, false, false, false, false])
           }} className="select">
             <option value="">選択してください</option>
-            {staff.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+            {contactStaff.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
         </div>
       )}
 
       {/* モード切替 */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap">
         {!isAdmin && (
           <>
             <button onClick={() => setMode('weekly')} className={`btn flex-1 ${mode === 'weekly' ? 'btn-blue' : 'btn-gray'}`}>週次</button>
@@ -1952,9 +1954,10 @@ function ContactBook({ staff, contactGoals, setContactGoals, contactWeekly, setC
         )}
         {isAdmin && (
           <>
-            <button onClick={() => setMode('admin')} className={`btn flex-1 ${mode === 'admin' ? 'btn-blue' : 'btn-gray'}`}>📊 管理</button>
-            <button onClick={() => setMode('goals')} className={`btn flex-1 ${mode === 'goals' ? 'btn-blue' : 'btn-gray'}`}>🎯 目標設定</button>
-            <button onClick={() => setMode('detail')} className={`btn flex-1 ${mode === 'detail' ? 'btn-blue' : 'btn-gray'}`}>👤 個人詳細</button>
+            <button onClick={() => setMode('admin')} className={`btn ${mode === 'admin' ? 'btn-blue' : 'btn-gray'}`}>📊 管理</button>
+            <button onClick={() => setMode('goals')} className={`btn ${mode === 'goals' ? 'btn-blue' : 'btn-gray'}`}>🎯 目標</button>
+            <button onClick={() => setMode('members')} className={`btn ${mode === 'members' ? 'btn-blue' : 'btn-gray'}`}>👥 対象者</button>
+            <button onClick={() => setMode('detail')} className={`btn ${mode === 'detail' ? 'btn-blue' : 'btn-gray'}`}>👤 詳細</button>
           </>
         )}
       </div>
@@ -1977,27 +1980,36 @@ function ContactBook({ staff, contactGoals, setContactGoals, contactWeekly, setC
           <div className="mb-4">
             <p className="text-sm font-semibold mb-2">できた日にチェック</p>
             <div className="grid grid-cols-7 gap-1">
-              {dayNames.map((day, i) => (
-                <div key={day} className="text-center">
-                  <div className="text-xs text-gray-500 mb-1">{day}</div>
-                  <button 
-                    onClick={() => {
-                      const newChecks = [...weeklyChecks]
-                      newChecks[i] = !newChecks[i]
-                      setWeeklyChecks(newChecks)
-                    }}
-                    className={`w-10 h-10 rounded-full text-lg ${weeklyChecks[i] ? 'bg-green-500 text-white' : 'bg-gray-200'}`}
-                  >
-                    {weeklyChecks[i] ? '✓' : ''}
-                  </button>
-                </div>
-              ))}
+              {dayNames.map((day, i) => {
+                const dateObj = weekDates[i]
+                const holiday = isHoliday(dateObj)
+                const dateNum = dateObj.getDate()
+                return (
+                  <div key={day} className="text-center">
+                    <div className={`text-xs mb-1 ${holiday ? 'text-gray-300' : 'text-gray-500'}`}>{day}</div>
+                    <div className={`text-xs mb-1 ${holiday ? 'text-gray-300' : 'text-gray-400'}`}>{dateNum}</div>
+                    {holiday ? (
+                      <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 text-xs mx-auto">休</div>
+                    ) : (
+                      <button 
+                        onClick={() => {
+                          const newChecks = [...weeklyChecks]
+                          newChecks[i] = !newChecks[i]
+                          setWeeklyChecks(newChecks)
+                        }}
+                        className={`w-10 h-10 rounded-full text-lg ${weeklyChecks[i] ? 'bg-green-500 text-white' : 'bg-gray-100 border-2 border-gray-300'}`}
+                      >
+                        {weeklyChecks[i] ? '✓' : ''}
+                      </button>
+                    )}
+                  </div>
+                )
+              })}
             </div>
-            <p className="text-center mt-2 font-bold text-lg">{countChecks(weeklyChecks)}日 / 7日</p>
+            <p className="text-center mt-2 font-bold text-lg">{countChecks(weeklyChecks, weekDates)}日 / {workingDays}日</p>
           </div>
           
-          {/* 0日の場合のみ追加入力 */}
-          {countChecks(weeklyChecks) === 0 && (
+          {countChecks(weeklyChecks, weekDates) === 0 && (
             <div className="bg-yellow-50 p-3 rounded mb-4">
               <p className="text-sm font-semibold mb-2">できなかった理由</p>
               <div className="flex flex-wrap gap-2 mb-3">
@@ -2008,7 +2020,6 @@ function ContactBook({ staff, contactGoals, setContactGoals, contactWeekly, setC
               {zeroReason === 'その他' && (
                 <input type="text" placeholder="理由を入力" className="input mb-3" onChange={e => setZeroReason(e.target.value)} />
               )}
-              
               <p className="text-sm font-semibold mb-2">来週どうする？</p>
               <div className="flex flex-wrap gap-2 mb-3">
                 {actionOptions.map(a => (
@@ -2027,14 +2038,11 @@ function ContactBook({ staff, contactGoals, setContactGoals, contactWeekly, setC
             <p className="text-center text-sm text-gray-500 mt-2">提出済: {new Date(currentWeekly.submittedAt).toLocaleString('ja-JP')}</p>
           )}
 
-          {/* 返信表示 */}
           {currentWeekly && contactReplies.filter(r => r.weeklyId === currentWeekly.id).length > 0 && (
             <div className="mt-4 bg-purple-50 p-3 rounded">
               <p className="font-semibold text-sm mb-2">💬 返信</p>
               {contactReplies.filter(r => r.weeklyId === currentWeekly.id).map(r => (
-                <div key={r.id} className="text-sm">
-                  <span className="text-purple-600">{r.repliedBy}:</span> {r.replyText}
-                </div>
+                <div key={r.id} className="text-sm"><span className="text-purple-600">{r.repliedBy}:</span> {r.replyText}</div>
               ))}
             </div>
           )}
@@ -2046,22 +2054,20 @@ function ContactBook({ staff, contactGoals, setContactGoals, contactWeekly, setC
         <div className="card">
           <h3 className="font-bold mb-3">📝 今月の振り返り</h3>
           <p className="text-sm text-gray-500 mb-4">{currentYearMonth}</p>
-          
           <div className="space-y-4">
             <div>
-              <p className="text-sm font-semibold mb-1">Q1. 今月いちばん止まった（または重かった）行動はどれ？</p>
+              <p className="text-sm font-semibold mb-1">Q1. 今月いちばん止まった行動はどれ？</p>
               <input type="text" value={q1Answer} onChange={e => setQ1Answer(e.target.value)} className="input" placeholder="3行以内で" />
             </div>
             <div>
-              <p className="text-sm font-semibold mb-1">Q2. それが止まった一番の理由は何だったと思う？</p>
+              <p className="text-sm font-semibold mb-1">Q2. それが止まった一番の理由は？</p>
               <input type="text" value={q2Answer} onChange={e => setQ2Answer(e.target.value)} className="input" placeholder="3行以内で" />
             </div>
             <div>
-              <p className="text-sm font-semibold mb-1">Q3. 来月、同じ目標なら最初に何を変える？</p>
+              <p className="text-sm font-semibold mb-1">Q3. 来月、最初に何を変える？</p>
               <input type="text" value={q3Answer} onChange={e => setQ3Answer(e.target.value)} className="input" placeholder="3行以内で" />
             </div>
           </div>
-          
           <button onClick={submitMonthly} className="btn btn-green w-full py-3 mt-4">提出する</button>
         </div>
       )}
@@ -2069,26 +2075,22 @@ function ContactBook({ staff, contactGoals, setContactGoals, contactWeekly, setC
       {/* ===== 管理者：ダッシュボード ===== */}
       {mode === 'admin' && isAdmin && (
         <div className="space-y-4">
-          {/* 赤信号 */}
           {redFlagStaff.length > 0 && (
             <div className="card bg-red-50 border-red-300">
               <h3 className="font-bold text-red-600 mb-2">⚠️ 赤信号</h3>
               <div className="space-y-1">
                 {redFlagStaff.map(s => (
-                  <div key={s.id} className="text-sm">
-                    <span className="font-semibold">{s.name}</span> - 2週連続0日 or 未提出
-                  </div>
+                  <div key={s.id} className="text-sm"><span className="font-semibold">{s.name}</span> - 2週連続0日 or 未提出</div>
                 ))}
               </div>
             </div>
           )}
           
-          {/* 今週の状況 */}
           <div className="card">
             <h3 className="font-bold mb-3">📊 今週（{currentWeekStart}〜）</h3>
             <div className="grid-2 gap-4 mb-4">
               <div className="bg-blue-50 p-3 rounded text-center">
-                <div className="text-2xl font-bold text-blue-600">{thisWeekSubmissions.length}/{staff.length}</div>
+                <div className="text-2xl font-bold text-blue-600">{thisWeekSubmissions.filter(w => contactStaff.some(s => s.id === w.staffId)).length}/{contactStaff.length}</div>
                 <div className="text-sm text-gray-500">提出</div>
               </div>
               <div className="bg-green-50 p-3 rounded text-center">
@@ -2100,7 +2102,7 @@ function ContactBook({ staff, contactGoals, setContactGoals, contactWeekly, setC
             </div>
             
             <div className="space-y-2">
-              {staff.map(s => {
+              {contactStaff.map(s => {
                 const weekly = contactWeekly.find(w => w.staffId === s.id && w.weekStart === currentWeekStart)
                 const hasReply = weekly && contactReplies.some(r => r.weeklyId === weekly.id)
                 const checkCount = weekly ? countChecks(weekly.checks) : null
@@ -2126,7 +2128,6 @@ function ContactBook({ staff, contactGoals, setContactGoals, contactWeekly, setC
               })}
             </div>
             
-            {/* 返信入力 */}
             {replyingTo && (
               <div className="mt-4 bg-purple-50 p-3 rounded">
                 <p className="text-sm font-semibold mb-2">💬 返信を書く</p>
@@ -2141,12 +2142,33 @@ function ContactBook({ staff, contactGoals, setContactGoals, contactWeekly, setC
         </div>
       )}
 
+      {/* ===== 管理者：対象スタッフ設定 ===== */}
+      {mode === 'members' && isAdmin && (
+        <div className="card">
+          <h3 className="font-bold mb-3">👥 連絡帳の対象スタッフ</h3>
+          <p className="text-sm text-gray-500 mb-4">連絡帳を使うスタッフを選択</p>
+          <div className="space-y-2">
+            {staff.map(s => (
+              <div key={s.id} className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                <span className="font-semibold">{s.name}</span>
+                <button 
+                  onClick={() => toggleContactEnabled(s.id)}
+                  className={`btn text-sm ${s.contactEnabled ? 'btn-green' : 'btn-gray'}`}
+                >
+                  {s.contactEnabled ? '✓ 対象' : '対象外'}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* ===== 管理者：目標設定 ===== */}
       {mode === 'goals' && isAdmin && (
         <div className="card">
           <h3 className="font-bold mb-3">🎯 {currentYearMonth} 目標設定</h3>
           <div className="space-y-3">
-            {staff.map(s => {
+            {contactStaff.map(s => {
               const goal = contactGoals.find(g => g.staffId === s.id && g.yearMonth === currentYearMonth)
               const isEditing = editingGoal === s.id
               
@@ -2155,13 +2177,9 @@ function ContactBook({ staff, contactGoals, setContactGoals, contactWeekly, setC
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-semibold">{s.name}</span>
                     {!isEditing && (
-                      <button onClick={() => {
-                        setEditingGoal(s.id)
-                        setGoalData({ monthlyGoal: goal?.monthlyGoal || '', weeklyTask: goal?.weeklyTask || '' })
-                      }} className="text-blue-500 text-sm">編集</button>
+                      <button onClick={() => { setEditingGoal(s.id); setGoalData({ monthlyGoal: goal?.monthlyGoal || '', weeklyTask: goal?.weeklyTask || '' }) }} className="text-blue-500 text-sm">編集</button>
                     )}
                   </div>
-                  
                   {isEditing ? (
                     <div className="space-y-2">
                       <input type="text" value={goalData.monthlyGoal} onChange={e => setGoalData({...goalData, monthlyGoal: e.target.value})} placeholder="今月の目標" className="input" />
@@ -2197,13 +2215,12 @@ function ContactBook({ staff, contactGoals, setContactGoals, contactWeekly, setC
             <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>スタッフを選択</label>
             <select value={detailStaffId || ''} onChange={e => setDetailStaffId(parseInt(e.target.value))} className="select">
               <option value="">選択してください</option>
-              {staff.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+              {contactStaff.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
           </div>
           
           {detailStaffId && (
             <>
-              {/* 週次推移 */}
               <div className="card">
                 <h3 className="font-bold mb-3">📈 週次推移</h3>
                 <div className="space-y-2">
@@ -2215,9 +2232,7 @@ function ContactBook({ staff, contactGoals, setContactGoals, contactWeekly, setC
                         <div>
                           <span className="font-semibold">{w.weekStart}</span>
                           <span className={`ml-2 ${checkCount === 0 ? 'text-red-500 font-bold' : 'text-green-600'}`}>{checkCount}日</span>
-                          {checkCount === 0 && w.zeroReason && (
-                            <span className="ml-2 text-xs text-gray-500">({w.zeroReason})</span>
-                          )}
+                          {checkCount === 0 && w.zeroReason && (<span className="ml-2 text-xs text-gray-500">({w.zeroReason})</span>)}
                         </div>
                         {hasReply && <span className="text-xs text-purple-500">返信済</span>}
                       </div>
@@ -2226,7 +2241,6 @@ function ContactBook({ staff, contactGoals, setContactGoals, contactWeekly, setC
                 </div>
               </div>
               
-              {/* 月次の問い */}
               <div className="card">
                 <h3 className="font-bold mb-3">📝 月次の問い</h3>
                 {contactMonthly.filter(m => m.staffId === detailStaffId).slice(0, 3).map(m => (
@@ -2248,6 +2262,7 @@ function ContactBook({ staff, contactGoals, setContactGoals, contactWeekly, setC
     </div>
   )
 }
+
 
 // ==================== 練習予約 ====================
 function PracticeReservation({ staff, practiceReservations, setPracticeReservations, modelRules, setModelRules, isAdmin }) {
