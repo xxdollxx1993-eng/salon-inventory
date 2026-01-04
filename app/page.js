@@ -132,6 +132,8 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
   const [leaveGrants, setLeaveGrants] = useState([])
   const [leaveRequests, setLeaveRequests] = useState([])
   const [notifications, setNotifications] = useState([])
+  const [practiceReservations, setPracticeReservations] = useState([])
+  const [modelRules, setModelRules] = useState('')
   const [lossRecords, setLossRecords] = useState([])
   const [lossPrices, setLossPrices] = useState([])
   const [loading, setLoading] = useState(true)
@@ -141,7 +143,7 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
   const loadAllData = async () => {
     setLoading(true)
     try {
-      const [staffRes, productsRes, categoriesRes, usageRes, stockInRes, inventoryRes, favoritesRes, purchasesRes, budgetsRes, allocationsRes, bonusRes, lossRes, lossPricesRes, monthlyRes, timeRes, leaveGrantsRes, leaveRequestsRes, notificationsRes] = await Promise.all([
+      const [staffRes, productsRes, categoriesRes, usageRes, stockInRes, inventoryRes, favoritesRes, purchasesRes, budgetsRes, allocationsRes, bonusRes, lossRes, lossPricesRes, monthlyRes, timeRes, leaveGrantsRes, leaveRequestsRes, notificationsRes, practiceRes, modelRulesRes] = await Promise.all([
         supabase.from('staff').select('*').order('id'),
         supabase.from('products').select('*').order('id'),
         supabase.from('categories').select('*').order('id'),
@@ -160,6 +162,8 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
         supabase.from('leave_grants').select('*').order('fiscal_year', { ascending: false }),
         supabase.from('leave_requests').select('*').order('leave_date', { ascending: false }),
         supabase.from('notifications').select('*').order('created_at', { ascending: false }),
+        supabase.from('practice_reservations').select('*').order('practice_date', { ascending: true }),
+        supabase.from('app_settings').select('*').eq('key', 'model_rules').single(),
       ])
       if (staffRes.data) setStaff(staffRes.data.map(s => ({
         id: s.id, name: s.name, dealer: s.dealer || '',
@@ -193,6 +197,8 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
       if (leaveGrantsRes.data) setLeaveGrants(leaveGrantsRes.data.map(g => ({ id: g.id, staffId: g.staff_id, staffName: g.staff_name, fiscalYear: g.fiscal_year, leaveType: g.leave_type, grantedDays: parseFloat(g.granted_days), carriedDays: parseFloat(g.carried_days) })))
       if (leaveRequestsRes.data) setLeaveRequests(leaveRequestsRes.data.map(r => ({ id: r.id, staffId: r.staff_id, staffName: r.staff_name, leaveType: r.leave_type, leaveDate: r.leave_date, dayType: r.day_type, dayValue: parseFloat(r.day_value), status: r.status, memo: r.memo, approvedBy: r.approved_by, approvedAt: r.approved_at })))
       if (notificationsRes.data) setNotifications(notificationsRes.data.map(n => ({ id: n.id, targetRole: n.target_role, targetStaffId: n.target_staff_id, message: n.message, linkTo: n.link_to, isRead: n.is_read, createdAt: n.created_at })))
+      if (practiceRes.data) setPracticeReservations(practiceRes.data.map(p => ({ id: p.id, staffId: p.staff_id, staffName: p.staff_name, date: p.practice_date, time: p.practice_time, menu: p.menu, memo: p.memo })))
+      if (modelRulesRes?.data?.value) setModelRules(modelRulesRes.data.value)
     } catch (e) { console.error('データ読み込みエラー:', e) }
     setLoading(false)
   }
@@ -203,6 +209,7 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
     { key: 'usage', label: '使用入力' },
     { key: 'stockin', label: '入荷' },
     { key: 'timecard', label: '🕐 打刻' },
+    { key: 'practice', label: '🎨 練習予約' },
     { key: 'order', label: '発注リンク' }
   ]
   const otherTabs = [
@@ -257,12 +264,13 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
 
       {tab === 'usage' && (
         <>
-          <MiniLeaveCalendar leaveRequests={leaveRequests} />
+          <MiniLeaveCalendar leaveRequests={leaveRequests} practiceReservations={practiceReservations} staff={staff} />
           <UsageInput products={products} usage={usage} setUsage={setUsage} favorites={favorites} setFavorites={setFavorites} />
         </>
       )}
       {tab === 'stockin' && <StockInInput products={products} stockIn={stockIn} setStockIn={setStockIn} categories={categories} />}
       {tab === 'timecard' && <TimeCard staff={staff} timeRecords={timeRecords} setTimeRecords={setTimeRecords} isAdmin={isAdmin} />}
+      {tab === 'practice' && <PracticeReservation staff={staff} practiceReservations={practiceReservations} setPracticeReservations={setPracticeReservations} modelRules={modelRules} setModelRules={setModelRules} isAdmin={isAdmin} />}
       {tab === 'order' && <OrderLinks categories={categories} setCategories={setCategories} />}
       {tab === 'inventory' && <InventoryInput products={products} staff={staff} usage={usage} stockIn={stockIn} inventoryHistory={inventoryHistory} setInventoryHistory={setInventoryHistory} />}
       {tab === 'dealer' && <DealerBudget products={products} usage={usage} stockIn={stockIn} categories={categories} dealerBudgets={dealerBudgets} setDealerBudgets={setDealerBudgets} dealerAllocations={dealerAllocations} setDealerAllocations={setDealerAllocations} isAdmin={isAdmin} />}
@@ -281,7 +289,7 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
 }
 
 // ==================== ミニ有給カレンダー ====================
-function MiniLeaveCalendar({ leaveRequests }) {
+function MiniLeaveCalendar({ leaveRequests, practiceReservations, staff }) {
   const today = new Date()
   const year = today.getFullYear()
   const month = today.getMonth()
@@ -298,6 +306,22 @@ function MiniLeaveCalendar({ leaveRequests }) {
     }
   }
   
+  // スタッフごとの色
+  const staffColors = [
+    { bg: '#fef3c7', text: '#92400e' },
+    { bg: '#fce7f3', text: '#9d174d' },
+    { bg: '#e0e7ff', text: '#3730a3' },
+    { bg: '#d1fae5', text: '#065f46' },
+    { bg: '#fee2e2', text: '#991b1b' },
+    { bg: '#e0f2fe', text: '#075985' },
+    { bg: '#f3e8ff', text: '#6b21a8' },
+    { bg: '#fef9c3', text: '#854d0e' },
+  ]
+  const getStaffColor = (staffId) => {
+    const index = staff.findIndex(s => s.id === staffId)
+    return staffColors[index % staffColors.length]
+  }
+  
   // 今月の承認済み休み
   const monthRequests = leaveRequests.filter(r => {
     if (r.status !== 'approved') return false
@@ -305,30 +329,45 @@ function MiniLeaveCalendar({ leaveRequests }) {
     return d.getFullYear() === year && d.getMonth() === month
   })
   
+  // 今月の練習予約
+  const monthPractice = practiceReservations.filter(p => {
+    const d = new Date(p.date)
+    return d.getFullYear() === year && d.getMonth() === month
+  })
+  
   // 今日の休み
   const todayRequests = monthRequests.filter(r => r.leaveDate === todayStr)
+  // 今日の練習
+  const todayPractice = monthPractice.filter(p => p.date === todayStr)
   
   const firstDay = new Date(year, month, 1).getDay()
   const dayNames = ['日', '月', '火', '水', '木', '金', '土']
   
   return (
     <div className="card mb-4">
-      <div className="flex justify-between items-center mb-3">
-        <h3 className="font-bold">📅 {month + 1}月の休み</h3>
-        {todayRequests.length > 0 && (
-          <div className="text-sm bg-blue-100 text-blue-700 px-2 py-1 rounded">
-            今日: {todayRequests.map(r => r.staffName + (r.dayType !== 'full' ? (r.dayType === 'am' ? '(午前)' : '(午後)') : '')).join(', ')}
-          </div>
-        )}
+      <div className="flex justify-between items-center mb-2">
+        <h3 className="font-bold">📅 {month + 1}月</h3>
+        <div className="flex gap-2 text-xs">
+          {todayRequests.length > 0 && (
+            <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded">
+              休: {todayRequests.map(r => r.staffName.slice(0,2)).join(', ')}
+            </span>
+          )}
+          {todayPractice.length > 0 && (
+            <span className="bg-orange-100 text-orange-700 px-2 py-1 rounded">
+              練習: {todayPractice.length}件
+            </span>
+          )}
+        </div>
       </div>
       
       {/* ミニカレンダー */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '1px', fontSize: '12px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '1px', fontSize: '11px' }}>
         {/* 曜日ヘッダー */}
         {dayNames.map((d, i) => (
           <div key={d} style={{ 
             textAlign: 'center', 
-            padding: '4px 0', 
+            padding: '3px 0', 
             fontWeight: 'bold',
             backgroundColor: i === 1 || i === 2 ? '#e5e7eb' : '#f9fafb',
             color: i === 0 ? '#ef4444' : i === 6 ? '#3b82f6' : i === 1 || i === 2 ? '#9ca3af' : '#374151'
@@ -337,7 +376,7 @@ function MiniLeaveCalendar({ leaveRequests }) {
         
         {/* 空白セル */}
         {[...Array(firstDay)].map((_, i) => (
-          <div key={`empty-${i}`} style={{ height: '32px', backgroundColor: '#f9fafb' }}></div>
+          <div key={`empty-${i}`} style={{ height: '38px', backgroundColor: '#f9fafb' }}></div>
         ))}
         
         {/* 日付セル */}
@@ -348,34 +387,59 @@ function MiniLeaveCalendar({ leaveRequests }) {
           const isHoliday = dayOfWeek === 1 || dayOfWeek === 2 || date === thirdSunday
           const isToday = dateStr === todayStr
           const dayRequests = monthRequests.filter(r => r.leaveDate === dateStr)
+          const dayPractice = monthPractice.filter(p => p.date === dateStr)
           
           let bgColor = '#ffffff'
           if (isHoliday) bgColor = '#d1d5db'
-          else if (dayRequests.length > 0) bgColor = dayRequests[0].leaveType === 'paid' ? '#dbeafe' : '#dcfce7'
           else if (dayOfWeek === 0) bgColor = '#fef2f2'
           else if (dayOfWeek === 6) bgColor = '#eff6ff'
           
           return (
             <div key={date} style={{ 
-              height: '32px', 
+              height: '38px', 
               backgroundColor: bgColor,
               border: isToday ? '2px solid #3b82f6' : '1px solid #e5e7eb',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              position: 'relative'
+              padding: '1px',
+              overflow: 'hidden'
             }}>
-              <span style={{ 
+              <div style={{ 
                 fontWeight: isToday ? 'bold' : 'normal',
+                fontSize: '10px',
                 color: isHoliday ? '#9ca3af' : dayOfWeek === 0 ? '#ef4444' : dayOfWeek === 6 ? '#3b82f6' : '#374151'
-              }}>{date}</span>
-              {dayRequests.length > 0 && !isHoliday && (
-                <span style={{ 
-                  fontSize: '8px', 
-                  color: dayRequests[0].leaveType === 'paid' ? '#1d4ed8' : '#166534',
-                  lineHeight: '1'
-                }}>{dayRequests.length > 1 ? `${dayRequests.length}人` : dayRequests[0].staffName.slice(0, 2)}</span>
+              }}>{date}</div>
+              {!isHoliday && (
+                <div style={{ fontSize: '8px', lineHeight: '1.2' }}>
+                  {dayRequests.length > 0 && (
+                    <div style={{ 
+                      backgroundColor: dayRequests[0].leaveType === 'paid' ? '#dbeafe' : '#dcfce7',
+                      color: dayRequests[0].leaveType === 'paid' ? '#1d4ed8' : '#166534',
+                      borderRadius: '2px',
+                      padding: '0 2px',
+                      marginBottom: '1px'
+                    }}>
+                      休{dayRequests.length > 1 ? dayRequests.length : ''}
+                    </div>
+                  )}
+                  {dayPractice.slice(0, 1).map(p => {
+                    const color = getStaffColor(p.staffId)
+                    return (
+                      <div key={p.id} style={{ 
+                        backgroundColor: color.bg,
+                        color: color.text,
+                        borderRadius: '2px',
+                        padding: '0 2px',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                      }}>
+                        {p.staffName?.slice(0,2)}
+                      </div>
+                    )
+                  })}
+                  {dayPractice.length > 1 && (
+                    <div style={{ color: '#6b7280' }}>+{dayPractice.length - 1}</div>
+                  )}
+                </div>
               )}
             </div>
           )
@@ -383,10 +447,11 @@ function MiniLeaveCalendar({ leaveRequests }) {
       </div>
       
       {/* 凡例 */}
-      <div className="flex gap-3 mt-2 text-xs text-gray-500 justify-center">
+      <div className="flex gap-3 mt-2 text-xs text-gray-500 justify-center flex-wrap">
         <span><span className="inline-block w-2 h-2 bg-gray-300 rounded mr-1"></span>定休</span>
         <span><span className="inline-block w-2 h-2 bg-blue-200 rounded mr-1"></span>有給</span>
         <span><span className="inline-block w-2 h-2 bg-green-200 rounded mr-1"></span>夏休</span>
+        <span><span className="inline-block w-2 h-2 bg-amber-200 rounded mr-1"></span>練習</span>
       </div>
     </div>
   )
@@ -1592,6 +1657,349 @@ function DataExport({ products, staff, usage, stockIn, inventoryHistory }) {
     <div className="card">
       <h3 className="text-lg font-bold mb-4">📊 データ出力</h3>
       <div className="space-y-3">{items.map((item, i) => (<div key={i} className="flex justify-between items-center p-4 bg-gray-50 rounded"><div><span className="font-semibold">{item.label}</span><span className="text-sm text-gray-500 ml-2">({item.count}件)</span></div><button onClick={item.fn} className="btn btn-green">CSV出力</button></div>))}</div>
+    </div>
+  )
+}
+
+// ==================== 練習予約 ====================
+function PracticeReservation({ staff, practiceReservations, setPracticeReservations, modelRules, setModelRules, isAdmin }) {
+  const [selectedStaff, setSelectedStaff] = useState('')
+  const [calendarMonth, setCalendarMonth] = useState(new Date())
+  const [showRules, setShowRules] = useState(false)
+  const [editingRules, setEditingRules] = useState(false)
+  const [rulesText, setRulesText] = useState(modelRules)
+  const [practiceDate, setPracticeDate] = useState('')
+  const [practiceTime, setPracticeTime] = useState('10:00')
+  const [practiceMenu, setPracticeMenu] = useState('')
+  const [practiceMemo, setPracticeMemo] = useState('')
+
+  // スタッフごとの色（自動割り当て）
+  const staffColors = [
+    { bg: '#fef3c7', text: '#92400e', border: '#f59e0b' }, // amber
+    { bg: '#fce7f3', text: '#9d174d', border: '#ec4899' }, // pink
+    { bg: '#e0e7ff', text: '#3730a3', border: '#6366f1' }, // indigo
+    { bg: '#d1fae5', text: '#065f46', border: '#10b981' }, // emerald
+    { bg: '#fee2e2', text: '#991b1b', border: '#ef4444' }, // red
+    { bg: '#e0f2fe', text: '#075985', border: '#0ea5e9' }, // sky
+    { bg: '#f3e8ff', text: '#6b21a8', border: '#a855f7' }, // purple
+    { bg: '#fef9c3', text: '#854d0e', border: '#eab308' }, // yellow
+  ]
+
+  const getStaffColor = (staffId) => {
+    const index = staff.findIndex(s => s.id === staffId)
+    return staffColors[index % staffColors.length]
+  }
+
+  // 時間オプション
+  const timeOptions = []
+  for (let h = 9; h <= 21; h++) {
+    for (let m = 0; m < 60; m += 30) {
+      timeOptions.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`)
+    }
+  }
+
+  // メニュー選択肢
+  const menuOptions = ['カット', 'カラー', 'パーマ', '縮毛矯正', 'トリートメント', 'その他']
+
+  // 予約登録
+  const submitReservation = async () => {
+    if (!selectedStaff || !practiceDate || !practiceMenu) {
+      alert('スタッフ、日付、メニューを入力してください')
+      return
+    }
+    const staffMember = staff.find(s => s.id === parseInt(selectedStaff))
+    
+    const { data, error } = await supabase.from('practice_reservations').insert({
+      staff_id: parseInt(selectedStaff),
+      staff_name: staffMember.name,
+      practice_date: practiceDate,
+      practice_time: practiceTime,
+      menu: practiceMenu,
+      memo: practiceMemo
+    }).select()
+
+    if (!error && data) {
+      setPracticeReservations([...practiceReservations, {
+        id: data[0].id,
+        staffId: parseInt(selectedStaff),
+        staffName: staffMember.name,
+        date: practiceDate,
+        time: practiceTime,
+        menu: practiceMenu,
+        memo: practiceMemo
+      }])
+      alert('予約しました！')
+      setPracticeDate('')
+      setPracticeMenu('')
+      setPracticeMemo('')
+    }
+  }
+
+  // 予約削除
+  const deleteReservation = async (id) => {
+    if (!confirm('この予約を削除しますか？')) return
+    const { error } = await supabase.from('practice_reservations').delete().eq('id', id)
+    if (!error) {
+      setPracticeReservations(practiceReservations.filter(p => p.id !== id))
+    }
+  }
+
+  // ルール保存
+  const saveRules = async () => {
+    const { data: existing } = await supabase.from('app_settings').select('*').eq('key', 'model_rules').single()
+    
+    if (existing) {
+      await supabase.from('app_settings').update({ value: rulesText }).eq('key', 'model_rules')
+    } else {
+      await supabase.from('app_settings').insert({ key: 'model_rules', value: rulesText })
+    }
+    setModelRules(rulesText)
+    setEditingRules(false)
+    alert('保存しました')
+  }
+
+  // カレンダー用データ
+  const year = calendarMonth.getFullYear()
+  const month = calendarMonth.getMonth()
+  const firstDay = new Date(year, month, 1).getDay()
+  const lastDate = new Date(year, month + 1, 0).getDate()
+  
+  // 第三日曜日
+  let sundayCount = 0
+  let thirdSunday = null
+  for (let d = 1; d <= lastDate; d++) {
+    if (new Date(year, month, d).getDay() === 0) {
+      sundayCount++
+      if (sundayCount === 3) { thirdSunday = d; break }
+    }
+  }
+
+  // 自分の予約
+  const myReservations = selectedStaff 
+    ? practiceReservations.filter(p => p.staffId === parseInt(selectedStaff))
+    : []
+
+  const today = new Date().toISOString().split('T')[0]
+
+  return (
+    <div className="space-y-4">
+      {/* スタッフ選択 */}
+      <div className="card">
+        <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>スタッフ</label>
+        <select value={selectedStaff} onChange={e => setSelectedStaff(e.target.value)} className="select">
+          <option value="">選択してください</option>
+          {staff.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+        </select>
+      </div>
+
+      {/* モデルルール */}
+      <div className="card">
+        <div className="flex justify-between items-center mb-2">
+          <h3 className="font-bold">📋 モデルルール</h3>
+          <button onClick={() => setShowRules(!showRules)} className="text-blue-500 text-sm">
+            {showRules ? '閉じる' : '確認する'}
+          </button>
+        </div>
+        {showRules && (
+          <div className="bg-gray-50 p-3 rounded">
+            {editingRules ? (
+              <>
+                <textarea 
+                  value={rulesText} 
+                  onChange={e => setRulesText(e.target.value)} 
+                  className="input w-full" 
+                  rows={8}
+                  placeholder="モデル練習のルールを記載..."
+                />
+                <div className="flex gap-2 mt-2">
+                  <button onClick={saveRules} className="btn btn-green flex-1">保存</button>
+                  <button onClick={() => { setEditingRules(false); setRulesText(modelRules) }} className="btn btn-gray flex-1">キャンセル</button>
+                </div>
+              </>
+            ) : (
+              <>
+                {modelRules ? (
+                  <p className="whitespace-pre-wrap text-sm">{modelRules}</p>
+                ) : (
+                  <p className="text-gray-400 text-sm">ルールが設定されていません</p>
+                )}
+                {isAdmin && (
+                  <button onClick={() => { setEditingRules(true); setRulesText(modelRules) }} className="btn btn-blue mt-2 text-sm">編集</button>
+                )}
+              </>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* カレンダー */}
+      <div className="card">
+        <div className="flex justify-between items-center mb-4">
+          <button onClick={() => setCalendarMonth(new Date(year, month - 1))} className="btn btn-gray" style={{ padding: '0.5rem 1rem' }}>◀</button>
+          <h3 className="text-xl font-bold">{year}年{month + 1}月</h3>
+          <button onClick={() => setCalendarMonth(new Date(year, month + 1))} className="btn btn-gray" style={{ padding: '0.5rem 1rem' }}>▶</button>
+        </div>
+
+        {/* 凡例（スタッフの色） */}
+        <div className="flex gap-2 mb-3 flex-wrap text-xs">
+          {staff.slice(0, 8).map(s => {
+            const color = getStaffColor(s.id)
+            return (
+              <span key={s.id} style={{ backgroundColor: color.bg, color: color.text, padding: '2px 6px', borderRadius: '4px' }}>
+                {s.name}
+              </span>
+            )
+          })}
+        </div>
+
+        {/* カレンダー本体 */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px' }}>
+          {/* 曜日ヘッダー */}
+          {['日', '月', '火', '水', '木', '金', '土'].map((d, i) => (
+            <div key={d} style={{ 
+              textAlign: 'center', 
+              padding: '8px 0', 
+              fontWeight: 'bold',
+              backgroundColor: i === 1 || i === 2 ? '#e5e7eb' : '#f9fafb',
+              color: i === 0 ? '#ef4444' : i === 6 ? '#3b82f6' : i === 1 || i === 2 ? '#9ca3af' : '#374151',
+              fontSize: '12px'
+            }}>{d}</div>
+          ))}
+          
+          {/* 空白セル */}
+          {[...Array(firstDay)].map((_, i) => (
+            <div key={`empty-${i}`} style={{ minHeight: '80px', backgroundColor: '#f9fafb' }}></div>
+          ))}
+          
+          {/* 日付セル */}
+          {[...Array(lastDate)].map((_, i) => {
+            const date = i + 1
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`
+            const dayOfWeek = new Date(year, month, date).getDay()
+            const isHoliday = dayOfWeek === 1 || dayOfWeek === 2 || date === thirdSunday
+            const isToday = dateStr === today
+            const dayReservations = practiceReservations.filter(p => p.date === dateStr)
+            
+            let bgColor = '#ffffff'
+            if (isHoliday) bgColor = '#d1d5db'
+            else if (dayOfWeek === 0) bgColor = '#fef2f2'
+            else if (dayOfWeek === 6) bgColor = '#eff6ff'
+            
+            return (
+              <div key={date} style={{ 
+                minHeight: '80px', 
+                backgroundColor: bgColor,
+                border: isToday ? '2px solid #3b82f6' : '1px solid #e5e7eb',
+                padding: '2px',
+                overflow: 'hidden'
+              }}>
+                <div style={{ 
+                  fontWeight: 'bold', 
+                  fontSize: '12px',
+                  color: isHoliday ? '#9ca3af' : dayOfWeek === 0 ? '#ef4444' : dayOfWeek === 6 ? '#3b82f6' : '#374151',
+                  marginBottom: '2px'
+                }}>
+                  {date}
+                </div>
+                {!isHoliday && dayReservations.length > 0 && (
+                  <div style={{ fontSize: '10px', lineHeight: '1.4' }}>
+                    {dayReservations.slice(0, 3).map(r => {
+                      const color = getStaffColor(r.staffId)
+                      return (
+                        <div key={r.id} style={{ 
+                          backgroundColor: color.bg,
+                          color: color.text,
+                          padding: '1px 2px',
+                          borderRadius: '2px',
+                          marginBottom: '1px',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          borderLeft: `2px solid ${color.border}`
+                        }}>
+                          {r.time?.slice(0,5)} {r.staffName?.slice(0,2)}
+                        </div>
+                      )
+                    })}
+                    {dayReservations.length > 3 && (
+                      <div style={{ color: '#6b7280', fontSize: '9px' }}>+{dayReservations.length - 3}件</div>
+                    )}
+                  </div>
+                )}
+                {isHoliday && (
+                  <div style={{ fontSize: '9px', color: '#9ca3af' }}>定休</div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* 予約登録 */}
+      {selectedStaff && (
+        <div className="card">
+          <h3 className="font-bold mb-3">➕ 練習予約を追加</h3>
+          <div className="grid-2 gap-3 mb-3">
+            <div>
+              <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>日付</label>
+              <input type="date" value={practiceDate} onChange={e => setPracticeDate(e.target.value)} min={today} className="input" />
+            </div>
+            <div>
+              <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>時間</label>
+              <select value={practiceTime} onChange={e => setPracticeTime(e.target.value)} className="select">
+                {timeOptions.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
+          </div>
+          <div className="mb-3">
+            <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>メニュー</label>
+            <div className="flex gap-2 flex-wrap mb-2">
+              {menuOptions.map(m => (
+                <button 
+                  key={m} 
+                  onClick={() => setPracticeMenu(m)} 
+                  className={`btn text-sm ${practiceMenu === m ? 'btn-blue' : 'btn-gray'}`}
+                  style={{ padding: '4px 12px' }}
+                >
+                  {m}
+                </button>
+              ))}
+            </div>
+            <input 
+              type="text" 
+              value={practiceMenu} 
+              onChange={e => setPracticeMenu(e.target.value)} 
+              placeholder="または自由入力" 
+              className="input" 
+            />
+          </div>
+          <div className="mb-3">
+            <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>メモ（任意）</label>
+            <input type="text" value={practiceMemo} onChange={e => setPracticeMemo(e.target.value)} placeholder="詳細など" className="input" />
+          </div>
+          <button onClick={submitReservation} className="btn btn-green w-full py-3">予約登録</button>
+        </div>
+      )}
+
+      {/* 自分の予約一覧 */}
+      {selectedStaff && myReservations.length > 0 && (
+        <div className="card">
+          <h3 className="font-bold mb-3">📝 自分の予約一覧</h3>
+          <div className="space-y-2">
+            {myReservations.filter(r => r.date >= today).sort((a, b) => a.date.localeCompare(b.date)).map(r => (
+              <div key={r.id} className="flex justify-between items-center bg-gray-50 p-3 rounded">
+                <div>
+                  <span className="font-bold">{r.date}</span>
+                  <span className="ml-2 text-gray-600">{r.time}</span>
+                  <span className="ml-2 text-blue-600">{r.menu}</span>
+                  {r.memo && <span className="ml-2 text-gray-400 text-sm">({r.memo})</span>}
+                </div>
+                <button onClick={() => deleteReservation(r.id)} className="text-red-500 text-sm">削除</button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
