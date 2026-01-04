@@ -1978,18 +1978,22 @@ function ContactBook({ staff, setStaff, contactGoals, setContactGoals, contactWe
           )}
           
           <div className="mb-4">
-            <p className="text-sm font-semibold mb-2">できた日にチェック</p>
-            <div className="grid grid-cols-7 gap-1">
+            <p className="text-sm font-semibold mb-3">できた日にチェック</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px' }}>
               {dayNames.map((day, i) => {
                 const dateObj = weekDates[i]
                 const holiday = isHoliday(dateObj)
                 const dateNum = dateObj.getDate()
                 return (
-                  <div key={day} className="text-center">
-                    <div className={`text-xs mb-1 ${holiday ? 'text-gray-300' : 'text-gray-500'}`}>{day}</div>
-                    <div className={`text-xs mb-1 ${holiday ? 'text-gray-300' : 'text-gray-400'}`}>{dateNum}</div>
+                  <div key={day} style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: '12px', marginBottom: '4px', color: holiday ? '#d1d5db' : '#6b7280' }}>{day}</div>
+                    <div style={{ fontSize: '11px', marginBottom: '4px', color: holiday ? '#d1d5db' : '#9ca3af' }}>{dateNum}日</div>
                     {holiday ? (
-                      <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 text-xs mx-auto">休</div>
+                      <div style={{ 
+                        width: '44px', height: '44px', borderRadius: '50%', 
+                        backgroundColor: '#e5e7eb', display: 'flex', alignItems: 'center', 
+                        justifyContent: 'center', color: '#9ca3af', fontSize: '12px', margin: '0 auto'
+                      }}>休</div>
                     ) : (
                       <button 
                         onClick={() => {
@@ -1997,7 +2001,13 @@ function ContactBook({ staff, setStaff, contactGoals, setContactGoals, contactWe
                           newChecks[i] = !newChecks[i]
                           setWeeklyChecks(newChecks)
                         }}
-                        className={`w-10 h-10 rounded-full text-lg ${weeklyChecks[i] ? 'bg-green-500 text-white' : 'bg-gray-100 border-2 border-gray-300'}`}
+                        style={{ 
+                          width: '44px', height: '44px', borderRadius: '50%', 
+                          fontSize: '20px', border: 'none', cursor: 'pointer',
+                          backgroundColor: weeklyChecks[i] ? '#22c55e' : '#f3f4f6',
+                          color: weeklyChecks[i] ? 'white' : '#9ca3af',
+                          boxShadow: weeklyChecks[i] ? 'none' : 'inset 0 0 0 2px #d1d5db'
+                        }}
                       >
                         {weeklyChecks[i] ? '✓' : ''}
                       </button>
@@ -2006,7 +2016,7 @@ function ContactBook({ staff, setStaff, contactGoals, setContactGoals, contactWe
                 )
               })}
             </div>
-            <p className="text-center mt-2 font-bold text-lg">{countChecks(weeklyChecks, weekDates)}日 / {workingDays}日</p>
+            <p className="text-center mt-3 font-bold text-lg">{countChecks(weeklyChecks, weekDates)}日 / {workingDays}日</p>
           </div>
           
           {countChecks(weeklyChecks, weekDates) === 0 && (
