@@ -1266,57 +1266,6 @@ function MiniLeaveCalendar({ leaveRequests, practiceReservations, staff }) {
       </div>
     </div>
   )
-}px',
-                color: isHolidayDay ? '#9ca3af' : dayOfWeek === 0 ? '#ef4444' : dayOfWeek === 6 ? '#3b82f6' : '#374151'
-              }}>{date}</div>
-              {!isHolidayDay && (
-                <div style={{ fontSize: '8px', lineHeight: '1.2' }}>
-                  {dayRequests.length > 0 && (
-                    <div style={{ 
-                      backgroundColor: dayRequests[0].leaveType === 'paid' ? '#dbeafe' : '#dcfce7',
-                      color: dayRequests[0].leaveType === 'paid' ? '#1d4ed8' : '#166534',
-                      borderRadius: '2px',
-                      padding: '0 2px',
-                      marginBottom: '1px'
-                    }}>
-                      休{dayRequests.length > 1 ? dayRequests.length : ''}
-                    </div>
-                  )}
-                  {dayPractice.slice(0, 1).map(p => {
-                    const color = getStaffColor(p.staffId)
-                    return (
-                      <div key={p.id} style={{ 
-                        backgroundColor: color.bg,
-                        color: color.text,
-                        borderRadius: '2px',
-                        padding: '0 2px',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap'
-                      }}>
-                        {p.staffName?.slice(0,2)}
-                      </div>
-                    )
-                  })}
-                  {dayPractice.length > 1 && (
-                    <div style={{ color: '#6b7280' }}>+{dayPractice.length - 1}</div>
-                  )}
-                </div>
-              )}
-            </div>
-          )
-        })}
-      </div>
-      
-      {/* 凡例 */}
-      <div className="flex gap-3 mt-2 text-xs text-gray-500 justify-center flex-wrap">
-        <span><span className="inline-block w-2 h-2 bg-gray-300 rounded mr-1"></span>定休</span>
-        <span><span className="inline-block w-2 h-2 bg-blue-200 rounded mr-1"></span>有給</span>
-        <span><span className="inline-block w-2 h-2 bg-green-200 rounded mr-1"></span>夏休</span>
-        <span><span className="inline-block w-2 h-2 bg-amber-200 rounded mr-1"></span>練習</span>
-      </div>
-    </div>
-  )
 }
 
 // ==================== 使用入力 ====================
@@ -2765,6 +2714,3 @@ function AppSettings({ appSettings, setAppSettings, isAdmin }) {
     </div>
   )
 }
-
-// ==================== Export ====================
-export default SalonApp
