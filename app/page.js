@@ -1947,34 +1947,6 @@ function StaffPurchase({ products, staff, staffPurchases, setStaffPurchases }) {
     </div>
   )
 }
-input" /></div>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="text-sm">
-            <thead><tr><th>ディーラー</th><th>種類</th><th>商品名</th><th>種別</th><th className="text-right">仕入</th><th className="text-right">販売</th><th className="text-center">操作</th></tr></thead>
-            <tbody>
-              {filteredProducts.map(p => (
-                editingId === p.id ? (
-                  <tr key={p.id} style={{ background: '#fef9c3' }}>
-                    <td><select value={editData.largeCategory} onChange={e => setEditData({...editData, largeCategory: e.target.value})} className="select" style={{ width: '100px' }}>{categories.large.map((c, i) => <option key={i} value={c.name}>{c.name}</option>)}</select></td>
-                    <td><select value={editData.mediumCategory} onChange={e => setEditData({...editData, mediumCategory: e.target.value})} className="select" style={{ width: '100px' }}>{categories.medium.map((c, i) => <option key={i} value={c}>{c}</option>)}</select></td>
-                    <td><input value={editData.name} onChange={e => setEditData({...editData, name: e.target.value})} className="input" style={{ width: '120px' }} /></td>
-                    <td><select value={editData.productType} onChange={e => setEditData({...editData, productType: e.target.value})} className="select" style={{ width: '80px' }}>{productTypes.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}</select></td>
-                    <td><input type="number" value={editData.purchasePrice} onChange={e => setEditData({...editData, purchasePrice: e.target.value})} className="input" style={{ width: '80px' }} /></td>
-                    <td><input type="number" value={editData.sellingPrice} onChange={e => setEditData({...editData, sellingPrice: e.target.value})} className="input" style={{ width: '80px' }} /></td>
-                    <td className="text-center"><button onClick={() => saveEdit(p.id)} className="text-green-600 text-sm mr-2">保存</button><button onClick={() => setEditingId(null)} className="text-gray-500 text-sm">取消</button></td>
-                  </tr>
-                ) : (
-                  <tr key={p.id}><td>{p.largeCategory}</td><td>{p.mediumCategory}</td><td>{p.name}</td><td><span className={`badge ${p.productType === 'retail' ? 'badge-green' : p.productType === 'both' ? 'badge-purple' : 'badge-gray'}`}>{getTypeLabel(p.productType)}</span></td><td className="text-right">¥{p.purchasePrice.toLocaleString()}</td><td className="text-right">¥{p.sellingPrice.toLocaleString()}</td><td className="text-center"><button onClick={() => startEdit(p)} className="text-blue-500 text-sm mr-2">編集</button><button onClick={() => deleteProduct(p.id)} className="text-red-500 text-sm">削除</button></td></tr>
-                )
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 // ==================== スタッフ管理 ====================
 function StaffManagement({ staff, setStaff, isAdmin }) {
