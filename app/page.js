@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 
+// ==================== アイコン ====================
 const Icons = {
   Save: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>,
   Plus: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
@@ -20,8 +21,63 @@ const Icons = {
   History: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
   Lock: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>,
   Logout: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>,
+  // v4で追加したアイコン
+  Home: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
+  Users: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
+  Calendar: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
+  Sun: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>,
+  Palette: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.555C21.965 6.012 17.461 2 12 2z"/></svg>,
+  Book: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>,
+  Clock: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
+  Menu: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>,
+  X: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
+  ChevronRight: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>,
+  HelpCircle: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>,
 }
 
+// ==================== ユーティリティ関数 ====================
+const formatDate = (date) => {
+  const d = new Date(date)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+const getWeekStart = (date) => {
+  const d = new Date(date)
+  const day = d.getDay()
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1)
+  const monday = new Date(d.setDate(diff))
+  return formatDate(monday)
+}
+
+const isHoliday = (date) => {
+  const d = new Date(date)
+  const dayOfWeek = d.getDay()
+  if (dayOfWeek === 1 || dayOfWeek === 2) return true
+  // 第三日曜日
+  if (dayOfWeek === 0) {
+    const firstDay = new Date(d.getFullYear(), d.getMonth(), 1)
+    let sundayCount = 0
+    for (let i = 1; i <= d.getDate(); i++) {
+      if (new Date(d.getFullYear(), d.getMonth(), i).getDay() === 0) sundayCount++
+    }
+    if (sundayCount === 3) return true
+  }
+  return false
+}
+
+// スタッフごとの色
+const staffColors = [
+  { bg: '#fef3c7', text: '#92400e', border: '#f59e0b' },
+  { bg: '#fce7f3', text: '#9d174d', border: '#ec4899' },
+  { bg: '#e0e7ff', text: '#3730a3', border: '#6366f1' },
+  { bg: '#d1fae5', text: '#065f46', border: '#10b981' },
+  { bg: '#fee2e2', text: '#991b1b', border: '#ef4444' },
+  { bg: '#e0f2fe', text: '#075985', border: '#0ea5e9' },
+  { bg: '#f3e8ff', text: '#6b21a8', border: '#a855f7' },
+  { bg: '#fef9c3', text: '#854d0e', border: '#eab308' },
+]
+
+// ==================== メインエクスポート ====================
 export default function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [userRole, setUserRole] = useState(null)
@@ -90,7 +146,7 @@ function LoginScreen({ passwords, onLogin }) {
       <div className="card" style={{ maxWidth: '400px', margin: '0 auto' }}>
         <div className="text-center mb-6">
           <Icons.Lock />
-          <h1 className="text-2xl font-bold mt-2">美容室在庫管理</h1>
+          <h1 className="text-2xl font-bold mt-2">DOLL 在庫管理</h1>
           <p className="text-sm text-gray-500 mt-1">ログインしてください</p>
         </div>
         <form onSubmit={handleSubmit}>
@@ -115,8 +171,9 @@ function LoginScreen({ passwords, onLogin }) {
 
 // ==================== メインアプリ ====================
 function MainApp({ userRole, onLogout, passwords, setPasswords }) {
-  const [tab, setTab] = useState('usage')
+  const [tab, setTab] = useState('home')
   const [showHelp, setShowHelp] = useState(false)
+  const [showOtherMenu, setShowOtherMenu] = useState(false)
   const [staff, setStaff] = useState([])
   const [products, setProducts] = useState([])
   const [categories, setCategories] = useState({ large: [], medium: [] })
@@ -221,6 +278,27 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
 
   // ヘルプコンテンツ
   const helpContents = {
+    home: {
+      title: '🏠 ホーム',
+      staff: `🎯 ホーム画面
+今日の予定や休みの情報をまとめて確認できます。
+
+✅ 表示内容
+・今日のお休み（承認済みの有給・夏休み）
+・今日の練習予約
+・今週の予定カレンダー
+
+💡 ポイント
+・画面下のナビから各機能に移動できます
+・「その他」から詳細な機能にアクセス`,
+      admin: `🎯 ホーム画面
+今日の予定や休みの情報をまとめて確認できます。
+
+✅ 管理者向け
+・スタッフの休み状況を一目で確認
+・練習予約の把握
+・業務の流れを把握`
+    },
     usage: {
       title: '📦 使用入力',
       staff: `🎯 目的
@@ -571,65 +649,78 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
     }
   }
 
-  const mainTabs = [
-    { key: 'usage', label: '使用入力' },
-    { key: 'stockin', label: '入荷' },
-    { key: 'timecard', label: '🕐 打刻' },
-    { key: 'practice', label: '🎨 練習予約' },
-    { key: 'contact', label: '📓 連絡帳' },
-    { key: 'order', label: '発注リンク' }
+  // スタッフ用メニュー
+  const staffOtherMenuItems = [
+    { key: 'order', icon: '🔗', label: '発注リンク' },
+    { key: 'inventory', icon: '📋', label: '棚卸' },
+    { key: 'purchase', icon: '🛒', label: 'スタッフ購入' },
+    { key: 'loss', icon: '📉', label: 'ロス入力' },
+    { key: 'leave', icon: '🏖️', label: '有給管理' },
+    { key: 'contact', icon: '📓', label: '連絡帳' },
+    { key: 'practice', icon: '🎨', label: '練習予約' },
+    { key: 'monthly', icon: '📊', label: '月次レポート' },
+    { key: 'bonus', icon: '🎁', label: '材料費達成率' },
+    { key: 'dealer', icon: '💰', label: '予算管理' },
+    { key: 'products', icon: '📦', label: '商品管理' },
+    { key: 'staff', icon: '👥', label: 'スタッフ' },
+    { key: 'export', icon: '📤', label: '出力' },
   ]
-  const otherTabs = [
-    { key: 'inventory', label: '棚卸' },
-    { key: 'dealer', label: '予算管理' },
-    { key: 'purchase', label: 'スタッフ購入' },
-    { key: 'loss', label: 'ロス入力' },
-    { key: 'monthly', label: '📊 月次レポート' },
-    { key: 'bonus', label: '材料費達成率' },
-    { key: 'leave', label: '🏖️ 有給管理' },
-    { key: 'products', label: '商品管理' },
-    { key: 'staff', label: 'スタッフ' },
-    { key: 'export', label: '出力' },
-    ...(isAdmin ? [
-      { key: 'lossprice', label: 'ロス単価設定' },
-      { key: 'settings', label: '設定' }
-    ] : [])
+
+  // 管理者用メニュー（スタッフ用 + 管理者専用）
+  const adminOtherMenuItems = [
+    ...staffOtherMenuItems,
+    { key: 'lossprice', icon: '⚙️', label: 'ロス単価設定' },
+    { key: 'settings', icon: '🔧', label: 'アプリ設定' },
   ]
-  const allTabs = [...mainTabs, ...otherTabs]
-  const currentLabel = allTabs.find(t => t.key === tab)?.label || '使用入力'
-  const isOtherTab = otherTabs.some(t => t.key === tab)
+
+  const otherMenuItems = isAdmin ? adminOtherMenuItems : staffOtherMenuItems
+
+  // タブ名からラベルを取得
+  const getTabLabel = (key) => {
+    const labels = {
+      home: 'ホーム',
+      usage: '使用入力',
+      stockin: '入荷',
+      timecard: '打刻',
+      practice: '練習予約',
+      contact: '連絡帳',
+      order: '発注リンク',
+      inventory: '棚卸',
+      dealer: '予算管理',
+      purchase: 'スタッフ購入',
+      loss: 'ロス入力',
+      monthly: '月次レポート',
+      bonus: '材料費達成率',
+      leave: '有給管理',
+      products: '商品管理',
+      staff: 'スタッフ',
+      export: '出力',
+      lossprice: 'ロス単価設定',
+      settings: '設定',
+    }
+    return labels[key] || key
+  }
 
   if (loading) return <div className="container" style={{ paddingTop: '4rem', textAlign: 'center' }}><p>読み込み中...</p></div>
 
   return (
-    <div className="container">
-      <div className="card">
-        <div className="flex justify-between items-center mb-4">
-          <h1 className="text-2xl font-bold">美容室在庫管理</h1>
+    <div className="container" style={{ paddingBottom: '80px' }}>
+      {/* ヘッダー */}
+      <div className="card" style={{ marginBottom: '1rem' }}>
+        <div className="flex justify-between items-center">
+          <h1 className="text-xl font-bold">DOLL</h1>
           <div className="flex items-center gap-2">
-            <button onClick={() => setShowHelp(true)} className="btn btn-gray" style={{ padding: '0.25rem 0.5rem', fontSize: '16px' }}>❓</button>
+            <button onClick={() => setShowHelp(true)} className="btn btn-gray" style={{ padding: '0.25rem 0.5rem', fontSize: '14px' }}>
+              <Icons.HelpCircle />
+            </button>
             <span className={`badge ${isAdmin ? 'badge-red' : 'badge-blue'}`}>{isAdmin ? '管理者' : 'スタッフ'}</span>
             <button onClick={onLogout} className="btn btn-gray" style={{ padding: '0.25rem 0.5rem' }}><Icons.Logout /></button>
           </div>
         </div>
-        <div className="flex gap-2 flex-wrap">
-          {mainTabs.map(t => (
-            <button key={t.key} className={`tab ${tab === t.key ? 'active' : ''}`} onClick={() => setTab(t.key)}>{t.label}</button>
-          ))}
-          <select
-            value={isOtherTab ? tab : ''}
-            onChange={e => e.target.value && setTab(e.target.value)}
-            className={`select ${isOtherTab ? 'bg-blue-100 border-blue-500' : ''}`}
-            style={{ minWidth: '120px' }}
-          >
-            <option value="">{isOtherTab ? currentLabel : 'その他 ▼'}</option>
-            {otherTabs.map(t => (
-              <option key={t.key} value={t.key}>{t.label}</option>
-            ))}
-          </select>
-        </div>
       </div>
 
+      {/* メインコンテンツ */}
+      {tab === 'home' && <HomeScreen leaveRequests={leaveRequests} practiceReservations={practiceReservations} staff={staff} setTab={setTab} isAdmin={isAdmin} />}
       {tab === 'usage' && (
         <>
           <MiniLeaveCalendar leaveRequests={leaveRequests} practiceReservations={practiceReservations} staff={staff} />
@@ -654,6 +745,163 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
       {tab === 'lossprice' && isAdmin && <LossPriceSettings lossPrices={lossPrices} setLossPrices={setLossPrices} />}
       {tab === 'settings' && isAdmin && <AppSettings passwords={passwords} setPasswords={setPasswords} />}
 
+      {/* 下部固定ナビゲーション */}
+      <div style={{
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: 'white',
+        borderTop: '1px solid #e5e7eb',
+        display: 'flex',
+        justifyContent: 'space-around',
+        padding: '8px 0',
+        zIndex: 100,
+        boxShadow: '0 -2px 10px rgba(0,0,0,0.1)'
+      }}>
+        <button
+          onClick={() => setTab('home')}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            padding: '4px 12px',
+            background: 'none',
+            border: 'none',
+            color: tab === 'home' ? '#3b82f6' : '#6b7280',
+            cursor: 'pointer'
+          }}
+        >
+          <Icons.Home />
+          <span style={{ fontSize: '10px', marginTop: '2px' }}>ホーム</span>
+        </button>
+        <button
+          onClick={() => setTab('usage')}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            padding: '4px 12px',
+            background: 'none',
+            border: 'none',
+            color: tab === 'usage' ? '#3b82f6' : '#6b7280',
+            cursor: 'pointer'
+          }}
+        >
+          <Icons.Package />
+          <span style={{ fontSize: '10px', marginTop: '2px' }}>使用</span>
+        </button>
+        <button
+          onClick={() => setTab('stockin')}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            padding: '4px 12px',
+            background: 'none',
+            border: 'none',
+            color: tab === 'stockin' ? '#3b82f6' : '#6b7280',
+            cursor: 'pointer'
+          }}
+        >
+          <Icons.TrendingUp />
+          <span style={{ fontSize: '10px', marginTop: '2px' }}>入荷</span>
+        </button>
+        <button
+          onClick={() => setTab('timecard')}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            padding: '4px 12px',
+            background: 'none',
+            border: 'none',
+            color: tab === 'timecard' ? '#3b82f6' : '#6b7280',
+            cursor: 'pointer'
+          }}
+        >
+          <Icons.Clock />
+          <span style={{ fontSize: '10px', marginTop: '2px' }}>打刻</span>
+        </button>
+        <button
+          onClick={() => setShowOtherMenu(true)}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            padding: '4px 12px',
+            background: 'none',
+            border: 'none',
+            color: '#6b7280',
+            cursor: 'pointer'
+          }}
+        >
+          <Icons.Menu />
+          <span style={{ fontSize: '10px', marginTop: '2px' }}>その他</span>
+        </button>
+      </div>
+
+      {/* その他メニュー（モーダル） */}
+      {showOtherMenu && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          zIndex: 200,
+          display: 'flex',
+          alignItems: 'flex-end'
+        }} onClick={() => setShowOtherMenu(false)}>
+          <div style={{
+            backgroundColor: 'white',
+            width: '100%',
+            maxHeight: '70vh',
+            borderTopLeftRadius: '16px',
+            borderTopRightRadius: '16px',
+            overflow: 'hidden'
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{
+              padding: '16px',
+              borderBottom: '1px solid #e5e7eb',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <h3 style={{ fontWeight: 'bold', fontSize: '18px' }}>その他のメニュー</h3>
+              <button onClick={() => setShowOtherMenu(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                <Icons.X />
+              </button>
+            </div>
+            <div style={{ padding: '8px', maxHeight: '60vh', overflowY: 'auto' }}>
+              {otherMenuItems.map(item => (
+                <button
+                  key={item.key}
+                  onClick={() => { setTab(item.key); setShowOtherMenu(false) }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    width: '100%',
+                    padding: '14px 16px',
+                    background: tab === item.key ? '#eff6ff' : 'none',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    marginBottom: '4px'
+                  }}
+                >
+                  <span style={{ fontSize: '20px', marginRight: '12px' }}>{item.icon}</span>
+                  <span style={{ flex: 1, fontWeight: tab === item.key ? 'bold' : 'normal', color: tab === item.key ? '#3b82f6' : '#374151' }}>{item.label}</span>
+                  <Icons.ChevronRight />
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ヘルプモーダル */}
       {showHelp && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
@@ -673,7 +921,7 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                   {Object.entries(helpContents).filter(([key, val]) => {
                     const content = isAdmin ? val.admin : val.staff
-                    return content && content !== '【後で設定】' && content.length > 0 && key !== tab
+                    return content && content.length > 0 && key !== tab
                   }).map(([key, val]) => (
                     <button key={key} onClick={() => setTab(key)} style={{ 
                       fontSize: '11px', padding: '4px 8px', backgroundColor: '#f3f4f6', 
@@ -695,12 +943,179 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
   )
 }
 
+// ==================== ホーム画面 ====================
+function HomeScreen({ leaveRequests, practiceReservations, staff, setTab, isAdmin }) {
+  const today = new Date()
+  const todayStr = formatDate(today)
+  const dayNames = ['日', '月', '火', '水', '木', '金', '土']
+  
+  // 今日の休み
+  const todayLeaves = leaveRequests.filter(r => r.leaveDate === todayStr && r.status === 'approved')
+  
+  // 今日の練習
+  const todayPractice = practiceReservations.filter(p => p.date === todayStr)
+  
+  // 今週の日付を取得
+  const getWeekDates = () => {
+    const dates = []
+    const weekStart = new Date(today)
+    const day = weekStart.getDay()
+    weekStart.setDate(weekStart.getDate() - day) // 日曜始まり
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(weekStart)
+      d.setDate(weekStart.getDate() + i)
+      dates.push(d)
+    }
+    return dates
+  }
+  
+  const weekDates = getWeekDates()
+  
+  // スタッフの色を取得
+  const getStaffColor = (staffId) => {
+    const index = staff.findIndex(s => s.id === staffId)
+    return staffColors[index % staffColors.length]
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* 今日の日付 */}
+      <div className="card">
+        <div className="text-center">
+          <p className="text-gray-500 text-sm">{today.getFullYear()}年{today.getMonth() + 1}月</p>
+          <p className="text-4xl font-bold">{today.getDate()}</p>
+          <p className="text-lg">{dayNames[today.getDay()]}曜日</p>
+        </div>
+      </div>
+      
+      {/* 今日のお知らせ */}
+      <div className="card">
+        <h3 className="font-bold mb-3">📢 今日のお知らせ</h3>
+        
+        {/* 今日の休み */}
+        {todayLeaves.length > 0 && (
+          <div className="mb-3">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-blue-600">🏖️</span>
+              <span className="font-semibold">お休み</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {todayLeaves.map(leave => (
+                <span key={leave.id} className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm">
+                  {leave.staffName} ({leave.leaveType === 'paid' ? '有給' : '夏休み'}{leave.dayType !== 'full' ? ` ${leave.dayType === 'am' ? '午前' : '午後'}` : ''})
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+        
+        {/* 今日の練習 */}
+        {todayPractice.length > 0 && (
+          <div className="mb-3">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-orange-600">🎨</span>
+              <span className="font-semibold">練習予約</span>
+            </div>
+            <div className="space-y-2">
+              {todayPractice.map(p => {
+                const color = getStaffColor(p.staffId)
+                return (
+                  <div key={p.id} className="flex items-center gap-2 p-2 rounded" style={{ backgroundColor: color.bg }}>
+                    <span className="font-semibold" style={{ color: color.text }}>{p.time}</span>
+                    <span style={{ color: color.text }}>{p.staffName}</span>
+                    <span className="text-gray-600">- {p.menu}</span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+        
+        {todayLeaves.length === 0 && todayPractice.length === 0 && (
+          <p className="text-gray-500 text-center py-2">今日の予定はありません</p>
+        )}
+      </div>
+      
+      {/* 今週のカレンダー */}
+      <div className="card">
+        <h3 className="font-bold mb-3">📅 今週の予定</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px' }}>
+          {weekDates.map((date, i) => {
+            const dateStr = formatDate(date)
+            const isToday = dateStr === todayStr
+            const holiday = isHoliday(date)
+            const dayLeaves = leaveRequests.filter(r => r.leaveDate === dateStr && r.status === 'approved')
+            const dayPractice = practiceReservations.filter(p => p.date === dateStr)
+            
+            return (
+              <div key={i} style={{
+                padding: '8px 4px',
+                borderRadius: '8px',
+                backgroundColor: isToday ? '#eff6ff' : holiday ? '#f3f4f6' : 'white',
+                border: isToday ? '2px solid #3b82f6' : '1px solid #e5e7eb',
+                textAlign: 'center'
+              }}>
+                <div style={{ 
+                  fontSize: '10px', 
+                  color: i === 0 ? '#ef4444' : i === 6 ? '#3b82f6' : holiday ? '#9ca3af' : '#6b7280'
+                }}>
+                  {dayNames[i]}
+                </div>
+                <div style={{ 
+                  fontSize: '16px', 
+                  fontWeight: isToday ? 'bold' : 'normal',
+                  color: holiday ? '#9ca3af' : '#374151'
+                }}>
+                  {date.getDate()}
+                </div>
+                {!holiday && (
+                  <div style={{ marginTop: '4px', fontSize: '10px' }}>
+                    {dayLeaves.length > 0 && (
+                      <div style={{ backgroundColor: '#dbeafe', color: '#1d4ed8', borderRadius: '4px', padding: '1px', marginBottom: '2px' }}>
+                        休{dayLeaves.length}
+                      </div>
+                    )}
+                    {dayPractice.length > 0 && (
+                      <div style={{ backgroundColor: '#fef3c7', color: '#92400e', borderRadius: '4px', padding: '1px' }}>
+                        練{dayPractice.length}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      </div>
+      
+      {/* クイックアクセス */}
+      <div className="card">
+        <h3 className="font-bold mb-3">⚡ クイックアクセス</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
+          <button onClick={() => setTab('usage')} className="btn btn-gray py-3" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+            <span>📦</span> 使用入力
+          </button>
+          <button onClick={() => setTab('stockin')} className="btn btn-gray py-3" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+            <span>📥</span> 入荷
+          </button>
+          <button onClick={() => setTab('leave')} className="btn btn-gray py-3" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+            <span>🏖️</span> 有給管理
+          </button>
+          <button onClick={() => setTab('practice')} className="btn btn-gray py-3" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+            <span>🎨</span> 練習予約
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ==================== ミニ有給カレンダー ====================
 function MiniLeaveCalendar({ leaveRequests, practiceReservations, staff }) {
   const today = new Date()
   const year = today.getFullYear()
   const month = today.getMonth()
-  const todayStr = today.toISOString().split('T')[0]
+  const todayStr = formatDate(today)
   
   // 第三日曜日を計算
   let sundayCount = 0
@@ -713,17 +1128,6 @@ function MiniLeaveCalendar({ leaveRequests, practiceReservations, staff }) {
     }
   }
   
-  // スタッフごとの色
-  const staffColors = [
-    { bg: '#fef3c7', text: '#92400e' },
-    { bg: '#fce7f3', text: '#9d174d' },
-    { bg: '#e0e7ff', text: '#3730a3' },
-    { bg: '#d1fae5', text: '#065f46' },
-    { bg: '#fee2e2', text: '#991b1b' },
-    { bg: '#e0f2fe', text: '#075985' },
-    { bg: '#f3e8ff', text: '#6b21a8' },
-    { bg: '#fef9c3', text: '#854d0e' },
-  ]
   const getStaffColor = (staffId) => {
     const index = staff.findIndex(s => s.id === staffId)
     return staffColors[index % staffColors.length]
@@ -791,13 +1195,13 @@ function MiniLeaveCalendar({ leaveRequests, practiceReservations, staff }) {
           const date = i + 1
           const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`
           const dayOfWeek = new Date(year, month, date).getDay()
-          const isHoliday = dayOfWeek === 1 || dayOfWeek === 2 || date === thirdSunday
+          const isHolidayDay = dayOfWeek === 1 || dayOfWeek === 2 || date === thirdSunday
           const isToday = dateStr === todayStr
           const dayRequests = monthRequests.filter(r => r.leaveDate === dateStr)
           const dayPractice = monthPractice.filter(p => p.date === dateStr)
           
           let bgColor = '#ffffff'
-          if (isHoliday) bgColor = '#d1d5db'
+          if (isHolidayDay) bgColor = '#d1d5db'
           else if (dayOfWeek === 0) bgColor = '#fef2f2'
           else if (dayOfWeek === 6) bgColor = '#eff6ff'
           
@@ -812,9 +1216,60 @@ function MiniLeaveCalendar({ leaveRequests, practiceReservations, staff }) {
               <div style={{ 
                 fontWeight: isToday ? 'bold' : 'normal',
                 fontSize: '10px',
-                color: isHoliday ? '#9ca3af' : dayOfWeek === 0 ? '#ef4444' : dayOfWeek === 6 ? '#3b82f6' : '#374151'
+                color: isHolidayDay ? '#9ca3af' : dayOfWeek === 0 ? '#ef4444' : dayOfWeek === 6 ? '#3b82f6' : '#374151'
               }}>{date}</div>
-              {!isHoliday && (
+              {!isHolidayDay && (
+                <div style={{ fontSize: '8px', lineHeight: '1.2' }}>
+                  {dayRequests.length > 0 && (
+                    <div style={{ 
+                      backgroundColor: dayRequests[0].leaveType === 'paid' ? '#dbeafe' : '#dcfce7',
+                      color: dayRequests[0].leaveType === 'paid' ? '#1d4ed8' : '#166534',
+                      borderRadius: '2px',
+                      padding: '0 2px',
+                      marginBottom: '1px'
+                    }}>
+                      休{dayRequests.length > 1 ? dayRequests.length : ''}
+                    </div>
+                  )}
+                  {dayPractice.slice(0, 1).map(p => {
+                    const color = getStaffColor(p.staffId)
+                    return (
+                      <div key={p.id} style={{ 
+                        backgroundColor: color.bg,
+                        color: color.text,
+                        borderRadius: '2px',
+                        padding: '0 2px',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                      }}>
+                        {p.staffName?.slice(0,2)}
+                      </div>
+                    )
+                  })}
+                  {dayPractice.length > 1 && (
+                    <div style={{ color: '#6b7280' }}>+{dayPractice.length - 1}</div>
+                  )}
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+      
+      {/* 凡例 */}
+      <div className="flex gap-3 mt-2 text-xs text-gray-500 justify-center flex-wrap">
+        <span><span className="inline-block w-2 h-2 bg-gray-300 rounded mr-1"></span>定休</span>
+        <span><span className="inline-block w-2 h-2 bg-blue-200 rounded mr-1"></span>有給</span>
+        <span><span className="inline-block w-2 h-2 bg-green-200 rounded mr-1"></span>夏休</span>
+        <span><span className="inline-block w-2 h-2 bg-amber-200 rounded mr-1"></span>練習</span>
+      </div>
+    </div>
+  )
+}px',
+                color: isHolidayDay ? '#9ca3af' : dayOfWeek === 0 ? '#ef4444' : dayOfWeek === 6 ? '#3b82f6' : '#374151'
+              }}>{date}</div>
+              {!isHolidayDay && (
                 <div style={{ fontSize: '8px', lineHeight: '1.2' }}>
                   {dayRequests.length > 0 && (
                     <div style={{ 
@@ -1417,194 +1872,59 @@ function StaffPurchase({ products, staff, staffPurchases, setStaffPurchases }) {
   const [cart, setCart] = useState([])
   const [filterDealer, setFilterDealer] = useState('')
 
-  // ディーラー一覧を取得
   const dealers = [...new Set(products.map(p => p.largeCategory).filter(Boolean))]
-  
-  // フィルター済み商品
-  const filteredProducts = filterDealer 
-    ? products.filter(p => p.largeCategory === filterDealer)
-    : products
+  const filteredProducts = filterDealer ? products.filter(p => p.largeCategory === filterDealer) : products
 
-  // 商品選択時に価格をセット
   const handleProductChange = (productId) => {
     setSelectedProduct(productId)
     if (productId) {
       const product = products.find(p => p.id === parseInt(productId))
-      if (product) {
-        setCustomPrice(product.purchasePrice.toString())
-        setSaleTag('')
-      }
-    } else {
-      setCustomPrice('')
-      setSaleTag('')
-    }
+      if (product) { setCustomPrice(product.purchasePrice.toString()); setSaleTag('') }
+    } else { setCustomPrice(''); setSaleTag('') }
   }
 
-  // カートに追加
   const addToCart = () => {
     if (!selectedProduct) { alert('商品を選択してください'); return }
     const product = products.find(p => p.id === parseInt(selectedProduct))
     if (!product) return
     const finalPrice = parseInt(customPrice) || product.purchasePrice
     const tag = finalPrice !== product.purchasePrice ? (saleTag || 'セール') : ''
-    
-    setCart([...cart, {
-      tempId: Date.now(),
-      productId: product.id,
-      productName: product.name,
-      largeCategory: product.largeCategory,
-      mediumCategory: product.mediumCategory,
-      purchasePrice: finalPrice,
-      originalPrice: product.purchasePrice,
-      quantity,
-      saleTag: tag
-    }])
-    
-    // リセット
-    setSelectedProduct('')
-    setCustomPrice('')
-    setSaleTag('')
-    setQuantity(1)
+    setCart([...cart, { tempId: Date.now(), productId: product.id, productName: product.name, largeCategory: product.largeCategory, mediumCategory: product.mediumCategory, purchasePrice: finalPrice, originalPrice: product.purchasePrice, quantity, saleTag: tag }])
+    setSelectedProduct(''); setCustomPrice(''); setSaleTag(''); setQuantity(1)
   }
 
-  // カートから削除
-  const removeFromCart = (tempId) => {
-    setCart(cart.filter(item => item.tempId !== tempId))
-  }
-
-  // カート合計
+  const removeFromCart = (tempId) => { setCart(cart.filter(item => item.tempId !== tempId)) }
   const cartTotal = cart.reduce((sum, item) => sum + (item.purchasePrice * item.quantity), 0)
 
-  // まとめて登録
   const submitCart = async () => {
     if (!selectedStaff) { alert('スタッフを選択してください'); return }
     if (cart.length === 0) { alert('カートに商品がありません'); return }
-    
-    const insertData = cart.map(item => ({
-      staff_name: selectedStaff,
-      product_id: item.productId,
-      product_name: item.productName,
-      large_category: item.largeCategory,
-      medium_category: item.mediumCategory,
-      purchase_price: item.purchasePrice,
-      quantity: item.quantity,
-      purchase_date: date,
-      sale_tag: item.saleTag
-    }))
-    
+    const insertData = cart.map(item => ({ staff_name: selectedStaff, product_id: item.productId, product_name: item.productName, large_category: item.largeCategory, medium_category: item.mediumCategory, purchase_price: item.purchasePrice, quantity: item.quantity, purchase_date: date, sale_tag: item.saleTag }))
     const { data, error } = await supabase.from('staff_purchases').insert(insertData).select()
-    
     if (!error && data) {
-      const newPurchases = data.map((d, i) => ({
-        id: d.id,
-        staff: selectedStaff,
-        productId: cart[i].productId,
-        productName: cart[i].productName,
-        largeCategory: cart[i].largeCategory,
-        mediumCategory: cart[i].mediumCategory,
-        purchasePrice: cart[i].purchasePrice,
-        quantity: cart[i].quantity,
-        date,
-        saleTag: cart[i].saleTag
-      }))
-      setStaffPurchases([...staffPurchases, ...newPurchases])
-      setCart([])
-      alert(`${data.length}件の購入を記録しました！`)
+      const newPurchases = data.map((d, i) => ({ id: d.id, staff: selectedStaff, productId: cart[i].productId, productName: cart[i].productName, largeCategory: cart[i].largeCategory, mediumCategory: cart[i].mediumCategory, purchasePrice: cart[i].purchasePrice, quantity: cart[i].quantity, date, saleTag: cart[i].saleTag }))
+      setStaffPurchases([...staffPurchases, ...newPurchases]); setCart([]); alert(`${data.length}件の購入を記録しました！`)
     }
   }
 
-  // 単品登録（従来機能も残す）
   const recordSingle = async () => {
     if (!selectedStaff || !selectedProduct) { alert('スタッフと商品を選択してください'); return }
     const product = products.find(p => p.id === parseInt(selectedProduct))
     if (!product) return
     const finalPrice = parseInt(customPrice) || product.purchasePrice
     const tag = finalPrice !== product.purchasePrice ? (saleTag || 'セール') : ''
-    const { data, error } = await supabase.from('staff_purchases').insert({ 
-      staff_name: selectedStaff, 
-      product_id: product.id, 
-      product_name: product.name, 
-      large_category: product.largeCategory, 
-      medium_category: product.mediumCategory, 
-      purchase_price: finalPrice, 
-      quantity, 
-      purchase_date: date,
-      sale_tag: tag
-    }).select()
-    if (!error && data) { 
-      setStaffPurchases([...staffPurchases, { 
-        id: data[0].id, 
-        staff: selectedStaff, 
-        productId: product.id, 
-        productName: product.name, 
-        largeCategory: product.largeCategory, 
-        mediumCategory: product.mediumCategory, 
-        purchasePrice: finalPrice,
-        originalPrice: product.purchasePrice,
-        quantity, 
-        date,
-        saleTag: tag
-      }])
-      alert('購入を記録しました！')
-      setQuantity(1)
-      setCustomPrice('')
-      setSaleTag('')
-      setSelectedProduct('')
-    }
+    const { data, error } = await supabase.from('staff_purchases').insert({ staff_name: selectedStaff, product_id: product.id, product_name: product.name, large_category: product.largeCategory, medium_category: product.mediumCategory, purchase_price: finalPrice, quantity, purchase_date: date, sale_tag: tag }).select()
+    if (!error && data) { setStaffPurchases([...staffPurchases, { id: data[0].id, staff: selectedStaff, productId: product.id, productName: product.name, largeCategory: product.largeCategory, mediumCategory: product.mediumCategory, purchasePrice: finalPrice, originalPrice: product.purchasePrice, quantity, date, saleTag: tag }]); alert('購入を記録しました！'); setQuantity(1); setCustomPrice(''); setSaleTag(''); setSelectedProduct('') }
   }
 
-  const deletePurchase = async (id) => { 
-    if (!confirm('この購入記録を削除しますか？')) return
-    const { error } = await supabase.from('staff_purchases').delete().eq('id', id)
-    if (!error) setStaffPurchases(staffPurchases.filter(p => p.id !== id)) 
-  }
-  
-  const startEdit = (record) => { 
-    const product = products.find(p => p.id === record.productId)
-    setEditingId(record.id)
-    setEditData({ 
-      staff: record.staff, 
-      quantity: record.quantity, 
-      date: record.date,
-      price: record.purchasePrice,
-      originalPrice: product?.purchasePrice || record.purchasePrice,
-      saleTag: record.saleTag || ''
-    }) 
-  }
-  
-  const saveEdit = async (id) => { 
-    const finalPrice = parseInt(editData.price) || editData.originalPrice
-    const tag = editData.saleTag || (finalPrice !== editData.originalPrice ? 'セール' : '')
-    const { error } = await supabase.from('staff_purchases').update({ 
-      staff_name: editData.staff, 
-      quantity: parseInt(editData.quantity) || 1, 
-      purchase_date: editData.date,
-      purchase_price: finalPrice,
-      sale_tag: tag
-    }).eq('id', id)
-    if (!error) { 
-      setStaffPurchases(staffPurchases.map(p => p.id === id ? { 
-        ...p, 
-        staff: editData.staff, 
-        quantity: parseInt(editData.quantity) || 1, 
-        date: editData.date,
-        purchasePrice: finalPrice,
-        saleTag: tag
-      } : p))
-      setEditingId(null) 
-    } 
-  }
+  const deletePurchase = async (id) => { if (!confirm('この購入記録を削除しますか？')) return; const { error } = await supabase.from('staff_purchases').delete().eq('id', id); if (!error) setStaffPurchases(staffPurchases.filter(p => p.id !== id)) }
+  const startEdit = (record) => { const product = products.find(p => p.id === record.productId); setEditingId(record.id); setEditData({ staff: record.staff, quantity: record.quantity, date: record.date, price: record.purchasePrice, originalPrice: product?.purchasePrice || record.purchasePrice, saleTag: record.saleTag || '' }) }
+  const saveEdit = async (id) => { const finalPrice = parseInt(editData.price) || editData.originalPrice; const tag = editData.saleTag || (finalPrice !== editData.originalPrice ? 'セール' : ''); const { error } = await supabase.from('staff_purchases').update({ staff_name: editData.staff, quantity: parseInt(editData.quantity) || 1, purchase_date: editData.date, purchase_price: finalPrice, sale_tag: tag }).eq('id', id); if (!error) { setStaffPurchases(staffPurchases.map(p => p.id === id ? { ...p, staff: editData.staff, quantity: parseInt(editData.quantity) || 1, date: editData.date, purchasePrice: finalPrice, saleTag: tag } : p)); setEditingId(null) } }
 
   const monthlyPurchases = staffPurchases.filter(p => p.date?.startsWith(selectedMonth))
   const staffSummary = {}
-  monthlyPurchases.forEach(p => { 
-    if (!staffSummary[p.staff]) staffSummary[p.staff] = { items: [], total: 0 }
-    staffSummary[p.staff].items.push(p)
-    staffSummary[p.staff].total += p.purchasePrice * p.quantity 
-  })
+  monthlyPurchases.forEach(p => { if (!staffSummary[p.staff]) staffSummary[p.staff] = { items: [], total: 0 }; staffSummary[p.staff].items.push(p); staffSummary[p.staff].total += p.purchasePrice * p.quantity })
   const grandTotal = Object.values(staffSummary).reduce((sum, s) => sum + s.total, 0)
-
-  // 選択中の商品
   const selectedProductData = selectedProduct ? products.find(p => p.id === parseInt(selectedProduct)) : null
 
   const printMonthlyReport = () => {
@@ -1620,100 +1940,31 @@ function StaffPurchase({ products, staff, staffPurchases, setStaffPurchases }) {
           <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>スタッフ</label><select value={selectedStaff} onChange={e => setSelectedStaff(e.target.value)} className="select"><option value="">選択</option>{staff.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}</select></div>
           <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>購入日</label><input type="date" value={date} onChange={e => setDate(e.target.value)} className="input" /></div>
         </div>
-        <div className="mb-4">
-          <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>ディーラー</label>
-          <select value={filterDealer} onChange={e => { setFilterDealer(e.target.value); setSelectedProduct('') }} className="select">
-            <option value="">すべて</option>
-            {dealers.map(d => <option key={d} value={d}>{d}</option>)}
-          </select>
-        </div>
-        <div className="mb-4">
-          <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>商品 {filterDealer && `（${filteredProducts.length}件）`}</label>
-          <select value={selectedProduct} onChange={e => handleProductChange(e.target.value)} className="select">
-            <option value="">選択</option>
-            {filteredProducts.map(p => <option key={p.id} value={p.id}>{p.name}（通常¥{p.purchasePrice.toLocaleString()}）</option>)}
-          </select>
-        </div>
+        <div className="mb-4"><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>ディーラー</label><select value={filterDealer} onChange={e => { setFilterDealer(e.target.value); setSelectedProduct('') }} className="select"><option value="">すべて</option>{dealers.map(d => <option key={d} value={d}>{d}</option>)}</select></div>
+        <div className="mb-4"><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>商品 {filterDealer && `（${filteredProducts.length}件）`}</label><select value={selectedProduct} onChange={e => handleProductChange(e.target.value)} className="select"><option value="">選択</option>{filteredProducts.map(p => <option key={p.id} value={p.id}>{p.name}（通常¥{p.purchasePrice.toLocaleString()}）</option>)}</select></div>
         {selectedProductData && (
           <div className="bg-gray-50 p-3 rounded mb-4">
             <div className="grid-2 gap-4 mb-3">
-              <div>
-                <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>単価</label>
-                <input 
-                  type="number" 
-                  value={customPrice} 
-                  onChange={e => setCustomPrice(e.target.value)} 
-                  className="input" 
-                  placeholder={selectedProductData.purchasePrice.toString()}
-                />
-                {parseInt(customPrice) !== selectedProductData.purchasePrice && customPrice && (
-                  <p className="text-xs text-red-500 mt-1">通常価格: ¥{selectedProductData.purchasePrice.toLocaleString()}</p>
-                )}
-              </div>
-              <div>
-                <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>数量</label>
-                <input type="number" value={quantity} onChange={e => setQuantity(parseInt(e.target.value) || 1)} min="1" className="input" />
-              </div>
+              <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>単価</label><input type="number" value={customPrice} onChange={e => setCustomPrice(e.target.value)} className="input" placeholder={selectedProductData.purchasePrice.toString()} />{parseInt(customPrice) !== selectedProductData.purchasePrice && customPrice && (<p className="text-xs text-red-500 mt-1">通常価格: ¥{selectedProductData.purchasePrice.toLocaleString()}</p>)}</div>
+              <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>数量</label><input type="number" value={quantity} onChange={e => setQuantity(parseInt(e.target.value) || 1)} min="1" className="input" /></div>
             </div>
-            {parseInt(customPrice) !== selectedProductData.purchasePrice && customPrice && (
-              <div className="mb-3">
-                <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>タグ（任意）</label>
-                <input 
-                  type="text" 
-                  value={saleTag} 
-                  onChange={e => setSaleTag(e.target.value)} 
-                  className="input" 
-                  placeholder="例: セール、キャンペーン、福袋"
-                />
-              </div>
-            )}
-            <div className="bg-white p-2 rounded text-center mb-3">
-              <span className="text-gray-500">小計: </span>
-              <span className="text-xl font-bold text-blue-600">¥{((parseInt(customPrice) || selectedProductData.purchasePrice) * quantity).toLocaleString()}</span>
-              {parseInt(customPrice) !== selectedProductData.purchasePrice && customPrice && (
-                <span className="ml-2 text-xs bg-red-100 text-red-600 px-2 py-1 rounded">{saleTag || 'セール'}</span>
-              )}
-            </div>
-            <div className="grid-2 gap-2">
-              <button onClick={addToCart} className="btn btn-green py-2">🛒 カートに追加</button>
-              <button onClick={recordSingle} className="btn btn-blue py-2">⚡ 直接登録</button>
-            </div>
+            {parseInt(customPrice) !== selectedProductData.purchasePrice && customPrice && (<div className="mb-3"><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>タグ（任意）</label><input type="text" value={saleTag} onChange={e => setSaleTag(e.target.value)} className="input" placeholder="例: セール、キャンペーン、福袋" /></div>)}
+            <div className="bg-white p-2 rounded text-center mb-3"><span className="text-gray-500">小計: </span><span className="text-xl font-bold text-blue-600">¥{((parseInt(customPrice) || selectedProductData.purchasePrice) * quantity).toLocaleString()}</span>{parseInt(customPrice) !== selectedProductData.purchasePrice && customPrice && (<span className="ml-2 text-xs bg-red-100 text-red-600 px-2 py-1 rounded">{saleTag || 'セール'}</span>)}</div>
+            <div className="grid-2 gap-2"><button onClick={addToCart} className="btn btn-green py-2">🛒 カートに追加</button><button onClick={recordSingle} className="btn btn-blue py-2">⚡ 直接登録</button></div>
           </div>
         )}
-        
-        {/* カート表示 */}
         {cart.length > 0 && (
           <div className="bg-yellow-50 border-2 border-yellow-300 rounded p-3 mt-4">
             <h4 className="font-bold mb-2">🛒 カート（{cart.length}件）</h4>
-            <div className="space-y-2 mb-3">
-              {cart.map(item => (
-                <div key={item.tempId} className="flex justify-between items-center bg-white p-2 rounded text-sm">
-                  <div className="flex-1">
-                    <span className="font-semibold">{item.productName}</span>
-                    {item.saleTag && <span className="ml-1 text-xs bg-red-100 text-red-600 px-1 rounded">{item.saleTag}</span>}
-                    <span className="text-gray-500 ml-2">×{item.quantity}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold">¥{(item.purchasePrice * item.quantity).toLocaleString()}</span>
-                    <button onClick={() => removeFromCart(item.tempId)} className="text-red-500 text-xs">✕</button>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="bg-white p-3 rounded mb-3 text-center">
-              <span className="text-gray-500">合計: </span>
-              <span className="text-2xl font-bold text-green-600">¥{cartTotal.toLocaleString()}</span>
-            </div>
+            <div className="space-y-2 mb-3">{cart.map(item => (<div key={item.tempId} className="flex justify-between items-center bg-white p-2 rounded text-sm"><div className="flex-1"><span className="font-semibold">{item.productName}</span>{item.saleTag && <span className="ml-1 text-xs bg-red-100 text-red-600 px-1 rounded">{item.saleTag}</span>}<span className="text-gray-500 ml-2">×{item.quantity}</span></div><div className="flex items-center gap-2"><span className="font-bold">¥{(item.purchasePrice * item.quantity).toLocaleString()}</span><button onClick={() => removeFromCart(item.tempId)} className="text-red-500 text-xs">✕</button></div></div>))}</div>
+            <div className="bg-white p-3 rounded mb-3 text-center"><span className="text-gray-500">合計: </span><span className="text-2xl font-bold text-green-600">¥{cartTotal.toLocaleString()}</span></div>
             <button onClick={submitCart} className="btn btn-green w-full py-3 text-lg">✓ まとめて登録（{cart.length}件）</button>
           </div>
         )}
       </div>
       <div className="card">
         <div className="flex justify-between items-center mb-4 flex-wrap gap-2"><h3 className="text-lg font-bold">📊 月次集計</h3><input type="month" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="input" style={{ width: 'auto' }} /></div>
-        <div className="bg-blue-50 p-4 rounded mb-4 grid-2">
-          <div className="summary-card"><div className="label">購入件数</div><div className="value text-blue-600">{monthlyPurchases.length}件</div></div>
-          <div className="summary-card"><div className="label">合計金額</div><div className="value text-blue-600">¥{grandTotal.toLocaleString()}</div></div>
-        </div>
+        <div className="bg-blue-50 p-4 rounded mb-4 grid-2"><div className="summary-card"><div className="label">購入件数</div><div className="value text-blue-600">{monthlyPurchases.length}件</div></div><div className="summary-card"><div className="label">合計金額</div><div className="value text-blue-600">¥{grandTotal.toLocaleString()}</div></div></div>
         <button onClick={printMonthlyReport} className="btn btn-blue mb-4">PDF出力（印刷）</button>
         {Object.keys(staffSummary).length === 0 ? (<p className="text-gray-500 text-center py-4">この月の購入記録はありません</p>) : (
           Object.entries(staffSummary).map(([staffName, data]) => (
@@ -1723,40 +1974,18 @@ function StaffPurchase({ products, staff, staffPurchases, setStaffPurchases }) {
                 <table className="text-sm"><thead><tr><th>日付</th><th>商品</th><th className="text-right">単価</th><th className="text-center">数量</th><th className="text-right">金額</th><th className="text-center">操作</th></tr></thead>
                   <tbody>
                     {data.items.map(item => {
-                      const product = products.find(p => p.id === item.productId)
-                      const originalPrice = product?.purchasePrice || item.purchasePrice
-                      const isSale = item.purchasePrice !== originalPrice || item.saleTag
-                      
+                      const product = products.find(p => p.id === item.productId); const originalPrice = product?.purchasePrice || item.purchasePrice; const isSale = item.purchasePrice !== originalPrice || item.saleTag
                       return editingId === item.id ? (
                         <tr key={item.id} style={{ background: '#fef9c3' }}>
                           <td><input type="date" value={editData.date} onChange={e => setEditData({...editData, date: e.target.value})} className="input" style={{ width: '110px', fontSize: '12px' }} /></td>
-                          <td style={{ fontSize: '12px' }}>
-                            {item.productName}
-                            <input type="text" value={editData.saleTag} onChange={e => setEditData({...editData, saleTag: e.target.value})} className="input" style={{ width: '100%', fontSize: '11px', marginTop: '4px' }} placeholder="タグ（例: セール）" />
-                          </td>
+                          <td style={{ fontSize: '12px' }}>{item.productName}<input type="text" value={editData.saleTag} onChange={e => setEditData({...editData, saleTag: e.target.value})} className="input" style={{ width: '100%', fontSize: '11px', marginTop: '4px' }} placeholder="タグ（例: セール）" /></td>
                           <td><input type="number" value={editData.price} onChange={e => setEditData({...editData, price: e.target.value})} className="input" style={{ width: '70px', fontSize: '12px' }} /></td>
                           <td className="text-center"><input type="number" value={editData.quantity} onChange={e => setEditData({...editData, quantity: e.target.value})} className="input" style={{ width: '50px', fontSize: '12px' }} min="1" /></td>
                           <td className="text-right" style={{ fontSize: '12px' }}>¥{((parseInt(editData.price) || 0) * (parseInt(editData.quantity) || 1)).toLocaleString()}</td>
-                          <td className="text-center">
-                            <button onClick={() => saveEdit(item.id)} className="text-green-600 text-xs mr-1">保存</button>
-                            <button onClick={() => setEditingId(null)} className="text-gray-500 text-xs">取消</button>
-                          </td>
+                          <td className="text-center"><button onClick={() => saveEdit(item.id)} className="text-green-600 text-xs mr-1">保存</button><button onClick={() => setEditingId(null)} className="text-gray-500 text-xs">取消</button></td>
                         </tr>
                       ) : (
-                        <tr key={item.id}>
-                          <td>{item.date}</td>
-                          <td>
-                            {item.productName}
-                            {isSale && <span className="ml-1 text-xs bg-red-100 text-red-600 px-1 rounded">{item.saleTag || 'セール'}</span>}
-                          </td>
-                          <td className="text-right">¥{item.purchasePrice.toLocaleString()}</td>
-                          <td className="text-center">{item.quantity}</td>
-                          <td className="text-right">¥{(item.purchasePrice * item.quantity).toLocaleString()}</td>
-                          <td className="text-center">
-                            <button onClick={() => startEdit(item)} className="text-blue-500 text-xs mr-1">編集</button>
-                            <button onClick={() => deletePurchase(item.id)} className="text-red-500 text-xs">削除</button>
-                          </td>
-                        </tr>
+                        <tr key={item.id}><td>{item.date}</td><td>{item.productName}{isSale && <span className="ml-1 text-xs bg-red-100 text-red-600 px-1 rounded">{item.saleTag || 'セール'}</span>}</td><td className="text-right">¥{item.purchasePrice.toLocaleString()}</td><td className="text-center">{item.quantity}</td><td className="text-right">¥{(item.purchasePrice * item.quantity).toLocaleString()}</td><td className="text-center"><button onClick={() => startEdit(item)} className="text-blue-500 text-xs mr-1">編集</button><button onClick={() => deletePurchase(item.id)} className="text-red-500 text-xs">削除</button></td></tr>
                       )
                     })}
                   </tbody>
@@ -1769,93 +1998,25 @@ function StaffPurchase({ products, staff, staffPurchases, setStaffPurchases }) {
     </div>
   )
 }
-
-// ==================== 商品管理 ====================
-function ProductManagement({ products, setProducts, categories, setCategories }) {
-  const [newLarge, setNewLarge] = useState('')
-  const [newMedium, setNewMedium] = useState('')
-  const [newProduct, setNewProduct] = useState({ largeCategory: '', mediumCategory: '', name: '', purchasePrice: '', sellingPrice: '', productType: 'business' })
-  const [editingId, setEditingId] = useState(null)
-  const [editData, setEditData] = useState({})
-  const [filterDealer, setFilterDealer] = useState('')
-  const [filterCategory, setFilterCategory] = useState('')
-  const [searchText, setSearchText] = useState('')
-
-  const productTypes = [{ value: 'business', label: '業務用' }, { value: 'retail', label: '店販' }, { value: 'both', label: '両方' }]
-
-  const addCategory = async (type, value, setter) => {
-    const exists = type === 'large' ? categories.large.some(c => c.name === value) : categories.medium.includes(value)
-    if (!value || exists) return
-    const { error } = await supabase.from('categories').insert({ type, name: value })
-    if (!error) {
-      if (type === 'large') { setCategories({ ...categories, large: [...categories.large, { name: value, url: '', orderMethod: 'web', loginId: '', loginPassword: '' }] }) }
-      else { setCategories({ ...categories, medium: [...categories.medium, value] }) }
-      setter('')
-    }
-  }
-  const deleteCategory = async (type, name) => {
-    if (!confirm(`「${name}」を削除しますか？`)) return
-    const { error } = await supabase.from('categories').delete().eq('type', type).eq('name', name)
-    if (!error) {
-      if (type === 'large') { setCategories({ ...categories, large: categories.large.filter(c => c.name !== name) }) }
-      else { setCategories({ ...categories, medium: categories.medium.filter(c => c !== name) }) }
-    }
-  }
-  const addProduct = async () => {
-    if (!newProduct.name || !newProduct.largeCategory || !newProduct.mediumCategory) return
-    const maxOrder = products.length > 0 ? Math.max(...products.map(p => p.sortOrder || 0)) + 1 : 1
-    const { data, error } = await supabase.from('products').insert({ large_category: newProduct.largeCategory, medium_category: newProduct.mediumCategory, name: newProduct.name, purchase_price: parseFloat(newProduct.purchasePrice) || 0, selling_price: parseFloat(newProduct.sellingPrice) || 0, product_type: newProduct.productType, sort_order: maxOrder }).select()
-    if (!error && data) { setProducts([...products, { id: data[0].id, largeCategory: newProduct.largeCategory, mediumCategory: newProduct.mediumCategory, name: newProduct.name, purchasePrice: parseFloat(newProduct.purchasePrice) || 0, sellingPrice: parseFloat(newProduct.sellingPrice) || 0, productType: newProduct.productType, sortOrder: maxOrder }]); setNewProduct({ largeCategory: '', mediumCategory: '', name: '', purchasePrice: '', sellingPrice: '', productType: 'business' }) }
-  }
-  const deleteProduct = async (id) => { if (!confirm('この商品を削除しますか？')) return; const { error } = await supabase.from('products').delete().eq('id', id); if (!error) setProducts(products.filter(p => p.id !== id)) }
-  const startEdit = (product) => { setEditingId(product.id); setEditData({ name: product.name, largeCategory: product.largeCategory, mediumCategory: product.mediumCategory, purchasePrice: product.purchasePrice, sellingPrice: product.sellingPrice, productType: product.productType || 'business' }) }
-  const saveEdit = async (id) => { const { error } = await supabase.from('products').update({ name: editData.name, large_category: editData.largeCategory, medium_category: editData.mediumCategory, purchase_price: parseFloat(editData.purchasePrice) || 0, selling_price: parseFloat(editData.sellingPrice) || 0, product_type: editData.productType }).eq('id', id); if (!error) { setProducts(products.map(p => p.id === id ? { ...p, ...editData, purchasePrice: parseFloat(editData.purchasePrice) || 0, sellingPrice: parseFloat(editData.sellingPrice) || 0 } : p)); setEditingId(null) } }
-  const getTypeLabel = (type) => { const found = productTypes.find(t => t.value === type); return found ? found.label : '業務用' }
-  const filteredProducts = products.filter(p => { if (filterDealer && p.largeCategory !== filterDealer) return false; if (filterCategory && p.mediumCategory !== filterCategory) return false; if (searchText && !p.name.toLowerCase().includes(searchText.toLowerCase())) return false; return true })
-
-  return (
-    <div className="space-y-4">
-      <div className="card">
-        <h3 className="text-lg font-bold mb-4">カテゴリー管理</h3>
-        <div className="grid-2">
-          <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>ディーラー</label><div className="flex gap-2"><input type="text" value={newLarge} onChange={e => setNewLarge(e.target.value)} placeholder="例：〇〇商事" className="input" /><button onClick={() => addCategory('large', newLarge, setNewLarge)} className="btn btn-blue">追加</button></div><div className="flex gap-2 mt-2 flex-wrap">{categories.large.map((c, i) => (<span key={i} className="bg-blue-50 px-3 py-1 rounded text-sm flex items-center gap-1">{c.name}<button onClick={() => deleteCategory('large', c.name)} className="text-red-500 ml-1">×</button></span>))}</div></div>
-          <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>種類</label><div className="flex gap-2"><input type="text" value={newMedium} onChange={e => setNewMedium(e.target.value)} placeholder="例：シャンプー" className="input" /><button onClick={() => addCategory('medium', newMedium, setNewMedium)} className="btn btn-green">追加</button></div><div className="flex gap-2 mt-2 flex-wrap">{categories.medium.map((c, i) => (<span key={i} className="bg-green-50 px-3 py-1 rounded text-sm flex items-center gap-1">{c}<button onClick={() => deleteCategory('medium', c)} className="text-red-500 ml-1">×</button></span>))}</div></div>
-        </div>
-      </div>
-      <div className="card">
-        <h3 className="text-lg font-bold mb-4">商品登録</h3>
-        <div className="grid-2 mb-4"><select value={newProduct.largeCategory} onChange={e => setNewProduct({ ...newProduct, largeCategory: e.target.value })} className="select"><option value="">ディーラー</option>{categories.large.map((c, i) => <option key={i} value={c.name}>{c.name}</option>)}</select><select value={newProduct.mediumCategory} onChange={e => setNewProduct({ ...newProduct, mediumCategory: e.target.value })} className="select"><option value="">種類</option>{categories.medium.map((c, i) => <option key={i} value={c}>{c}</option>)}</select></div>
-        <div className="grid-2 mb-4"><input type="text" value={newProduct.name} onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} placeholder="商品名" className="input" /><select value={newProduct.productType} onChange={e => setNewProduct({ ...newProduct, productType: e.target.value })} className="select">{productTypes.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}</select></div>
-        <div className="grid-2 mb-4"><input type="number" value={newProduct.purchasePrice} onChange={e => setNewProduct({ ...newProduct, purchasePrice: e.target.value })} placeholder="仕入れ価格" className="input" /><input type="number" value={newProduct.sellingPrice} onChange={e => setNewProduct({ ...newProduct, sellingPrice: e.target.value })} placeholder="販売価格" className="input" /></div>
-        <button onClick={addProduct} className="btn btn-blue"><Icons.Plus /> 商品を追加</button>
-      </div>
-      <div className="card">
-        <h3 className="text-lg font-bold mb-4">商品一覧 ({filteredProducts.length}件)</h3>
-        <div className="grid-3 gap-2 mb-4">
-          <select value={filterDealer} onChange={e => setFilterDealer(e.target.value)} className="select"><option value="">全ディーラー</option>{categories.large.map((c, i) => <option key={i} value={c.name}>{c.name}</option>)}</select>
-          <select value={filterCategory} onChange={e => setFilterCategory(e.target.value)} className="select"><option value="">全種類</option>{categories.medium.map((c, i) => <option key={i} value={c}>{c}</option>)}</select>
-          <div className="flex items-center gap-2"><Icons.Search /><input type="text" value={searchText} onChange={e => setSearchText(e.target.value)} placeholder="商品名検索" className="input" /></div>
+input" /></div>
         </div>
         <div className="overflow-x-auto">
-          <table><thead><tr><th>タイプ</th><th>ディーラー</th><th>種類</th><th>商品名</th><th className="text-right">仕入れ</th><th className="text-right">販売</th><th className="text-center">操作</th></tr></thead>
+          <table className="text-sm">
+            <thead><tr><th>ディーラー</th><th>種類</th><th>商品名</th><th>種別</th><th className="text-right">仕入</th><th className="text-right">販売</th><th className="text-center">操作</th></tr></thead>
             <tbody>
               {filteredProducts.map(p => (
                 editingId === p.id ? (
                   <tr key={p.id} style={{ background: '#fef9c3' }}>
-                    <td><select value={editData.productType} onChange={e => setEditData({...editData, productType: e.target.value})} className="select">{productTypes.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}</select></td>
-                    <td><select value={editData.largeCategory} onChange={e => setEditData({...editData, largeCategory: e.target.value})} className="select">{categories.large.map((c, i) => <option key={i} value={c.name}>{c.name}</option>)}</select></td>
-                    <td><select value={editData.mediumCategory} onChange={e => setEditData({...editData, mediumCategory: e.target.value})} className="select">{categories.medium.map((c, i) => <option key={i} value={c}>{c}</option>)}</select></td>
-                    <td><input type="text" value={editData.name} onChange={e => setEditData({...editData, name: e.target.value})} className="input" /></td>
+                    <td><select value={editData.largeCategory} onChange={e => setEditData({...editData, largeCategory: e.target.value})} className="select" style={{ width: '100px' }}>{categories.large.map((c, i) => <option key={i} value={c.name}>{c.name}</option>)}</select></td>
+                    <td><select value={editData.mediumCategory} onChange={e => setEditData({...editData, mediumCategory: e.target.value})} className="select" style={{ width: '100px' }}>{categories.medium.map((c, i) => <option key={i} value={c}>{c}</option>)}</select></td>
+                    <td><input value={editData.name} onChange={e => setEditData({...editData, name: e.target.value})} className="input" style={{ width: '120px' }} /></td>
+                    <td><select value={editData.productType} onChange={e => setEditData({...editData, productType: e.target.value})} className="select" style={{ width: '80px' }}>{productTypes.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}</select></td>
                     <td><input type="number" value={editData.purchasePrice} onChange={e => setEditData({...editData, purchasePrice: e.target.value})} className="input" style={{ width: '80px' }} /></td>
                     <td><input type="number" value={editData.sellingPrice} onChange={e => setEditData({...editData, sellingPrice: e.target.value})} className="input" style={{ width: '80px' }} /></td>
                     <td className="text-center"><button onClick={() => saveEdit(p.id)} className="text-green-600 text-sm mr-2">保存</button><button onClick={() => setEditingId(null)} className="text-gray-500 text-sm">取消</button></td>
                   </tr>
                 ) : (
-                  <tr key={p.id}>
-                    <td><span className={`badge ${p.productType === 'retail' ? 'badge-blue' : p.productType === 'both' ? 'badge-yellow' : 'badge-green'}`}>{getTypeLabel(p.productType)}</span></td>
-                    <td>{p.largeCategory}</td><td>{p.mediumCategory}</td><td>{p.name}</td><td className="text-right">¥{p.purchasePrice.toLocaleString()}</td><td className="text-right">¥{p.sellingPrice.toLocaleString()}</td>
-                    <td className="text-center"><button onClick={() => startEdit(p)} className="text-blue-500 text-sm mr-2">編集</button><button onClick={() => deleteProduct(p.id)} className="text-red-500 text-sm">削除</button></td>
-                  </tr>
+                  <tr key={p.id}><td>{p.largeCategory}</td><td>{p.mediumCategory}</td><td>{p.name}</td><td><span className={`badge ${p.productType === 'retail' ? 'badge-green' : p.productType === 'both' ? 'badge-purple' : 'badge-gray'}`}>{getTypeLabel(p.productType)}</span></td><td className="text-right">¥{p.purchasePrice.toLocaleString()}</td><td className="text-right">¥{p.sellingPrice.toLocaleString()}</td><td className="text-center"><button onClick={() => startEdit(p)} className="text-blue-500 text-sm mr-2">編集</button><button onClick={() => deleteProduct(p.id)} className="text-red-500 text-sm">削除</button></td></tr>
                 )
               ))}
             </tbody>
@@ -1867,184 +2028,520 @@ function ProductManagement({ products, setProducts, categories, setCategories })
 }
 
 // ==================== スタッフ管理 ====================
-function StaffManagement({ staff, setStaff, categories, isAdmin }) {
-  const [newStaff, setNewStaff] = useState('')
-  const [newDealers, setNewDealers] = useState([])
-  const [newJoinDate, setNewJoinDate] = useState('')
-  const [newTenureRate, setNewTenureRate] = useState(100)
-  const [newWorkType, setNewWorkType] = useState('full')
-  const [newWorkDaysPerWeek, setNewWorkDaysPerWeek] = useState(5)
-  const [newPartTimeRate, setNewPartTimeRate] = useState(100)
-  const [newIsOpening, setNewIsOpening] = useState(false)
-  const [newSpecialRate, setNewSpecialRate] = useState(0)
-  const [newIsManagement, setNewIsManagement] = useState(false)
+function StaffManagement({ staff, setStaff, isAdmin }) {
+  const [newStaff, setNewStaff] = useState({ name: '', role: 'staff', password: '', hiringDate: '', leaveGrants: [] })
   const [editingId, setEditingId] = useState(null)
   const [editData, setEditData] = useState({})
 
-  const tenureRateOptions = [100, 110, 120, 130, 140, 150]
-  const partTimeRateOptions = [50, 60, 70, 80, 90, 100]
-  const specialRateOptions = [0, 10, 20, 30, 40, 50]
-
-  const toggleNewDealer = (dealer) => { if (newDealers.includes(dealer)) { setNewDealers(newDealers.filter(d => d !== dealer)) } else { setNewDealers([...newDealers, dealer]) } }
-  const toggleEditDealer = (dealer) => { if (editData.dealers.includes(dealer)) { setEditData({...editData, dealers: editData.dealers.filter(d => d !== dealer)}) } else { setEditData({...editData, dealers: [...editData.dealers, dealer]}) } }
-
-  const calcTenure = (joinDate) => {
-    if (!joinDate) return '-'
-    const join = new Date(joinDate)
-    const now = new Date()
-    const years = now.getFullYear() - join.getFullYear()
-    const months = now.getMonth() - join.getMonth()
-    const totalMonths = years * 12 + months
-    const y = Math.floor(totalMonths / 12)
-    const m = totalMonths % 12
-    return y > 0 ? `${y}年${m}ヶ月` : `${m}ヶ月`
-  }
+  const roles = [{ value: 'admin', label: '管理者' }, { value: 'staff', label: 'スタッフ' }]
 
   const addStaff = async () => {
-    if (!newStaff || staff.find(s => s.name === newStaff)) return
-    const dealerStr = newDealers.join(',')
-    const { data, error } = await supabase.from('staff').insert({ name: newStaff, dealer: dealerStr, join_date: newJoinDate || null, tenure_rate: newTenureRate, work_type: newWorkType, part_time_rate: newPartTimeRate, work_days_per_week: newWorkDaysPerWeek, is_opening_staff: newIsOpening, special_rate: newSpecialRate, is_management: newIsManagement }).select()
-    if (!error && data) {
-      setStaff([...staff, { id: data[0].id, name: newStaff, dealer: dealerStr, joinDate: newJoinDate || null, tenureRate: newTenureRate, workType: newWorkType, partTimeRate: newPartTimeRate, workDaysPerWeek: newWorkDaysPerWeek, isOpeningStaff: newIsOpening, specialRate: newSpecialRate, isManagement: newIsManagement }])
-      setNewStaff(''); setNewDealers([]); setNewJoinDate(''); setNewTenureRate(100); setNewWorkType('full'); setNewPartTimeRate(100); setNewWorkDaysPerWeek(5); setNewIsOpening(false); setNewSpecialRate(0); setNewIsManagement(false)
-    }
+    if (!newStaff.name || !newStaff.password) { alert('名前とパスワードは必須です'); return }
+    const { data, error } = await supabase.from('staff').insert({ name: newStaff.name, role: newStaff.role, password: newStaff.password, hiring_date: newStaff.hiringDate || null, leave_grants: [] }).select()
+    if (!error && data) { setStaff([...staff, { id: data[0].id, name: data[0].name, role: data[0].role, password: data[0].password, hiringDate: data[0].hiring_date, leaveGrants: [] }]); setNewStaff({ name: '', role: 'staff', password: '', hiringDate: '', leaveGrants: [] }) }
   }
-  const deleteStaff = async (id, name) => { if (!confirm(`「${name}」を削除しますか？`)) return; const { error } = await supabase.from('staff').delete().eq('id', id); if (!error) setStaff(staff.filter(s => s.id !== id)) }
-  const startEdit = (s) => { setEditingId(s.id); setEditData({ name: s.name, dealers: s.dealer ? s.dealer.split(',').filter(d => d) : [], joinDate: s.joinDate || '', tenureRate: s.tenureRate || 100, workType: s.workType || 'full', partTimeRate: s.partTimeRate || 100, workDaysPerWeek: s.workDaysPerWeek || 5, isOpeningStaff: s.isOpeningStaff || false, specialRate: s.specialRate || 0, isManagement: s.isManagement || false }) }
-  const saveEdit = async (id) => {
-    const dealerStr = editData.dealers.join(',')
-    const { error } = await supabase.from('staff').update({ name: editData.name, dealer: dealerStr, join_date: editData.joinDate || null, tenure_rate: editData.tenureRate, work_type: editData.workType, part_time_rate: editData.partTimeRate, work_days_per_week: editData.workDaysPerWeek, is_opening_staff: editData.isOpeningStaff, special_rate: editData.specialRate, is_management: editData.isManagement }).eq('id', id)
-    if (!error) { setStaff(staff.map(s => s.id === id ? { ...s, name: editData.name, dealer: dealerStr, joinDate: editData.joinDate || null, tenureRate: editData.tenureRate, workType: editData.workType, partTimeRate: editData.partTimeRate, workDaysPerWeek: editData.workDaysPerWeek, isOpeningStaff: editData.isOpeningStaff, specialRate: editData.specialRate, isManagement: editData.isManagement } : s)); setEditingId(null) }
-  }
+  const deleteStaff = async (id) => { if (!confirm('このスタッフを削除しますか？')) return; const { error } = await supabase.from('staff').delete().eq('id', id); if (!error) setStaff(staff.filter(s => s.id !== id)) }
+  const startEdit = (s) => { setEditingId(s.id); setEditData({ name: s.name, role: s.role, password: s.password, hiringDate: s.hiringDate || '' }) }
+  const saveEdit = async (id) => { const { error } = await supabase.from('staff').update({ name: editData.name, role: editData.role, password: editData.password, hiring_date: editData.hiringDate || null }).eq('id', id); if (!error) { setStaff(staff.map(s => s.id === id ? { ...s, name: editData.name, role: editData.role, password: editData.password, hiringDate: editData.hiringDate } : s)); setEditingId(null) } }
 
-  // スタッフ用のシンプル表示
-  if (!isAdmin) {
-    return (
-      <div className="card">
-        <h3 className="text-lg font-bold mb-4">スタッフ一覧 ({staff.length}名)</h3>
-        <div className="space-y-3">
-          {staff.map(s => (
-            <div key={s.id} className="border rounded p-4">
-              <div className="font-bold text-lg mb-2">{s.name}</div>
-              {s.dealer && (
-                <div>
-                  <span className="text-sm text-gray-500">発注担当：</span>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {s.dealer.split(',').filter(d => d).map((d, i) => (
-                      <span key={i} className="bg-blue-50 px-2 py-1 rounded text-sm">{d}</span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-    )
-  }
-
-  // 管理者用のフル表示
   return (
     <div className="space-y-4">
       <div className="card">
-        <h3 className="text-lg font-bold mb-4">スタッフ追加</h3>
-        <div className="grid-2 mb-4">
-          <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>スタッフ名</label><input type="text" value={newStaff} onChange={e => setNewStaff(e.target.value)} placeholder="名前" className="input" /></div>
-          <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>入社日</label><input type="date" value={newJoinDate} onChange={e => setNewJoinDate(e.target.value)} className="input" /></div>
-        </div>
-        <div className="grid-2 mb-4">
-          <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>勤続係数</label><select value={newTenureRate} onChange={e => setNewTenureRate(parseInt(e.target.value))} className="select">{tenureRateOptions.map(r => <option key={r} value={r}>{r}%</option>)}</select></div>
-          <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>勤務形態</label><select value={newWorkType} onChange={e => setNewWorkType(e.target.value)} className="select"><option value="full">フル</option><option value="part">時短</option></select></div>
-          <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>週勤務日数</label><select value={newWorkDaysPerWeek} onChange={e => setNewWorkDaysPerWeek(parseInt(e.target.value))} className="select"><option value={5}>5日</option><option value={4}>4日</option><option value={3}>3日</option></select></div>
-        </div>
-        {newWorkType === 'part' && (
-          <div className="mb-4"><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>時短係数</label><select value={newPartTimeRate} onChange={e => setNewPartTimeRate(parseInt(e.target.value))} className="select">{partTimeRateOptions.map(r => <option key={r} value={r}>{r}%</option>)}</select></div>
-        )}
-        <div className="grid-2 mb-4">
-          <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>オープニングスタッフ</label><label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={newIsOpening} onChange={e => setNewIsOpening(e.target.checked)} /><span>はい</span></label></div>
-          <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>特別係数</label><select value={newSpecialRate} onChange={e => setNewSpecialRate(parseInt(e.target.value))} className="select">{specialRateOptions.map(r => <option key={r} value={r}>+{r}%</option>)}</select></div>
-        </div>
-        <div className="mb-4">
-          <label className="flex items-center gap-2 cursor-pointer p-3 bg-red-50 rounded border border-red-200">
-            <input type="checkbox" checked={newIsManagement} onChange={e => setNewIsManagement(e.target.checked)} />
-            <span className="font-semibold text-red-700">👑 経営陣（ボーナス対象外・内部留保）</span>
-          </label>
-        </div>
-        <div className="mb-4"><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>発注担当ディーラー</label>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {categories.large.map((c, i) => (
-              <label key={i} className={`flex items-center gap-2 px-3 py-2 rounded cursor-pointer border ${newDealers.includes(c.name) ? 'bg-blue-100 border-blue-500' : 'bg-gray-50 border-gray-200'}`}>
-                <input type="checkbox" checked={newDealers.includes(c.name)} onChange={() => toggleNewDealer(c.name)} />
-                <span className="text-sm">{c.name}</span>
-              </label>
-            ))}
+        <h3 className="text-lg font-bold mb-4">👥 スタッフ管理</h3>
+        {isAdmin && (
+          <div className="bg-blue-50 p-4 rounded mb-4">
+            <h4 className="font-semibold mb-3">新規スタッフ登録</h4>
+            <div className="grid-2 mb-4">
+              <input type="text" value={newStaff.name} onChange={e => setNewStaff({ ...newStaff, name: e.target.value })} placeholder="名前" className="input" />
+              <select value={newStaff.role} onChange={e => setNewStaff({ ...newStaff, role: e.target.value })} className="select">{roles.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}</select>
+            </div>
+            <div className="grid-2 mb-4">
+              <input type="text" value={newStaff.password} onChange={e => setNewStaff({ ...newStaff, password: e.target.value })} placeholder="パスワード" className="input" />
+              <input type="date" value={newStaff.hiringDate} onChange={e => setNewStaff({ ...newStaff, hiringDate: e.target.value })} className="input" />
+            </div>
+            <button onClick={addStaff} className="btn btn-blue"><Icons.Plus /> スタッフを追加</button>
           </div>
+        )}
+        <div className="overflow-x-auto">
+          <table>
+            <thead><tr><th>名前</th><th>権限</th><th>パスワード</th><th>入社日</th>{isAdmin && <th className="text-center">操作</th>}</tr></thead>
+            <tbody>
+              {staff.map(s => (
+                editingId === s.id ? (
+                  <tr key={s.id} style={{ background: '#fef9c3' }}>
+                    <td><input value={editData.name} onChange={e => setEditData({...editData, name: e.target.value})} className="input" style={{ width: '100px' }} /></td>
+                    <td><select value={editData.role} onChange={e => setEditData({...editData, role: e.target.value})} className="select" style={{ width: '100px' }}>{roles.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}</select></td>
+                    <td><input value={editData.password} onChange={e => setEditData({...editData, password: e.target.value})} className="input" style={{ width: '100px' }} /></td>
+                    <td><input type="date" value={editData.hiringDate} onChange={e => setEditData({...editData, hiringDate: e.target.value})} className="input" style={{ width: '130px' }} /></td>
+                    <td className="text-center"><button onClick={() => saveEdit(s.id)} className="text-green-600 text-sm mr-2">保存</button><button onClick={() => setEditingId(null)} className="text-gray-500 text-sm">取消</button></td>
+                  </tr>
+                ) : (
+                  <tr key={s.id}>
+                    <td className="font-semibold">{s.name}</td>
+                    <td><span className={`badge ${s.role === 'admin' ? 'badge-red' : 'badge-blue'}`}>{s.role === 'admin' ? '管理者' : 'スタッフ'}</span></td>
+                    <td className="text-gray-500">{s.password}</td>
+                    <td>{s.hiringDate || '-'}</td>
+                    {isAdmin && <td className="text-center"><button onClick={() => startEdit(s)} className="text-blue-500 text-sm mr-2">編集</button><button onClick={() => deleteStaff(s.id)} className="text-red-500 text-sm">削除</button></td>}
+                  </tr>
+                )
+              ))}
+            </tbody>
+          </table>
         </div>
-        <button onClick={addStaff} className="btn btn-blue">追加</button>
+      </div>
+    </div>
+  )
+}
+
+// ==================== タイムカード ====================
+function TimeCard({ staff, timeRecords, setTimeRecords, currentUser, isAdmin }) {
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0])
+  const [editingId, setEditingId] = useState(null)
+  const [editData, setEditData] = useState({})
+  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7))
+  const [showMonthly, setShowMonthly] = useState(false)
+
+  const myRecordsToday = timeRecords.filter(r => r.staff === currentUser && r.date === date)
+  const hasClockedIn = myRecordsToday.some(r => r.clockIn && !r.clockOut)
+  const lastRecord = myRecordsToday[myRecordsToday.length - 1]
+
+  const clockIn = async () => {
+    const time = new Date().toTimeString().slice(0, 5)
+    const { data, error } = await supabase.from('time_records').insert({ staff_name: currentUser, record_date: date, clock_in: time, clock_out: null }).select()
+    if (!error && data) { setTimeRecords([...timeRecords, { id: data[0].id, staff: currentUser, date, clockIn: time, clockOut: null }]) }
+  }
+  const clockOut = async () => {
+    if (!lastRecord) return
+    const time = new Date().toTimeString().slice(0, 5)
+    const { error } = await supabase.from('time_records').update({ clock_out: time }).eq('id', lastRecord.id)
+    if (!error) { setTimeRecords(timeRecords.map(r => r.id === lastRecord.id ? { ...r, clockOut: time } : r)) }
+  }
+  const deleteRecord = async (id) => { if (!confirm('この記録を削除しますか？')) return; const { error } = await supabase.from('time_records').delete().eq('id', id); if (!error) setTimeRecords(timeRecords.filter(r => r.id !== id)) }
+  const startEdit = (r) => { setEditingId(r.id); setEditData({ clockIn: r.clockIn, clockOut: r.clockOut || '', date: r.date }) }
+  const saveEdit = async (id) => { const { error } = await supabase.from('time_records').update({ clock_in: editData.clockIn, clock_out: editData.clockOut || null, record_date: editData.date }).eq('id', id); if (!error) { setTimeRecords(timeRecords.map(r => r.id === id ? { ...r, clockIn: editData.clockIn, clockOut: editData.clockOut || null, date: editData.date } : r)); setEditingId(null) } }
+  const calcHours = (cin, cout) => { if (!cin || !cout) return '-'; const [h1, m1] = cin.split(':').map(Number); const [h2, m2] = cout.split(':').map(Number); const diff = (h2 * 60 + m2) - (h1 * 60 + m1); if (diff < 0) return '-'; return `${Math.floor(diff / 60)}h${diff % 60}m` }
+  const monthlyRecords = timeRecords.filter(r => r.date?.startsWith(selectedMonth))
+  const staffMonthlyData = {}
+  monthlyRecords.forEach(r => { if (!staffMonthlyData[r.staff]) staffMonthlyData[r.staff] = { records: [], totalMinutes: 0 }; staffMonthlyData[r.staff].records.push(r); if (r.clockIn && r.clockOut) { const [h1, m1] = r.clockIn.split(':').map(Number); const [h2, m2] = r.clockOut.split(':').map(Number); const diff = (h2 * 60 + m2) - (h1 * 60 + m1); if (diff > 0) staffMonthlyData[r.staff].totalMinutes += diff } })
+  const formatMinutes = (mins) => `${Math.floor(mins / 60)}h${mins % 60}m`
+
+  return (
+    <div className="space-y-4">
+      <div className="card">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-bold">⏰ タイムカード</h3>
+          <button onClick={() => setShowMonthly(!showMonthly)} className={`btn ${showMonthly ? 'btn-green' : 'btn-gray'}`}>{showMonthly ? '打刻に戻る' : '月次集計'}</button>
+        </div>
+        {!showMonthly ? (
+          <>
+            <div className="mb-4">
+              <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>日付</label>
+              <input type="date" value={date} onChange={e => setDate(e.target.value)} className="input" style={{ width: 'auto' }} />
+            </div>
+            <div className="bg-blue-50 p-6 rounded mb-4 text-center">
+              <p className="text-lg mb-2">{currentUser}さん</p>
+              {hasClockedIn ? (<><p className="text-sm text-gray-600 mb-2">出勤中：{lastRecord?.clockIn}</p><button onClick={clockOut} className="btn btn-red py-3 px-8 text-lg">退勤</button></>) : (<button onClick={clockIn} className="btn btn-green py-3 px-8 text-lg">出勤</button>)}
+            </div>
+            <h4 className="font-semibold mb-2">今日の記録</h4>
+            <div className="overflow-x-auto">
+              <table className="text-sm">
+                <thead><tr><th>スタッフ</th><th>出勤</th><th>退勤</th><th>勤務時間</th>{isAdmin && <th className="text-center">操作</th>}</tr></thead>
+                <tbody>
+                  {timeRecords.filter(r => r.date === date).map(r => (
+                    editingId === r.id ? (
+                      <tr key={r.id} style={{ background: '#fef9c3' }}>
+                        <td>{r.staff}</td>
+                        <td><input type="time" value={editData.clockIn} onChange={e => setEditData({...editData, clockIn: e.target.value})} className="input" style={{ width: '100px' }} /></td>
+                        <td><input type="time" value={editData.clockOut} onChange={e => setEditData({...editData, clockOut: e.target.value})} className="input" style={{ width: '100px' }} /></td>
+                        <td>{calcHours(editData.clockIn, editData.clockOut)}</td>
+                        <td className="text-center"><button onClick={() => saveEdit(r.id)} className="text-green-600 text-sm mr-2">保存</button><button onClick={() => setEditingId(null)} className="text-gray-500 text-sm">取消</button></td>
+                      </tr>
+                    ) : (
+                      <tr key={r.id}><td>{r.staff}</td><td>{r.clockIn}</td><td>{r.clockOut || '-'}</td><td>{calcHours(r.clockIn, r.clockOut)}</td>{isAdmin && <td className="text-center"><button onClick={() => startEdit(r)} className="text-blue-500 text-sm mr-2">編集</button><button onClick={() => deleteRecord(r.id)} className="text-red-500 text-sm">削除</button></td>}</tr>
+                    )
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="mb-4"><input type="month" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="input" style={{ width: 'auto' }} /></div>
+            {Object.keys(staffMonthlyData).length === 0 ? (<p className="text-gray-500 text-center py-4">この月の記録はありません</p>) : (
+              Object.entries(staffMonthlyData).map(([staffName, data]) => (
+                <div key={staffName} className="mb-4 border rounded-lg overflow-hidden">
+                  <div className="bg-gray-100 p-3 flex justify-between items-center"><span className="font-bold">{staffName}</span><span className="text-blue-600 font-bold">合計: {formatMinutes(data.totalMinutes)}</span></div>
+                  <div className="overflow-x-auto">
+                    <table className="text-sm"><thead><tr><th>日付</th><th>出勤</th><th>退勤</th><th>勤務時間</th></tr></thead>
+                      <tbody>{data.records.sort((a, b) => a.date.localeCompare(b.date)).map(r => (<tr key={r.id}><td>{r.date}</td><td>{r.clockIn}</td><td>{r.clockOut || '-'}</td><td>{calcHours(r.clockIn, r.clockOut)}</td></tr>))}</tbody>
+                    </table>
+                  </div>
+                </div>
+              ))
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ==================== 練習予約 ====================
+function PracticeReservation({ staff, practiceReservations, setPracticeReservations, currentUser }) {
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0])
+  const [time, setTime] = useState('')
+  const [menu, setMenu] = useState('')
+  const [model, setModel] = useState('')
+  const [note, setNote] = useState('')
+  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7))
+  const [editingId, setEditingId] = useState(null)
+  const [editData, setEditData] = useState({})
+
+  const addReservation = async () => {
+    if (!date || !time || !menu) { alert('日付・時間・メニューは必須です'); return }
+    const staffData = staff.find(s => s.name === currentUser)
+    const { data, error } = await supabase.from('practice_reservations').insert({ staff_id: staffData?.id, staff_name: currentUser, practice_date: date, practice_time: time, menu, model_name: model, note }).select()
+    if (!error && data) { setPracticeReservations([...practiceReservations, { id: data[0].id, staffId: staffData?.id, staffName: currentUser, date, time, menu, model, note }]); setTime(''); setMenu(''); setModel(''); setNote('') }
+  }
+  const deleteReservation = async (id) => { if (!confirm('この予約を削除しますか？')) return; const { error } = await supabase.from('practice_reservations').delete().eq('id', id); if (!error) setPracticeReservations(practiceReservations.filter(r => r.id !== id)) }
+  const startEdit = (r) => { setEditingId(r.id); setEditData({ date: r.date, time: r.time, menu: r.menu, model: r.model || '', note: r.note || '' }) }
+  const saveEdit = async (id) => { const { error } = await supabase.from('practice_reservations').update({ practice_date: editData.date, practice_time: editData.time, menu: editData.menu, model_name: editData.model, note: editData.note }).eq('id', id); if (!error) { setPracticeReservations(practiceReservations.map(r => r.id === id ? { ...r, date: editData.date, time: editData.time, menu: editData.menu, model: editData.model, note: editData.note } : r)); setEditingId(null) } }
+  const getStaffColor = (staffId) => { const colors = ['#3b82f6', '#ef4444', '#22c55e', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316']; const index = staff.findIndex(s => s.id === staffId); return colors[index % colors.length] }
+  const monthlyReservations = practiceReservations.filter(r => r.date?.startsWith(selectedMonth)).sort((a, b) => { if (a.date !== b.date) return a.date.localeCompare(b.date); return a.time.localeCompare(b.time) })
+  const menus = ['カット', 'カラー', 'パーマ', 'トリートメント', 'ヘッドスパ', 'その他']
+
+  return (
+    <div className="space-y-4">
+      <div className="card">
+        <h3 className="text-lg font-bold mb-4">✂️ 練習予約</h3>
+        <div className="bg-blue-50 p-4 rounded mb-4">
+          <h4 className="font-semibold mb-3">新規予約</h4>
+          <div className="grid-2 mb-4">
+            <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>日付</label><input type="date" value={date} onChange={e => setDate(e.target.value)} className="input" /></div>
+            <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>時間</label><input type="time" value={time} onChange={e => setTime(e.target.value)} className="input" /></div>
+          </div>
+          <div className="grid-2 mb-4">
+            <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>メニュー</label><select value={menu} onChange={e => setMenu(e.target.value)} className="select"><option value="">選択</option>{menus.map(m => <option key={m} value={m}>{m}</option>)}</select></div>
+            <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>モデル名</label><input type="text" value={model} onChange={e => setModel(e.target.value)} placeholder="任意" className="input" /></div>
+          </div>
+          <div className="mb-4"><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>備考</label><input type="text" value={note} onChange={e => setNote(e.target.value)} placeholder="任意" className="input" /></div>
+          <button onClick={addReservation} className="btn btn-blue w-full"><Icons.Plus /> 予約を追加</button>
+        </div>
       </div>
       <div className="card">
-        <h3 className="text-lg font-bold mb-4">スタッフ一覧 ({staff.length}名)</h3>
-        <div className="space-y-4">
-          {staff.map(s => (
-            editingId === s.id ? (
-              <div key={s.id} className="border rounded p-4 bg-yellow-50">
-                <h4 className="font-bold mb-4">✏️ {s.name} を編集中</h4>
-                <div className="grid-2 mb-3">
-                  <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>名前</label><input type="text" value={editData.name} onChange={e => setEditData({...editData, name: e.target.value})} className="input" /></div>
-                  <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>入社日</label><input type="date" value={editData.joinDate} onChange={e => setEditData({...editData, joinDate: e.target.value})} className="input" /></div>
-                </div>
-                <div className="grid-2 mb-3">
-                  <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>勤続係数</label><select value={editData.tenureRate} onChange={e => setEditData({...editData, tenureRate: parseInt(e.target.value)})} className="select">{tenureRateOptions.map(r => <option key={r} value={r}>{r}%</option>)}</select></div>
-                  <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>勤務形態</label><select value={editData.workType} onChange={e => setEditData({...editData, workType: e.target.value})} className="select"><option value="full">フル</option><option value="part">時短</option></select></div>
-                </div>
-                {editData.workType === 'part' && (<div className="mb-3"><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>時短係数</label><select value={editData.partTimeRate} onChange={e => setEditData({...editData, partTimeRate: parseInt(e.target.value)})} className="select" style={{ width: 'auto' }}>{partTimeRateOptions.map(r => <option key={r} value={r}>{r}%</option>)}</select></div>)}
-                <div className="mb-3"><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>週勤務日数</label><select value={editData.workDaysPerWeek} onChange={e => setEditData({...editData, workDaysPerWeek: parseInt(e.target.value)})} className="select" style={{ width: 'auto' }}><option value={5}>5日</option><option value={4}>4日</option><option value={3}>3日</option></select></div>
-                <div className="grid-2 mb-3">
-                  <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>オープニング</label><label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={editData.isOpeningStaff} onChange={e => setEditData({...editData, isOpeningStaff: e.target.checked})} /><span>はい</span></label></div>
-                  <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>特別係数</label><select value={editData.specialRate} onChange={e => setEditData({...editData, specialRate: parseInt(e.target.value)})} className="select">{specialRateOptions.map(r => <option key={r} value={r}>+{r}%</option>)}</select></div>
-                </div>
-                <div className="mb-3">
-                  <label className="flex items-center gap-2 cursor-pointer p-3 bg-red-50 rounded border border-red-200">
-                    <input type="checkbox" checked={editData.isManagement} onChange={e => setEditData({...editData, isManagement: e.target.checked})} />
-                    <span className="font-semibold text-red-700">👑 経営陣（ボーナス対象外）</span>
-                  </label>
-                </div>
-                <div className="mb-4">
-                  <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>発注担当</label>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {categories.large.map((c, i) => (
-                      <label key={i} className={`flex items-center gap-2 px-3 py-2 rounded cursor-pointer text-sm border ${editData.dealers.includes(c.name) ? 'bg-blue-100 border-blue-500' : 'bg-white border-gray-200'}`}>
-                        <input type="checkbox" checked={editData.dealers.includes(c.name)} onChange={() => toggleEditDealer(c.name)} className="w-4 h-4" />
-                        <span>{c.name}</span>
-                      </label>
-                    ))}
+        <div className="flex justify-between items-center mb-4"><h3 className="text-lg font-bold">📅 予約一覧</h3><input type="month" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="input" style={{ width: 'auto' }} /></div>
+        {monthlyReservations.length === 0 ? (<p className="text-gray-500 text-center py-4">この月の予約はありません</p>) : (
+          <div className="space-y-3">
+            {monthlyReservations.map(r => (
+              editingId === r.id ? (
+                <div key={r.id} className="border-2 border-yellow-400 rounded-lg p-4 bg-yellow-50">
+                  <div className="grid-2 gap-2 mb-2">
+                    <input type="date" value={editData.date} onChange={e => setEditData({...editData, date: e.target.value})} className="input" />
+                    <input type="time" value={editData.time} onChange={e => setEditData({...editData, time: e.target.value})} className="input" />
                   </div>
+                  <div className="grid-2 gap-2 mb-2">
+                    <select value={editData.menu} onChange={e => setEditData({...editData, menu: e.target.value})} className="select">{menus.map(m => <option key={m} value={m}>{m}</option>)}</select>
+                    <input type="text" value={editData.model} onChange={e => setEditData({...editData, model: e.target.value})} placeholder="モデル名" className="input" />
+                  </div>
+                  <input type="text" value={editData.note} onChange={e => setEditData({...editData, note: e.target.value})} placeholder="備考" className="input mb-2" />
+                  <div className="flex gap-2"><button onClick={() => saveEdit(r.id)} className="btn btn-green">保存</button><button onClick={() => setEditingId(null)} className="btn btn-gray">取消</button></div>
                 </div>
-                <div className="flex gap-2"><button onClick={() => saveEdit(s.id)} className="btn btn-green">保存</button><button onClick={() => setEditingId(null)} className="btn btn-gray">取消</button></div>
-              </div>
-            ) : (
-              <div key={s.id} className="border rounded p-4">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <div className="font-bold text-lg">{s.name}</div>
-                    <div className="text-sm text-gray-500">入社: {s.joinDate || '-'} ({calcTenure(s.joinDate)})</div>
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {s.isManagement && <span className="badge badge-red">👑 経営陣</span>}
-                      <span className="badge badge-blue">勤続{s.tenureRate}%</span>
-                      <span className="badge badge-green">{s.workType === 'full' ? 'フル' : `時短${s.partTimeRate}%`}</span>
-                      {s.isOpeningStaff && <span className="badge badge-yellow">オープニング</span>}
-                      {s.specialRate > 0 && <span className="badge badge-red">特別+{s.specialRate}%</span>}
+              ) : (
+                <div key={r.id} className="border rounded-lg p-4" style={{ borderLeft: `4px solid ${getStaffColor(r.staffId)}` }}>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1"><span className="font-bold">{r.date}</span><span className="text-blue-600">{r.time}</span></div>
+                      <div className="flex items-center gap-2"><span className="badge badge-blue">{r.staffName}</span><span className="font-semibold">{r.menu}</span>{r.model && <span className="text-gray-500">({r.model})</span>}</div>
+                      {r.note && <p className="text-sm text-gray-600 mt-1">{r.note}</p>}
                     </div>
-                    {s.dealer && (<div className="flex flex-wrap gap-1 mt-2">{s.dealer.split(',').filter(d => d).map((d, i) => (<span key={i} className="bg-gray-100 px-2 py-1 rounded text-xs">{d}</span>))}</div>)}
-                  </div>
-                  <div className="flex gap-2">
-                    <button onClick={() => startEdit(s)} className="text-blue-500 text-sm">編集</button>
-                    <button onClick={() => deleteStaff(s.id, s.name)} className="text-red-500 text-sm">削除</button>
+                    <div className="flex gap-2">{(r.staffName === currentUser) && <><button onClick={() => startEdit(r)} className="text-blue-500 text-sm">編集</button><button onClick={() => deleteReservation(r.id)} className="text-red-500 text-sm">削除</button></>}</div>
                   </div>
                 </div>
+              )
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ==================== 連絡帳 ====================
+function ContactBook({ staff, contactNotes, setContactNotes, currentUser }) {
+  const [content, setContent] = useState('')
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0])
+  const [editingId, setEditingId] = useState(null)
+  const [editContent, setEditContent] = useState('')
+
+  const addNote = async () => {
+    if (!content.trim()) return
+    const { data, error } = await supabase.from('contact_notes').insert({ staff_name: currentUser, content: content.trim(), note_date: date }).select()
+    if (!error && data) { setContactNotes([...contactNotes, { id: data[0].id, staff: currentUser, content: content.trim(), date, createdAt: data[0].created_at }]); setContent('') }
+  }
+  const deleteNote = async (id) => { if (!confirm('この連絡を削除しますか？')) return; const { error } = await supabase.from('contact_notes').delete().eq('id', id); if (!error) setContactNotes(contactNotes.filter(n => n.id !== id)) }
+  const startEdit = (note) => { setEditingId(note.id); setEditContent(note.content) }
+  const saveEdit = async (id) => { const { error } = await supabase.from('contact_notes').update({ content: editContent }).eq('id', id); if (!error) { setContactNotes(contactNotes.map(n => n.id === id ? { ...n, content: editContent } : n)); setEditingId(null); setEditContent('') } }
+
+  const sortedNotes = [...contactNotes].sort((a, b) => { if (a.date !== b.date) return b.date.localeCompare(a.date); return new Date(b.createdAt) - new Date(a.createdAt) })
+  const groupedByDate = sortedNotes.reduce((acc, note) => { if (!acc[note.date]) acc[note.date] = []; acc[note.date].push(note); return acc }, {})
+
+  return (
+    <div className="space-y-4">
+      <div className="card">
+        <h3 className="text-lg font-bold mb-4">📝 連絡帳</h3>
+        <div className="bg-blue-50 p-4 rounded mb-4">
+          <div className="mb-3"><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>日付</label><input type="date" value={date} onChange={e => setDate(e.target.value)} className="input" style={{ width: 'auto' }} /></div>
+          <div className="mb-3"><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>連絡内容</label><textarea value={content} onChange={e => setContent(e.target.value)} placeholder="連絡事項を入力..." className="input" rows={3} style={{ resize: 'vertical' }} /></div>
+          <button onClick={addNote} className="btn btn-blue"><Icons.Plus /> 投稿する</button>
+        </div>
+      </div>
+      <div className="card">
+        <h3 className="text-lg font-bold mb-4">📋 連絡一覧</h3>
+        {Object.keys(groupedByDate).length === 0 ? (<p className="text-gray-500 text-center py-4">連絡はありません</p>) : (
+          Object.entries(groupedByDate).map(([noteDate, notes]) => (
+            <div key={noteDate} className="mb-4">
+              <h4 className="font-semibold text-gray-700 mb-2 sticky top-0 bg-white py-1">{noteDate}</h4>
+              <div className="space-y-3">
+                {notes.map(note => (
+                  <div key={note.id} className="border rounded-lg p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="badge badge-blue">{note.staff}</span>
+                      <div className="flex gap-2">
+                        {note.staff === currentUser && (<><button onClick={() => startEdit(note)} className="text-blue-500 text-sm">編集</button><button onClick={() => deleteNote(note.id)} className="text-red-500 text-sm">削除</button></>)}
+                      </div>
+                    </div>
+                    {editingId === note.id ? (
+                      <div><textarea value={editContent} onChange={e => setEditContent(e.target.value)} className="input mb-2" rows={3} /><div className="flex gap-2"><button onClick={() => saveEdit(note.id)} className="btn btn-green btn-sm">保存</button><button onClick={() => setEditingId(null)} className="btn btn-gray btn-sm">取消</button></div></div>
+                    ) : (<p className="whitespace-pre-wrap">{note.content}</p>)}
+                  </div>
+                ))}
               </div>
-            )
-          ))}
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ==================== 有給管理 ====================
+function LeaveManagement({ staff, setStaff, leaveRequests, setLeaveRequests, currentUser, isAdmin }) {
+  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0])
+  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0])
+  const [leaveType, setLeaveType] = useState('paid')
+  const [note, setNote] = useState('')
+  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7))
+  const [showGrantModal, setShowGrantModal] = useState(false)
+  const [grantStaffId, setGrantStaffId] = useState(null)
+  const [grantDate, setGrantDate] = useState(new Date().toISOString().split('T')[0])
+  const [grantDays, setGrantDays] = useState(10)
+  const [expiryDate, setExpiryDate] = useState('')
+
+  useEffect(() => {
+    if (grantDate) { const d = new Date(grantDate); d.setFullYear(d.getFullYear() + 2); setExpiryDate(d.toISOString().split('T')[0]) }
+  }, [grantDate])
+
+  const leaveTypes = [{ value: 'paid', label: '有給休暇' }, { value: 'summer', label: '夏季休暇' }, { value: 'special', label: '特別休暇' }]
+
+  const countLeaveDays = (start, end) => { const s = new Date(start); const e = new Date(end); let count = 0; while (s <= e) { const day = s.getDay(); if (day !== 0 && day !== 6) count++; s.setDate(s.getDate() + 1) }; return count }
+
+  const currentStaff = staff.find(s => s.name === currentUser)
+  const getStaffLeaveBalance = (staffMember) => {
+    const grants = staffMember.leaveGrants || []
+    const today = new Date().toISOString().split('T')[0]
+    let total = 0
+    grants.forEach(g => { if (g.expiryDate >= today) total += g.remainingDays })
+    return total
+  }
+
+  const submitRequest = async () => {
+    if (!startDate || !endDate) { alert('開始日と終了日を入力してください'); return }
+    if (startDate > endDate) { alert('終了日は開始日以降にしてください'); return }
+    const days = countLeaveDays(startDate, endDate)
+    const staffData = staff.find(s => s.name === currentUser)
+    const balance = getStaffLeaveBalance(staffData)
+    if (leaveType === 'paid' && days > balance) { alert(`有給残日数が足りません（残: ${balance}日、申請: ${days}日）`); return }
+    const { data, error } = await supabase.from('leave_requests').insert({ staff_id: staffData?.id, staff_name: currentUser, start_date: startDate, end_date: endDate, leave_type: leaveType, days, status: 'pending', note }).select()
+    if (!error && data) { setLeaveRequests([...leaveRequests, { id: data[0].id, staffId: staffData?.id, staffName: currentUser, startDate, endDate, leaveType, days, status: 'pending', note }]); setNote(''); alert('休暇申請を提出しました') }
+  }
+
+  const approveRequest = async (req) => {
+    const { error } = await supabase.from('leave_requests').update({ status: 'approved' }).eq('id', req.id)
+    if (!error) {
+      setLeaveRequests(leaveRequests.map(r => r.id === req.id ? { ...r, status: 'approved' } : r))
+      if (req.leaveType === 'paid') {
+        const targetStaff = staff.find(s => s.id === req.staffId)
+        if (targetStaff) {
+          let remaining = req.days
+          const updatedGrants = [...(targetStaff.leaveGrants || [])].sort((a, b) => a.expiryDate.localeCompare(b.expiryDate))
+          updatedGrants.forEach(g => { if (remaining > 0 && g.remainingDays > 0) { const deduct = Math.min(remaining, g.remainingDays); g.remainingDays -= deduct; remaining -= deduct } })
+          await supabase.from('staff').update({ leave_grants: updatedGrants }).eq('id', targetStaff.id)
+          setStaff(staff.map(s => s.id === targetStaff.id ? { ...s, leaveGrants: updatedGrants } : s))
+        }
+      }
+    }
+  }
+  const rejectRequest = async (id) => { const { error } = await supabase.from('leave_requests').update({ status: 'rejected' }).eq('id', id); if (!error) setLeaveRequests(leaveRequests.map(r => r.id === id ? { ...r, status: 'rejected' } : r)) }
+  const deleteRequest = async (id) => { if (!confirm('この申請を削除しますか？')) return; const { error } = await supabase.from('leave_requests').delete().eq('id', id); if (!error) setLeaveRequests(leaveRequests.filter(r => r.id !== id)) }
+
+  const openGrantModal = (staffId) => { setGrantStaffId(staffId); setShowGrantModal(true) }
+  const grantLeave = async () => {
+    const targetStaff = staff.find(s => s.id === grantStaffId)
+    if (!targetStaff) return
+    const newGrant = { grantDate, days: grantDays, remainingDays: grantDays, expiryDate }
+    const updatedGrants = [...(targetStaff.leaveGrants || []), newGrant]
+    const { error } = await supabase.from('staff').update({ leave_grants: updatedGrants }).eq('id', grantStaffId)
+    if (!error) { setStaff(staff.map(s => s.id === grantStaffId ? { ...s, leaveGrants: updatedGrants } : s)); setShowGrantModal(false); alert('有給を付与しました') }
+  }
+
+  const getStatusBadge = (status) => { const styles = { pending: 'badge-yellow', approved: 'badge-green', rejected: 'badge-red' }; const labels = { pending: '申請中', approved: '承認', rejected: '却下' }; return <span className={`badge ${styles[status]}`}>{labels[status]}</span> }
+  const getTypeLabel = (type) => { const found = leaveTypes.find(t => t.value === type); return found ? found.label : type }
+  const monthlyRequests = leaveRequests.filter(r => r.startDate?.startsWith(selectedMonth) || r.endDate?.startsWith(selectedMonth)).sort((a, b) => a.startDate.localeCompare(b.startDate))
+
+  return (
+    <div className="space-y-4">
+      <div className="card">
+        <h3 className="text-lg font-bold mb-4">🏖️ 有給管理</h3>
+        {currentStaff && (<div className="bg-blue-50 p-4 rounded mb-4 text-center"><p className="text-gray-600">あなたの有給残日数</p><p className="text-3xl font-bold text-blue-600">{getStaffLeaveBalance(currentStaff)}日</p></div>)}
+        <div className="bg-gray-50 p-4 rounded">
+          <h4 className="font-semibold mb-3">休暇申請</h4>
+          <div className="grid-2 mb-3">
+            <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>開始日</label><input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="input" /></div>
+            <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>終了日</label><input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="input" /></div>
+          </div>
+          <div className="mb-3"><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>休暇種別</label><select value={leaveType} onChange={e => setLeaveType(e.target.value)} className="select">{leaveTypes.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}</select></div>
+          <div className="mb-3"><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>備考</label><input type="text" value={note} onChange={e => setNote(e.target.value)} placeholder="任意" className="input" /></div>
+          <button onClick={submitRequest} className="btn btn-blue w-full">申請する</button>
+        </div>
+      </div>
+      {isAdmin && (
+        <div className="card">
+          <h3 className="text-lg font-bold mb-4">👥 スタッフ有給状況</h3>
+          <div className="overflow-x-auto">
+            <table><thead><tr><th>スタッフ</th><th className="text-center">残日数</th><th className="text-center">操作</th></tr></thead>
+              <tbody>{staff.map(s => (<tr key={s.id}><td>{s.name}</td><td className="text-center font-bold text-blue-600">{getStaffLeaveBalance(s)}日</td><td className="text-center"><button onClick={() => openGrantModal(s.id)} className="btn btn-green btn-sm">付与</button></td></tr>))}</tbody>
+            </table>
+          </div>
+        </div>
+      )}
+      <div className="card">
+        <div className="flex justify-between items-center mb-4"><h3 className="text-lg font-bold">📋 申請一覧</h3><input type="month" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="input" style={{ width: 'auto' }} /></div>
+        {monthlyRequests.length === 0 ? (<p className="text-gray-500 text-center py-4">この月の申請はありません</p>) : (
+          <div className="space-y-3">
+            {monthlyRequests.map(r => (
+              <div key={r.id} className="border rounded-lg p-4">
+                <div className="flex justify-between items-start mb-2"><div className="flex items-center gap-2"><span className="badge badge-blue">{r.staffName}</span>{getStatusBadge(r.status)}</div><span className="text-sm text-gray-500">{getTypeLabel(r.leaveType)}</span></div>
+                <div className="mb-2"><span className="font-semibold">{r.startDate}</span>{r.startDate !== r.endDate && <span> 〜 {r.endDate}</span>}<span className="ml-2 text-gray-600">({r.days}日間)</span></div>
+                {r.note && <p className="text-sm text-gray-600 mb-2">{r.note}</p>}
+                <div className="flex gap-2 justify-end">
+                  {isAdmin && r.status === 'pending' && (<><button onClick={() => approveRequest(r)} className="btn btn-green btn-sm">承認</button><button onClick={() => rejectRequest(r.id)} className="btn btn-red btn-sm">却下</button></>)}
+                  {(r.staffName === currentUser || isAdmin) && <button onClick={() => deleteRequest(r.id)} className="btn btn-gray btn-sm">削除</button>}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      {showGrantModal && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <h3 className="text-lg font-bold mb-4">有給付与</h3>
+            <p className="mb-4">対象: <span className="font-semibold">{staff.find(s => s.id === grantStaffId)?.name}</span></p>
+            <div className="space-y-3">
+              <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>付与日</label><input type="date" value={grantDate} onChange={e => setGrantDate(e.target.value)} className="input" /></div>
+              <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>付与日数</label><input type="number" value={grantDays} onChange={e => setGrantDays(parseInt(e.target.value) || 0)} className="input" min="1" /></div>
+              <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>有効期限</label><input type="date" value={expiryDate} onChange={e => setExpiryDate(e.target.value)} className="input" /></div>
+            </div>
+            <div className="flex gap-2 mt-4"><button onClick={grantLeave} className="btn btn-green">付与する</button><button onClick={() => setShowGrantModal(false)} className="btn btn-gray">キャンセル</button></div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ==================== 材料費達成率（賞与管理） ====================
+function BonusManagement({ staff, usage, dealerBudgets, isAdmin }) {
+  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7))
+  const [targetRate] = useState(20)
+
+  const budget = dealerBudgets.find(b => b.yearMonth === selectedMonth)
+  const targetSales = budget?.targetSales || 0
+  const monthlyUsage = usage.filter(u => u.date?.startsWith(selectedMonth))
+  const totalUsage = monthlyUsage.reduce((sum, u) => sum + u.purchasePrice * u.quantity, 0)
+  const actualRate = targetSales > 0 ? (totalUsage / targetSales * 100) : 0
+  const achievement = targetRate > 0 ? Math.max(0, ((targetRate - actualRate) / targetRate * 100)) : 0
+  const getRank = (rate) => { if (rate >= 30) return { rank: 'S', color: 'text-purple-600', bg: 'bg-purple-100' }; if (rate >= 20) return { rank: 'A', color: 'text-blue-600', bg: 'bg-blue-100' }; if (rate >= 10) return { rank: 'B', color: 'text-green-600', bg: 'bg-green-100' }; if (rate >= 0) return { rank: 'C', color: 'text-yellow-600', bg: 'bg-yellow-100' }; return { rank: 'D', color: 'text-red-600', bg: 'bg-red-100' } }
+  const { rank, color, bg } = getRank(achievement)
+
+  return (
+    <div className="space-y-4">
+      <div className="card">
+        <div className="flex justify-between items-center mb-4"><h3 className="text-lg font-bold">🎯 材料費達成率</h3><input type="month" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="input" style={{ width: 'auto' }} /></div>
+        <div className="grid-2 gap-4 mb-4">
+          <div className="bg-gray-50 p-4 rounded text-center"><div className="text-sm text-gray-600">売上目標</div><div className="text-xl font-bold">¥{targetSales.toLocaleString()}</div></div>
+          <div className="bg-gray-50 p-4 rounded text-center"><div className="text-sm text-gray-600">目標仕入率</div><div className="text-xl font-bold">{targetRate}%</div></div>
+        </div>
+        <div className="grid-2 gap-4 mb-4">
+          <div className="bg-blue-50 p-4 rounded text-center"><div className="text-sm text-gray-600">今月の材料使用</div><div className="text-xl font-bold text-blue-600">¥{totalUsage.toLocaleString()}</div></div>
+          <div className={`p-4 rounded text-center ${actualRate <= targetRate ? 'bg-green-50' : 'bg-red-50'}`}><div className="text-sm text-gray-600">実績仕入率</div><div className={`text-xl font-bold ${actualRate <= targetRate ? 'text-green-600' : 'text-red-600'}`}>{actualRate.toFixed(1)}%</div></div>
+        </div>
+        <div className={`${bg} p-6 rounded text-center`}><div className="text-sm text-gray-600 mb-2">達成ランク</div><div className={`text-5xl font-bold ${color}`}>{rank}</div><div className="text-lg mt-2">{achievement.toFixed(1)}%達成</div></div>
+      </div>
+      <div className="card">
+        <h4 className="font-bold mb-4">ランク基準</h4>
+        <div className="space-y-2 text-sm">
+          <div className="flex justify-between p-2 bg-purple-50 rounded"><span className="font-bold text-purple-600">Sランク</span><span>30%以上削減</span></div>
+          <div className="flex justify-between p-2 bg-blue-50 rounded"><span className="font-bold text-blue-600">Aランク</span><span>20-30%削減</span></div>
+          <div className="flex justify-between p-2 bg-green-50 rounded"><span className="font-bold text-green-600">Bランク</span><span>10-20%削減</span></div>
+          <div className="flex justify-between p-2 bg-yellow-50 rounded"><span className="font-bold text-yellow-600">Cランク</span><span>0-10%削減</span></div>
+          <div className="flex justify-between p-2 bg-red-50 rounded"><span className="font-bold text-red-600">Dランク</span><span>目標未達</span></div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ==================== 月次レポート ====================
+function MonthlyReport({ products, usage, stockIn, inventoryHistory, dealerBudgets }) {
+  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7))
+
+  const monthlyUsage = usage.filter(u => u.date?.startsWith(selectedMonth))
+  const monthlyStockIn = stockIn.filter(s => s.date?.startsWith(selectedMonth))
+  const totalUsage = monthlyUsage.reduce((sum, u) => sum + u.purchasePrice * u.quantity, 0)
+  const totalStockIn = monthlyStockIn.reduce((sum, s) => { const p = products.find(pr => pr.id === s.productId); return sum + (p ? s.quantity * p.purchasePrice : 0) }, 0)
+  const budget = dealerBudgets.find(b => b.yearMonth === selectedMonth)
+  const targetSales = budget?.targetSales || 0
+  const targetRate = budget?.targetRate || 20
+  const targetBudget = Math.round(targetSales * targetRate / 100)
+  const usageByDealer = {}; monthlyUsage.forEach(u => { if (!usageByDealer[u.largeCategory]) usageByDealer[u.largeCategory] = 0; usageByDealer[u.largeCategory] += u.purchasePrice * u.quantity })
+  const stockInByDealer = {}; monthlyStockIn.forEach(s => { const p = products.find(pr => pr.id === s.productId); if (p) { if (!stockInByDealer[s.largeCategory]) stockInByDealer[s.largeCategory] = 0; stockInByDealer[s.largeCategory] += s.quantity * p.purchasePrice } })
+
+  const printReport = () => {
+    const content = `<h1 style="text-align: center;">${selectedMonth.replace('-', '年')}月 月次レポート</h1><h2>サマリー</h2><table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;"><tr><td style="border: 1px solid #ddd; padding: 8px;">売上目標</td><td style="border: 1px solid #ddd; padding: 8px; text-align: right;">¥${targetSales.toLocaleString()}</td></tr><tr><td style="border: 1px solid #ddd; padding: 8px;">仕入れ目標</td><td style="border: 1px solid #ddd; padding: 8px; text-align: right;">¥${targetBudget.toLocaleString()}</td></tr><tr><td style="border: 1px solid #ddd; padding: 8px;">材料使用額</td><td style="border: 1px solid #ddd; padding: 8px; text-align: right; color: blue;">¥${totalUsage.toLocaleString()}</td></tr><tr><td style="border: 1px solid #ddd; padding: 8px;">入荷額</td><td style="border: 1px solid #ddd; padding: 8px; text-align: right; color: purple;">¥${totalStockIn.toLocaleString()}</td></tr></table><h2>ディーラー別</h2><table style="width: 100%; border-collapse: collapse;"><tr style="background: #f0f0f0;"><th style="border: 1px solid #ddd; padding: 8px;">ディーラー</th><th style="border: 1px solid #ddd; padding: 8px; text-align: right;">使用額</th><th style="border: 1px solid #ddd; padding: 8px; text-align: right;">入荷額</th></tr>${Object.keys({...usageByDealer, ...stockInByDealer}).map(d => `<tr><td style="border: 1px solid #ddd; padding: 8px;">${d}</td><td style="border: 1px solid #ddd; padding: 8px; text-align: right;">¥${(usageByDealer[d] || 0).toLocaleString()}</td><td style="border: 1px solid #ddd; padding: 8px; text-align: right;">¥${(stockInByDealer[d] || 0).toLocaleString()}</td></tr>`).join('')}</table>`
+    const w = window.open('', '_blank'); w.document.write(`<!DOCTYPE html><html><head><title>月次レポート ${selectedMonth}</title><style>body { font-family: sans-serif; padding: 20px; }</style></head><body>${content}</body></html>`); w.document.close(); w.print()
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="card">
+        <div className="flex justify-between items-center mb-4"><h3 className="text-lg font-bold">📊 月次レポート</h3><input type="month" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="input" style={{ width: 'auto' }} /></div>
+        <div className="grid-2 gap-4 mb-4">
+          <div className="bg-gray-50 p-4 rounded text-center"><div className="text-sm text-gray-600">売上目標</div><div className="text-xl font-bold">¥{targetSales.toLocaleString()}</div></div>
+          <div className="bg-gray-50 p-4 rounded text-center"><div className="text-sm text-gray-600">仕入れ目標</div><div className="text-xl font-bold">¥{targetBudget.toLocaleString()}</div></div>
+        </div>
+        <div className="grid-2 gap-4 mb-4">
+          <div className="bg-blue-50 p-4 rounded text-center"><div className="text-sm text-gray-600">材料使用額</div><div className="text-xl font-bold text-blue-600">¥{totalUsage.toLocaleString()}</div></div>
+          <div className="bg-purple-50 p-4 rounded text-center"><div className="text-sm text-gray-600">入荷額</div><div className="text-xl font-bold text-purple-600">¥{totalStockIn.toLocaleString()}</div></div>
+        </div>
+        <button onClick={printReport} className="btn btn-blue w-full">PDF出力（印刷）</button>
+      </div>
+      <div className="card">
+        <h4 className="font-bold mb-4">ディーラー別集計</h4>
+        <div className="overflow-x-auto">
+          <table><thead><tr><th>ディーラー</th><th className="text-right">使用額</th><th className="text-right">入荷額</th></tr></thead>
+            <tbody>{Object.keys({...usageByDealer, ...stockInByDealer}).map(d => (<tr key={d}><td>{d}</td><td className="text-right text-blue-600">¥{(usageByDealer[d] || 0).toLocaleString()}</td><td className="text-right text-purple-600">¥{(stockInByDealer[d] || 0).toLocaleString()}</td></tr>))}</tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -2052,3100 +2549,222 @@ function StaffManagement({ staff, setStaff, categories, isAdmin }) {
 }
 
 // ==================== データ出力 ====================
-function DataExport({ products, staff, usage, stockIn, inventoryHistory }) {
-  const downloadCSV = (filename, headers, rows) => { const BOM = '\uFEFF'; const csvContent = BOM + [headers.join(','), ...rows.map(row => row.map(cell => `"${cell}"`).join(','))].join('\n'); const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = filename; link.click() }
-  const exportProductsCSV = () => { const headers = ['ディーラー', '種類', '商品名', '仕入れ価格', '販売価格']; const rows = products.map(p => [p.largeCategory, p.mediumCategory, p.name, p.purchasePrice, p.sellingPrice]); downloadCSV('商品一覧.csv', headers, rows) }
-  const exportUsageCSV = () => { const headers = ['日付', 'ディーラー', '種類', '商品名', '数量', '金額']; const rows = usage.map(u => [u.date, u.largeCategory, u.mediumCategory, u.productName, u.quantity, u.purchasePrice * u.quantity]); downloadCSV('使用履歴.csv', headers, rows) }
-  const exportStockInCSV = () => { const headers = ['日付', 'ディーラー', '商品名', '入荷数']; const rows = stockIn.map(s => [s.date, s.largeCategory, s.productName, s.quantity]); downloadCSV('入荷履歴.csv', headers, rows) }
-  const exportInventoryCSV = () => { if (inventoryHistory.length === 0) { alert('棚卸履歴がありません'); return }; const latest = inventoryHistory[inventoryHistory.length - 1]; const headers = ['商品名', '数量', '仕入れ価格', '在庫金額']; const rows = latest.data.map(d => [d.name, d.quantity, d.purchasePrice, d.quantity * d.purchasePrice]); downloadCSV(`棚卸_${latest.date}.csv`, headers, rows) }
-  const items = [{ label: '商品一覧', fn: exportProductsCSV, count: products.length }, { label: '使用履歴', fn: exportUsageCSV, count: usage.length }, { label: '入荷履歴', fn: exportStockInCSV, count: stockIn.length }, { label: '最新棚卸', fn: exportInventoryCSV, count: inventoryHistory.length }]
+function DataExport({ products, usage, stockIn, inventoryHistory, staff, timeRecords, leaveRequests, practiceReservations, contactNotes, staffPurchases, categories, dealerBudgets, dealerAllocations }) {
+  const [exportType, setExportType] = useState('usage')
+  const [startDate, setStartDate] = useState(new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString().split('T')[0])
+  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0])
 
-  return (
-    <div className="card">
-      <h3 className="text-lg font-bold mb-4">📊 データ出力</h3>
-      <div className="space-y-3">{items.map((item, i) => (<div key={i} className="flex justify-between items-center p-4 bg-gray-50 rounded"><div><span className="font-semibold">{item.label}</span><span className="text-sm text-gray-500 ml-2">({item.count}件)</span></div><button onClick={item.fn} className="btn btn-green">CSV出力</button></div>))}</div>
-    </div>
-  )
-}
-
-
-// ==================== 連絡帳 ====================
-function ContactBook({ staff, setStaff, contactGoals, setContactGoals, contactWeekly, setContactWeekly, contactReplies, setContactReplies, contactMonthly, setContactMonthly, notifications, setNotifications, isAdmin }) {
-  const [selectedStaff, setSelectedStaff] = useState('')
-  const [mode, setMode] = useState(isAdmin ? 'admin' : 'weekly')
-  const [detailStaffId, setDetailStaffId] = useState(null)
-  const [replyText, setReplyText] = useState('')
-  const [replyingTo, setReplyingTo] = useState(null)
-  
-  const [editingGoal, setEditingGoal] = useState(null)
-  const [goalData, setGoalData] = useState({ monthlyGoal: '', weeklyTask: '' })
-  
-  const [weeklyChecks, setWeeklyChecks] = useState([false, false, false, false, false, false, false])
-  const [zeroReason, setZeroReason] = useState('')
-  const [nextAction, setNextAction] = useState('')
-  const [nextActionDetail, setNextActionDetail] = useState('')
-  
-  const [q1Answer, setQ1Answer] = useState('')
-  const [q2Answer, setQ2Answer] = useState('')
-  const [q3Answer, setQ3Answer] = useState('')
-
-  const today = new Date()
-  const currentYearMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`
-
-  // 連絡帳対象スタッフのみ
-  const contactStaff = staff.filter(s => s.contactEnabled)
-
-  // 今週の月曜日を取得
-  const getWeekStart = (date) => {
-    const d = new Date(date)
-    const day = d.getDay()
-    const diff = d.getDate() - day + (day === 0 ? -6 : 1)
-    const monday = new Date(d.setDate(diff))
-    return monday.toISOString().split('T')[0]
-  }
-
-  const currentWeekStart = getWeekStart(today)
-
-  // 今週の各曜日の日付を取得
-  const getWeekDates = (weekStart) => {
-    const dates = []
-    const start = new Date(weekStart)
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(start)
-      d.setDate(start.getDate() + i)
-      dates.push(d)
-    }
-    return dates
-  }
-
-  // 第三日曜日かどうか
-  const isThirdSunday = (date) => {
-    const d = new Date(date)
-    if (d.getDay() !== 0) return false
-    let sundayCount = 0
-    for (let i = 1; i <= d.getDate(); i++) {
-      if (new Date(d.getFullYear(), d.getMonth(), i).getDay() === 0) sundayCount++
-    }
-    return sundayCount === 3
-  }
-
-  // 定休日かどうか（月火 + 第三日曜）
-  const isHoliday = (date) => {
-    const d = new Date(date)
-    const dayOfWeek = d.getDay()
-    if (dayOfWeek === 1 || dayOfWeek === 2) return true // 月火
-    if (isThirdSunday(d)) return true
-    return false
-  }
-
-  const weekDates = getWeekDates(currentWeekStart)
-  const dayNames = ['月', '火', '水', '木', '金', '土', '日']
-
-  // 稼働日数を計算
-  const workingDays = weekDates.filter(d => !isHoliday(d)).length
-
-  // チェック数を計算（稼働日のみ）
-  const countChecks = (checks, dates) => {
-    if (!dates) return checks.filter(c => c).length
-    return checks.filter((c, i) => c && !isHoliday(dates[i])).length
-  }
-
-  const reasonOptions = ['時間が取れなかった', '体調／メンタル', '忘れていた', '優先順位が下がった', 'その他']
-  const actionOptions = ['同じ内容で続ける', '少し下げて続ける', '一旦止める']
-
-  const currentGoal = contactGoals.find(g => g.staffId === parseInt(selectedStaff) && g.yearMonth === currentYearMonth)
-  const currentWeekly = contactWeekly.find(w => w.staffId === parseInt(selectedStaff) && w.weekStart === currentWeekStart)
-
-  // 赤信号判定
-  const isRedFlag = (staffId) => {
-    const records = contactWeekly.filter(w => w.staffId === staffId).sort((a, b) => b.weekStart.localeCompare(a.weekStart))
-    if (records.length < 2) return records.length === 0
-    const last2 = records.slice(0, 2)
-    const zeroCount = last2.filter(r => countChecks(r.checks) === 0 || !r.submittedAt).length
-    return zeroCount >= 2
-  }
-
-  // 週次提出
-  const submitWeekly = async () => {
-    if (!selectedStaff) return
-    const staffMember = staff.find(s => s.id === parseInt(selectedStaff))
-    const checkCount = countChecks(weeklyChecks, weekDates)
-    
-    if (checkCount === 0 && (!zeroReason || !nextAction)) {
-      alert('0日の場合は理由と来週の対応を入力してください')
-      return
-    }
-
-    const existing = contactWeekly.find(w => w.staffId === parseInt(selectedStaff) && w.weekStart === currentWeekStart)
-    
-    if (existing) {
-      const { error } = await supabase.from('contact_weekly').update({
-        check_mon: weeklyChecks[0], check_tue: weeklyChecks[1], check_wed: weeklyChecks[2],
-        check_thu: weeklyChecks[3], check_fri: weeklyChecks[4], check_sat: weeklyChecks[5], check_sun: weeklyChecks[6],
-        zero_reason: checkCount === 0 ? zeroReason : null,
-        next_action: checkCount === 0 ? nextAction : null,
-        next_action_detail: checkCount === 0 ? nextActionDetail : null,
-        submitted_at: new Date().toISOString()
-      }).eq('id', existing.id)
-      
-      if (!error) {
-        setContactWeekly(contactWeekly.map(w => w.id === existing.id ? {
-          ...w, checks: weeklyChecks, zeroReason: checkCount === 0 ? zeroReason : null,
-          nextAction: checkCount === 0 ? nextAction : null, nextActionDetail: checkCount === 0 ? nextActionDetail : null,
-          submittedAt: new Date().toISOString()
-        } : w))
-        alert('提出しました！')
-      }
-    } else {
-      const { data, error } = await supabase.from('contact_weekly').insert({
-        staff_id: parseInt(selectedStaff), staff_name: staffMember.name, week_start: currentWeekStart,
-        check_mon: weeklyChecks[0], check_tue: weeklyChecks[1], check_wed: weeklyChecks[2],
-        check_thu: weeklyChecks[3], check_fri: weeklyChecks[4], check_sat: weeklyChecks[5], check_sun: weeklyChecks[6],
-        zero_reason: checkCount === 0 ? zeroReason : null,
-        next_action: checkCount === 0 ? nextAction : null,
-        next_action_detail: checkCount === 0 ? nextActionDetail : null,
-        submitted_at: new Date().toISOString()
-      }).select()
-      
-      if (!error && data) {
-        setContactWeekly([{
-          id: data[0].id, staffId: parseInt(selectedStaff), staffName: staffMember.name,
-          weekStart: currentWeekStart, checks: weeklyChecks,
-          zeroReason: checkCount === 0 ? zeroReason : null,
-          nextAction: checkCount === 0 ? nextAction : null,
-          nextActionDetail: checkCount === 0 ? nextActionDetail : null,
-          submittedAt: new Date().toISOString()
-        }, ...contactWeekly])
-        
-        await supabase.from('notifications').insert({
-          target_role: 'admin', message: `${staffMember.name}さんが連絡帳を提出（${checkCount}日）`,
-          link_to: 'contact', is_read: false
-        })
-        alert('提出しました！')
-      }
-    }
-  }
-
-  // 月次提出
-  const submitMonthly = async () => {
-    if (!selectedStaff || !q1Answer || !q2Answer || !q3Answer) {
-      alert('すべての質問に回答してください')
-      return
-    }
-    const staffMember = staff.find(s => s.id === parseInt(selectedStaff))
-    const existing = contactMonthly.find(m => m.staffId === parseInt(selectedStaff) && m.yearMonth === currentYearMonth)
-    
-    if (existing) {
-      const { error } = await supabase.from('contact_monthly').update({
-        q1_answer: q1Answer, q2_answer: q2Answer, q3_answer: q3Answer,
-        submitted_at: new Date().toISOString()
-      }).eq('id', existing.id)
-      
-      if (!error) {
-        setContactMonthly(contactMonthly.map(m => m.id === existing.id ? {
-          ...m, q1: q1Answer, q2: q2Answer, q3: q3Answer, submittedAt: new Date().toISOString()
-        } : m))
-        alert('提出しました！')
-      }
-    } else {
-      const { data, error } = await supabase.from('contact_monthly').insert({
-        staff_id: parseInt(selectedStaff), staff_name: staffMember.name, year_month: currentYearMonth,
-        q1_answer: q1Answer, q2_answer: q2Answer, q3_answer: q3Answer,
-        submitted_at: new Date().toISOString()
-      }).select()
-      
-      if (!error && data) {
-        setContactMonthly([{
-          id: data[0].id, staffId: parseInt(selectedStaff), staffName: staffMember.name,
-          yearMonth: currentYearMonth, q1: q1Answer, q2: q2Answer, q3: q3Answer,
-          submittedAt: new Date().toISOString()
-        }, ...contactMonthly])
-        alert('提出しました！')
-      }
-    }
-  }
-
-  // 返信を送信
-  const submitReply = async (weeklyId) => {
-    if (!replyText) return
-    const { data, error } = await supabase.from('contact_replies').insert({
-      weekly_id: weeklyId, reply_text: replyText, replied_by: '綾華'
-    }).select()
-    
-    if (!error && data) {
-      setContactReplies([{ id: data[0].id, weeklyId, replyText, repliedBy: '綾華', createdAt: data[0].created_at }, ...contactReplies])
-      const weekly = contactWeekly.find(w => w.id === weeklyId)
-      if (weekly) {
-        await supabase.from('notifications').insert({
-          target_role: 'staff', target_staff_id: weekly.staffId,
-          message: '連絡帳に返信がありました', link_to: 'contact', is_read: false
-        })
-      }
-      setReplyText('')
-      setReplyingTo(null)
-      alert('返信しました')
-    }
-  }
-
-  // 目標を保存
-  const saveGoal = async (staffId, staffName) => {
-    const existing = contactGoals.find(g => g.staffId === staffId && g.yearMonth === currentYearMonth)
-    
-    if (existing) {
-      const { error } = await supabase.from('contact_goals').update({
-        monthly_goal: goalData.monthlyGoal, weekly_task: goalData.weeklyTask
-      }).eq('id', existing.id)
-      if (!error) setContactGoals(contactGoals.map(g => g.id === existing.id ? { ...g, monthlyGoal: goalData.monthlyGoal, weeklyTask: goalData.weeklyTask } : g))
-    } else {
-      const { data, error } = await supabase.from('contact_goals').insert({
-        staff_id: staffId, staff_name: staffName, year_month: currentYearMonth,
-        monthly_goal: goalData.monthlyGoal, weekly_task: goalData.weeklyTask
-      }).select()
-      if (!error && data) setContactGoals([...contactGoals, { id: data[0].id, staffId, staffName, yearMonth: currentYearMonth, monthlyGoal: goalData.monthlyGoal, weeklyTask: goalData.weeklyTask }])
-    }
-    setEditingGoal(null)
-    alert('保存しました')
-  }
-
-  // 対象スタッフ切り替え
-  const toggleContactEnabled = async (staffId) => {
-    const s = staff.find(x => x.id === staffId)
-    const newVal = !s.contactEnabled
-    const { error } = await supabase.from('staff').update({ contact_enabled: newVal }).eq('id', staffId)
-    if (!error) setStaff(staff.map(x => x.id === staffId ? { ...x, contactEnabled: newVal } : x))
-  }
-
-  const thisWeekSubmissions = contactWeekly.filter(w => w.weekStart === currentWeekStart && w.submittedAt)
-  const redFlagStaff = contactStaff.filter(s => isRedFlag(s.id))
-
-  return (
-    <div className="space-y-4">
-      {/* スタッフモード：スタッフ選択 */}
-      {!isAdmin && (
-        <div className="card">
-          <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>スタッフ</label>
-          <select value={selectedStaff} onChange={e => {
-            setSelectedStaff(e.target.value)
-            const weekly = contactWeekly.find(w => w.staffId === parseInt(e.target.value) && w.weekStart === currentWeekStart)
-            if (weekly) setWeeklyChecks(weekly.checks)
-            else setWeeklyChecks([false, false, false, false, false, false, false])
-          }} className="select">
-            <option value="">選択してください</option>
-            {contactStaff.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </select>
-        </div>
-      )}
-
-      {/* モード切替 */}
-      <div className="flex gap-2 flex-wrap">
-        {!isAdmin && (
-          <>
-            <button onClick={() => setMode('weekly')} className={`btn flex-1 ${mode === 'weekly' ? 'btn-blue' : 'btn-gray'}`}>週次</button>
-            <button onClick={() => setMode('monthly')} className={`btn flex-1 ${mode === 'monthly' ? 'btn-blue' : 'btn-gray'}`}>月次</button>
-          </>
-        )}
-        {isAdmin && (
-          <>
-            <button onClick={() => setMode('admin')} className={`btn ${mode === 'admin' ? 'btn-blue' : 'btn-gray'}`}>📊 管理</button>
-            <button onClick={() => setMode('goals')} className={`btn ${mode === 'goals' ? 'btn-blue' : 'btn-gray'}`}>🎯 目標</button>
-            <button onClick={() => setMode('members')} className={`btn ${mode === 'members' ? 'btn-blue' : 'btn-gray'}`}>👥 対象者</button>
-            <button onClick={() => setMode('detail')} className={`btn ${mode === 'detail' ? 'btn-blue' : 'btn-gray'}`}>👤 詳細</button>
-          </>
-        )}
-      </div>
-
-      {/* ===== スタッフ：週次 ===== */}
-      {mode === 'weekly' && !isAdmin && selectedStaff && (
-        <div className="card">
-          <h3 className="font-bold mb-3">📓 今週の連絡帳</h3>
-          <p className="text-sm text-gray-500 mb-2">週: {currentWeekStart} 〜</p>
-          
-          {currentGoal ? (
-            <div className="bg-blue-50 p-3 rounded mb-4">
-              <p className="text-sm"><span className="font-semibold">今月の目標:</span> {currentGoal.monthlyGoal}</p>
-              <p className="text-sm"><span className="font-semibold">今週やること:</span> {currentGoal.weeklyTask}</p>
-            </div>
-          ) : (
-            <p className="text-gray-400 text-sm mb-4">目標が設定されていません</p>
-          )}
-          
-          <div className="mb-4">
-            <p className="text-sm font-semibold mb-3">できた日にチェック</p>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px' }}>
-              {dayNames.map((day, i) => {
-                const dateObj = weekDates[i]
-                const holiday = isHoliday(dateObj)
-                const dateNum = dateObj.getDate()
-                return (
-                  <div key={day} style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '12px', marginBottom: '4px', color: holiday ? '#d1d5db' : '#6b7280' }}>{day}</div>
-                    <div style={{ fontSize: '11px', marginBottom: '4px', color: holiday ? '#d1d5db' : '#9ca3af' }}>{dateNum}日</div>
-                    {holiday ? (
-                      <div style={{ 
-                        width: '44px', height: '44px', borderRadius: '50%', 
-                        backgroundColor: '#e5e7eb', display: 'flex', alignItems: 'center', 
-                        justifyContent: 'center', color: '#9ca3af', fontSize: '12px', margin: '0 auto'
-                      }}>休</div>
-                    ) : (
-                      <button 
-                        onClick={() => {
-                          const newChecks = [...weeklyChecks]
-                          newChecks[i] = !newChecks[i]
-                          setWeeklyChecks(newChecks)
-                        }}
-                        style={{ 
-                          width: '44px', height: '44px', borderRadius: '50%', 
-                          fontSize: '20px', border: 'none', cursor: 'pointer',
-                          backgroundColor: weeklyChecks[i] ? '#22c55e' : '#f3f4f6',
-                          color: weeklyChecks[i] ? 'white' : '#9ca3af',
-                          boxShadow: weeklyChecks[i] ? 'none' : 'inset 0 0 0 2px #d1d5db'
-                        }}
-                      >
-                        {weeklyChecks[i] ? '✓' : ''}
-                      </button>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-            <p className="text-center mt-3 font-bold text-lg">{countChecks(weeklyChecks, weekDates)}日 / {workingDays}日</p>
-          </div>
-          
-          {countChecks(weeklyChecks, weekDates) === 0 && (
-            <div className="bg-yellow-50 p-3 rounded mb-4">
-              <p className="text-sm font-semibold mb-2">できなかった理由</p>
-              <div className="flex flex-wrap gap-2 mb-3">
-                {reasonOptions.map(r => (
-                  <button key={r} onClick={() => setZeroReason(r)} className={`btn text-xs ${zeroReason === r ? 'btn-blue' : 'btn-gray'}`}>{r}</button>
-                ))}
-              </div>
-              {zeroReason === 'その他' && (
-                <input type="text" placeholder="理由を入力" className="input mb-3" onChange={e => setZeroReason(e.target.value)} />
-              )}
-              <p className="text-sm font-semibold mb-2">来週どうする？</p>
-              <div className="flex flex-wrap gap-2 mb-3">
-                {actionOptions.map(a => (
-                  <button key={a} onClick={() => setNextAction(a)} className={`btn text-xs ${nextAction === a ? 'btn-blue' : 'btn-gray'}`}>{a}</button>
-                ))}
-              </div>
-              <input type="text" value={nextActionDetail} onChange={e => setNextActionDetail(e.target.value)} placeholder="補足（1行）" className="input" />
-            </div>
-          )}
-          
-          <button onClick={submitWeekly} className="btn btn-green w-full py-3">
-            {currentWeekly?.submittedAt ? '再提出する' : '提出する'}
-          </button>
-          
-          {currentWeekly?.submittedAt && (
-            <p className="text-center text-sm text-gray-500 mt-2">提出済: {new Date(currentWeekly.submittedAt).toLocaleString('ja-JP')}</p>
-          )}
-
-          {currentWeekly && contactReplies.filter(r => r.weeklyId === currentWeekly.id).length > 0 && (
-            <div className="mt-4 bg-purple-50 p-3 rounded">
-              <p className="font-semibold text-sm mb-2">💬 返信</p>
-              {contactReplies.filter(r => r.weeklyId === currentWeekly.id).map(r => (
-                <div key={r.id} className="text-sm"><span className="text-purple-600">{r.repliedBy}:</span> {r.replyText}</div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ===== スタッフ：月次 ===== */}
-      {mode === 'monthly' && !isAdmin && selectedStaff && (
-        <div className="card">
-          <h3 className="font-bold mb-3">📝 今月の振り返り</h3>
-          <p className="text-sm text-gray-500 mb-4">{currentYearMonth}</p>
-          <div className="space-y-4">
-            <div>
-              <p className="text-sm font-semibold mb-1">Q1. 今月いちばん止まった行動はどれ？</p>
-              <input type="text" value={q1Answer} onChange={e => setQ1Answer(e.target.value)} className="input" placeholder="3行以内で" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold mb-1">Q2. それが止まった一番の理由は？</p>
-              <input type="text" value={q2Answer} onChange={e => setQ2Answer(e.target.value)} className="input" placeholder="3行以内で" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold mb-1">Q3. 来月、最初に何を変える？</p>
-              <input type="text" value={q3Answer} onChange={e => setQ3Answer(e.target.value)} className="input" placeholder="3行以内で" />
-            </div>
-          </div>
-          <button onClick={submitMonthly} className="btn btn-green w-full py-3 mt-4">提出する</button>
-        </div>
-      )}
-
-      {/* ===== 管理者：ダッシュボード ===== */}
-      {mode === 'admin' && isAdmin && (
-        <div className="space-y-4">
-          {redFlagStaff.length > 0 && (
-            <div className="card bg-red-50 border-red-300">
-              <h3 className="font-bold text-red-600 mb-2">⚠️ 赤信号</h3>
-              <div className="space-y-1">
-                {redFlagStaff.map(s => (
-                  <div key={s.id} className="text-sm"><span className="font-semibold">{s.name}</span> - 2週連続0日 or 未提出</div>
-                ))}
-              </div>
-            </div>
-          )}
-          
-          <div className="card">
-            <h3 className="font-bold mb-3">📊 今週（{currentWeekStart}〜）</h3>
-            <div className="grid-2 gap-4 mb-4">
-              <div className="bg-blue-50 p-3 rounded text-center">
-                <div className="text-2xl font-bold text-blue-600">{thisWeekSubmissions.filter(w => contactStaff.some(s => s.id === w.staffId)).length}/{contactStaff.length}</div>
-                <div className="text-sm text-gray-500">提出</div>
-              </div>
-              <div className="bg-green-50 p-3 rounded text-center">
-                <div className="text-2xl font-bold text-green-600">
-                  {thisWeekSubmissions.length > 0 ? (thisWeekSubmissions.reduce((sum, w) => sum + countChecks(w.checks), 0) / thisWeekSubmissions.length).toFixed(1) : 0}日
-                </div>
-                <div className="text-sm text-gray-500">平均達成</div>
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              {contactStaff.map(s => {
-                const weekly = contactWeekly.find(w => w.staffId === s.id && w.weekStart === currentWeekStart)
-                const hasReply = weekly && contactReplies.some(r => r.weeklyId === weekly.id)
-                const checkCount = weekly ? countChecks(weekly.checks) : null
-                
-                return (
-                  <div key={s.id} className={`flex justify-between items-center p-2 rounded ${weekly?.submittedAt ? 'bg-gray-50' : 'bg-yellow-50'}`}>
-                    <div>
-                      <span className="font-semibold">{s.name}</span>
-                      {weekly?.submittedAt ? (
-                        <span className={`ml-2 ${checkCount === 0 ? 'text-red-500' : 'text-green-600'}`}>{checkCount}日</span>
-                      ) : (
-                        <span className="ml-2 text-gray-400">未提出</span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {weekly?.submittedAt && checkCount === 0 && !hasReply && (
-                        <button onClick={() => { setReplyingTo(weekly.id); setReplyText('') }} className="text-purple-500 text-xs">返信する</button>
-                      )}
-                      {hasReply && <span className="text-xs text-purple-500">返信済</span>}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-            
-            {replyingTo && (
-              <div className="mt-4 bg-purple-50 p-3 rounded">
-                <p className="text-sm font-semibold mb-2">💬 返信を書く</p>
-                <textarea value={replyText} onChange={e => setReplyText(e.target.value)} className="input w-full" rows={2} placeholder="事実確認＋質問1つまで" />
-                <div className="flex gap-2 mt-2">
-                  <button onClick={() => submitReply(replyingTo)} className="btn btn-purple flex-1">送信</button>
-                  <button onClick={() => setReplyingTo(null)} className="btn btn-gray flex-1">キャンセル</button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ===== 管理者：対象スタッフ設定 ===== */}
-      {mode === 'members' && isAdmin && (
-        <div className="card">
-          <h3 className="font-bold mb-3">👥 連絡帳の対象スタッフ</h3>
-          <p className="text-sm text-gray-500 mb-4">連絡帳を使うスタッフを選択</p>
-          <div className="space-y-2">
-            {staff.map(s => (
-              <div key={s.id} className="flex justify-between items-center p-3 bg-gray-50 rounded">
-                <span className="font-semibold">{s.name}</span>
-                <button 
-                  onClick={() => toggleContactEnabled(s.id)}
-                  className={`btn text-sm ${s.contactEnabled ? 'btn-green' : 'btn-gray'}`}
-                >
-                  {s.contactEnabled ? '✓ 対象' : '対象外'}
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ===== 管理者：目標設定 ===== */}
-      {mode === 'goals' && isAdmin && (
-        <div className="card">
-          <h3 className="font-bold mb-3">🎯 {currentYearMonth} 目標設定</h3>
-          <div className="space-y-3">
-            {contactStaff.map(s => {
-              const goal = contactGoals.find(g => g.staffId === s.id && g.yearMonth === currentYearMonth)
-              const isEditing = editingGoal === s.id
-              
-              return (
-                <div key={s.id} className="border rounded p-3">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="font-semibold">{s.name}</span>
-                    {!isEditing && (
-                      <button onClick={() => { setEditingGoal(s.id); setGoalData({ monthlyGoal: goal?.monthlyGoal || '', weeklyTask: goal?.weeklyTask || '' }) }} className="text-blue-500 text-sm">編集</button>
-                    )}
-                  </div>
-                  {isEditing ? (
-                    <div className="space-y-2">
-                      <input type="text" value={goalData.monthlyGoal} onChange={e => setGoalData({...goalData, monthlyGoal: e.target.value})} placeholder="今月の目標" className="input" />
-                      <input type="text" value={goalData.weeklyTask} onChange={e => setGoalData({...goalData, weeklyTask: e.target.value})} placeholder="毎日やること" className="input" />
-                      <div className="flex gap-2">
-                        <button onClick={() => saveGoal(s.id, s.name)} className="btn btn-green flex-1">保存</button>
-                        <button onClick={() => setEditingGoal(null)} className="btn btn-gray flex-1">キャンセル</button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-sm text-gray-600">
-                      {goal ? (
-                        <>
-                          <p><span className="text-gray-400">目標:</span> {goal.monthlyGoal}</p>
-                          <p><span className="text-gray-400">毎日:</span> {goal.weeklyTask}</p>
-                        </>
-                      ) : (
-                        <p className="text-gray-400">未設定</p>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* ===== 管理者：個人詳細 ===== */}
-      {mode === 'detail' && isAdmin && (
-        <div className="space-y-4">
-          <div className="card">
-            <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>スタッフを選択</label>
-            <select value={detailStaffId || ''} onChange={e => setDetailStaffId(parseInt(e.target.value))} className="select">
-              <option value="">選択してください</option>
-              {contactStaff.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-            </select>
-          </div>
-          
-          {detailStaffId && (
-            <>
-              <div className="card">
-                <h3 className="font-bold mb-3">📈 週次推移</h3>
-                <div className="space-y-2">
-                  {contactWeekly.filter(w => w.staffId === detailStaffId).slice(0, 8).map(w => {
-                    const checkCount = countChecks(w.checks)
-                    const hasReply = contactReplies.some(r => r.weeklyId === w.id)
-                    return (
-                      <div key={w.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                        <div>
-                          <span className="font-semibold">{w.weekStart}</span>
-                          <span className={`ml-2 ${checkCount === 0 ? 'text-red-500 font-bold' : 'text-green-600'}`}>{checkCount}日</span>
-                          {checkCount === 0 && w.zeroReason && (<span className="ml-2 text-xs text-gray-500">({w.zeroReason})</span>)}
-                        </div>
-                        {hasReply && <span className="text-xs text-purple-500">返信済</span>}
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-              
-              <div className="card">
-                <h3 className="font-bold mb-3">📝 月次の問い</h3>
-                {contactMonthly.filter(m => m.staffId === detailStaffId).slice(0, 3).map(m => (
-                  <div key={m.id} className="bg-gray-50 p-3 rounded mb-2">
-                    <p className="font-semibold text-sm mb-2">{m.yearMonth}</p>
-                    <p className="text-sm"><span className="text-gray-500">Q1:</span> {m.q1}</p>
-                    <p className="text-sm"><span className="text-gray-500">Q2:</span> {m.q2}</p>
-                    <p className="text-sm"><span className="text-gray-500">Q3:</span> {m.q3}</p>
-                  </div>
-                ))}
-                {contactMonthly.filter(m => m.staffId === detailStaffId).length === 0 && (
-                  <p className="text-gray-400 text-sm">まだ回答がありません</p>
-                )}
-              </div>
-            </>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
-
-
-// ==================== 練習予約 ====================
-function PracticeReservation({ staff, practiceReservations, setPracticeReservations, modelRules, setModelRules, isAdmin }) {
-  const [selectedStaff, setSelectedStaff] = useState('')
-  const [calendarMonth, setCalendarMonth] = useState(new Date())
-  const [showRules, setShowRules] = useState(false)
-  const [editingRules, setEditingRules] = useState(false)
-  const [rulesText, setRulesText] = useState(modelRules)
-  const [practiceDate, setPracticeDate] = useState('')
-  const [practiceTime, setPracticeTime] = useState('10:00')
-  const [practiceMenu, setPracticeMenu] = useState('')
-  const [practiceMemo, setPracticeMemo] = useState('')
-
-  // スタッフごとの色（自動割り当て）
-  const staffColors = [
-    { bg: '#fef3c7', text: '#92400e', border: '#f59e0b' }, // amber
-    { bg: '#fce7f3', text: '#9d174d', border: '#ec4899' }, // pink
-    { bg: '#e0e7ff', text: '#3730a3', border: '#6366f1' }, // indigo
-    { bg: '#d1fae5', text: '#065f46', border: '#10b981' }, // emerald
-    { bg: '#fee2e2', text: '#991b1b', border: '#ef4444' }, // red
-    { bg: '#e0f2fe', text: '#075985', border: '#0ea5e9' }, // sky
-    { bg: '#f3e8ff', text: '#6b21a8', border: '#a855f7' }, // purple
-    { bg: '#fef9c3', text: '#854d0e', border: '#eab308' }, // yellow
+  const exportTypes = [
+    { value: 'usage', label: '使用記録' },
+    { value: 'stockIn', label: '入荷記録' },
+    { value: 'inventory', label: '棚卸履歴' },
+    { value: 'timeRecords', label: 'タイムカード' },
+    { value: 'leaveRequests', label: '有給申請' },
+    { value: 'practiceReservations', label: '練習予約' },
+    { value: 'staffPurchases', label: 'スタッフ購入' },
+    { value: 'products', label: '商品マスター' },
+    { value: 'staff', label: 'スタッフマスター' }
   ]
 
-  const getStaffColor = (staffId) => {
-    const index = staff.findIndex(s => s.id === staffId)
-    return staffColors[index % staffColors.length]
+  const filterByDate = (data, dateField) => data.filter(item => { const d = item[dateField]; return d && d >= startDate && d <= endDate })
+
+  const generateCSV = (data, headers) => {
+    if (data.length === 0) return ''
+    const headerRow = headers.join(',')
+    const rows = data.map(item => headers.map(h => { const v = item[h]; return typeof v === 'string' && v.includes(',') ? `"${v}"` : v ?? '' }).join(','))
+    return [headerRow, ...rows].join('\n')
   }
 
-  // 時間オプション
-  const timeOptions = []
-  for (let h = 9; h <= 21; h++) {
-    for (let m = 0; m < 60; m += 30) {
-      timeOptions.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`)
+  const downloadCSV = (csv, filename) => {
+    const bom = new Uint8Array([0xEF, 0xBB, 0xBF])
+    const blob = new Blob([bom, csv], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a'); a.href = url; a.download = filename; a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const handleExport = () => {
+    let data, headers, filename
+    switch (exportType) {
+      case 'usage':
+        data = filterByDate(usage, 'date').map(u => ({ date: u.date, productName: u.productName, largeCategory: u.largeCategory, mediumCategory: u.mediumCategory, quantity: u.quantity, purchasePrice: u.purchasePrice, total: u.quantity * u.purchasePrice }))
+        headers = ['date', 'productName', 'largeCategory', 'mediumCategory', 'quantity', 'purchasePrice', 'total']; filename = `usage_${startDate}_${endDate}.csv`; break
+      case 'stockIn':
+        data = filterByDate(stockIn, 'date').map(s => { const p = products.find(pr => pr.id === s.productId); return { date: s.date, productName: s.productName, largeCategory: s.largeCategory, quantity: s.quantity, purchasePrice: p?.purchasePrice || 0, total: s.quantity * (p?.purchasePrice || 0) } })
+        headers = ['date', 'productName', 'largeCategory', 'quantity', 'purchasePrice', 'total']; filename = `stockin_${startDate}_${endDate}.csv`; break
+      case 'inventory':
+        data = inventoryHistory.flatMap(h => h.data.filter(d => d.quantity > 0).map(d => ({ date: h.date, staff: h.staff, productName: d.name, quantity: d.quantity, purchasePrice: d.purchasePrice, total: d.quantity * d.purchasePrice })))
+        headers = ['date', 'staff', 'productName', 'quantity', 'purchasePrice', 'total']; filename = `inventory_${startDate}_${endDate}.csv`; break
+      case 'timeRecords':
+        data = filterByDate(timeRecords, 'date').map(r => ({ date: r.date, staff: r.staff, clockIn: r.clockIn, clockOut: r.clockOut || '' }))
+        headers = ['date', 'staff', 'clockIn', 'clockOut']; filename = `timerecords_${startDate}_${endDate}.csv`; break
+      case 'leaveRequests':
+        data = leaveRequests.filter(r => r.startDate >= startDate && r.startDate <= endDate).map(r => ({ staffName: r.staffName, startDate: r.startDate, endDate: r.endDate, leaveType: r.leaveType, days: r.days, status: r.status, note: r.note || '' }))
+        headers = ['staffName', 'startDate', 'endDate', 'leaveType', 'days', 'status', 'note']; filename = `leave_${startDate}_${endDate}.csv`; break
+      case 'practiceReservations':
+        data = filterByDate(practiceReservations, 'date').map(r => ({ date: r.date, time: r.time, staffName: r.staffName, menu: r.menu, model: r.model || '', note: r.note || '' }))
+        headers = ['date', 'time', 'staffName', 'menu', 'model', 'note']; filename = `practice_${startDate}_${endDate}.csv`; break
+      case 'staffPurchases':
+        data = filterByDate(staffPurchases, 'date').map(p => ({ date: p.date, staff: p.staff, productName: p.productName, quantity: p.quantity, purchasePrice: p.purchasePrice, total: p.quantity * p.purchasePrice, saleTag: p.saleTag || '' }))
+        headers = ['date', 'staff', 'productName', 'quantity', 'purchasePrice', 'total', 'saleTag']; filename = `staffpurchases_${startDate}_${endDate}.csv`; break
+      case 'products':
+        data = products.map(p => ({ id: p.id, name: p.name, largeCategory: p.largeCategory, mediumCategory: p.mediumCategory, purchasePrice: p.purchasePrice, sellingPrice: p.sellingPrice, productType: p.productType }))
+        headers = ['id', 'name', 'largeCategory', 'mediumCategory', 'purchasePrice', 'sellingPrice', 'productType']; filename = `products_${new Date().toISOString().split('T')[0]}.csv`; break
+      case 'staff':
+        data = staff.map(s => ({ id: s.id, name: s.name, role: s.role, hiringDate: s.hiringDate || '' }))
+        headers = ['id', 'name', 'role', 'hiringDate']; filename = `staff_${new Date().toISOString().split('T')[0]}.csv`; break
+      default: return
     }
-  }
-
-  // メニュー選択肢
-  const menuOptions = ['カット', 'カラー', 'パーマ', '縮毛矯正', 'トリートメント', 'その他']
-
-  // 予約登録
-  const submitReservation = async () => {
-    if (!selectedStaff || !practiceDate || !practiceMenu) {
-      alert('スタッフ、日付、メニューを入力してください')
-      return
-    }
-    const staffMember = staff.find(s => s.id === parseInt(selectedStaff))
-    
-    const { data, error } = await supabase.from('practice_reservations').insert({
-      staff_id: parseInt(selectedStaff),
-      staff_name: staffMember.name,
-      practice_date: practiceDate,
-      practice_time: practiceTime,
-      menu: practiceMenu,
-      memo: practiceMemo
-    }).select()
-
-    if (!error && data) {
-      setPracticeReservations([...practiceReservations, {
-        id: data[0].id,
-        staffId: parseInt(selectedStaff),
-        staffName: staffMember.name,
-        date: practiceDate,
-        time: practiceTime,
-        menu: practiceMenu,
-        memo: practiceMemo
-      }])
-      alert('予約しました！')
-      setPracticeDate('')
-      setPracticeMenu('')
-      setPracticeMemo('')
-    }
-  }
-
-  // 予約削除
-  const deleteReservation = async (id) => {
-    if (!confirm('この予約を削除しますか？')) return
-    const { error } = await supabase.from('practice_reservations').delete().eq('id', id)
-    if (!error) {
-      setPracticeReservations(practiceReservations.filter(p => p.id !== id))
-    }
-  }
-
-  // ルール保存
-  const saveRules = async () => {
-    const { data: existing } = await supabase.from('app_settings').select('*').eq('key', 'model_rules').single()
-    
-    if (existing) {
-      await supabase.from('app_settings').update({ value: rulesText }).eq('key', 'model_rules')
-    } else {
-      await supabase.from('app_settings').insert({ key: 'model_rules', value: rulesText })
-    }
-    setModelRules(rulesText)
-    setEditingRules(false)
-    alert('保存しました')
-  }
-
-  // カレンダー用データ
-  const year = calendarMonth.getFullYear()
-  const month = calendarMonth.getMonth()
-  const firstDay = new Date(year, month, 1).getDay()
-  const lastDate = new Date(year, month + 1, 0).getDate()
-  
-  // 第三日曜日
-  let sundayCount = 0
-  let thirdSunday = null
-  for (let d = 1; d <= lastDate; d++) {
-    if (new Date(year, month, d).getDay() === 0) {
-      sundayCount++
-      if (sundayCount === 3) { thirdSunday = d; break }
-    }
-  }
-
-  // 自分の予約
-  const myReservations = selectedStaff 
-    ? practiceReservations.filter(p => p.staffId === parseInt(selectedStaff))
-    : []
-
-  const today = new Date().toISOString().split('T')[0]
-
-  return (
-    <div className="space-y-4">
-      {/* スタッフ選択 */}
-      <div className="card">
-        <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>スタッフ</label>
-        <select value={selectedStaff} onChange={e => setSelectedStaff(e.target.value)} className="select">
-          <option value="">選択してください</option>
-          {staff.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-        </select>
-      </div>
-
-      {/* モデルルール */}
-      <div className="card">
-        <div className="flex justify-between items-center mb-2">
-          <h3 className="font-bold">📋 モデルルール</h3>
-          <button onClick={() => setShowRules(!showRules)} className="text-blue-500 text-sm">
-            {showRules ? '閉じる' : '確認する'}
-          </button>
-        </div>
-        {showRules && (
-          <div className="bg-gray-50 p-3 rounded">
-            {editingRules ? (
-              <>
-                <textarea 
-                  value={rulesText} 
-                  onChange={e => setRulesText(e.target.value)} 
-                  className="input w-full" 
-                  rows={8}
-                  placeholder="モデル練習のルールを記載..."
-                />
-                <div className="flex gap-2 mt-2">
-                  <button onClick={saveRules} className="btn btn-green flex-1">保存</button>
-                  <button onClick={() => { setEditingRules(false); setRulesText(modelRules) }} className="btn btn-gray flex-1">キャンセル</button>
-                </div>
-              </>
-            ) : (
-              <>
-                {modelRules ? (
-                  <p className="whitespace-pre-wrap text-sm">{modelRules}</p>
-                ) : (
-                  <p className="text-gray-400 text-sm">ルールが設定されていません</p>
-                )}
-                {isAdmin && (
-                  <button onClick={() => { setEditingRules(true); setRulesText(modelRules) }} className="btn btn-blue mt-2 text-sm">編集</button>
-                )}
-              </>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* カレンダー */}
-      <div className="card">
-        <div className="flex justify-between items-center mb-4">
-          <button onClick={() => setCalendarMonth(new Date(year, month - 1))} className="btn btn-gray" style={{ padding: '0.5rem 1rem' }}>◀</button>
-          <h3 className="text-xl font-bold">{year}年{month + 1}月</h3>
-          <button onClick={() => setCalendarMonth(new Date(year, month + 1))} className="btn btn-gray" style={{ padding: '0.5rem 1rem' }}>▶</button>
-        </div>
-
-        {/* 凡例（スタッフの色） */}
-        <div className="flex gap-2 mb-3 flex-wrap text-xs">
-          {staff.slice(0, 8).map(s => {
-            const color = getStaffColor(s.id)
-            return (
-              <span key={s.id} style={{ backgroundColor: color.bg, color: color.text, padding: '2px 6px', borderRadius: '4px' }}>
-                {s.name}
-              </span>
-            )
-          })}
-        </div>
-
-        {/* カレンダー本体 */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px' }}>
-          {/* 曜日ヘッダー */}
-          {['日', '月', '火', '水', '木', '金', '土'].map((d, i) => (
-            <div key={d} style={{ 
-              textAlign: 'center', 
-              padding: '8px 0', 
-              fontWeight: 'bold',
-              backgroundColor: i === 1 || i === 2 ? '#e5e7eb' : '#f9fafb',
-              color: i === 0 ? '#ef4444' : i === 6 ? '#3b82f6' : i === 1 || i === 2 ? '#9ca3af' : '#374151',
-              fontSize: '12px'
-            }}>{d}</div>
-          ))}
-          
-          {/* 空白セル */}
-          {[...Array(firstDay)].map((_, i) => (
-            <div key={`empty-${i}`} style={{ minHeight: '80px', backgroundColor: '#f9fafb' }}></div>
-          ))}
-          
-          {/* 日付セル */}
-          {[...Array(lastDate)].map((_, i) => {
-            const date = i + 1
-            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`
-            const dayOfWeek = new Date(year, month, date).getDay()
-            const isHoliday = dayOfWeek === 1 || dayOfWeek === 2 || date === thirdSunday
-            const isToday = dateStr === today
-            const dayReservations = practiceReservations.filter(p => p.date === dateStr)
-            
-            let bgColor = '#ffffff'
-            if (isHoliday) bgColor = '#d1d5db'
-            else if (dayOfWeek === 0) bgColor = '#fef2f2'
-            else if (dayOfWeek === 6) bgColor = '#eff6ff'
-            
-            return (
-              <div key={date} style={{ 
-                minHeight: '80px', 
-                backgroundColor: bgColor,
-                border: isToday ? '2px solid #3b82f6' : '1px solid #e5e7eb',
-                padding: '2px',
-                overflow: 'hidden'
-              }}>
-                <div style={{ 
-                  fontWeight: 'bold', 
-                  fontSize: '12px',
-                  color: isHoliday ? '#9ca3af' : dayOfWeek === 0 ? '#ef4444' : dayOfWeek === 6 ? '#3b82f6' : '#374151',
-                  marginBottom: '2px'
-                }}>
-                  {date}
-                </div>
-                {!isHoliday && dayReservations.length > 0 && (
-                  <div style={{ fontSize: '10px', lineHeight: '1.4' }}>
-                    {dayReservations.slice(0, 3).map(r => {
-                      const color = getStaffColor(r.staffId)
-                      return (
-                        <div key={r.id} style={{ 
-                          backgroundColor: color.bg,
-                          color: color.text,
-                          padding: '1px 2px',
-                          borderRadius: '2px',
-                          marginBottom: '1px',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                          borderLeft: `2px solid ${color.border}`
-                        }}>
-                          {r.time?.slice(0,5)} {r.staffName?.slice(0,2)}
-                        </div>
-                      )
-                    })}
-                    {dayReservations.length > 3 && (
-                      <div style={{ color: '#6b7280', fontSize: '9px' }}>+{dayReservations.length - 3}件</div>
-                    )}
-                  </div>
-                )}
-                {isHoliday && (
-                  <div style={{ fontSize: '9px', color: '#9ca3af' }}>定休</div>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      </div>
-
-      {/* 予約登録 */}
-      {selectedStaff && (
-        <div className="card">
-          <h3 className="font-bold mb-3">➕ 練習予約を追加</h3>
-          <div className="grid-2 gap-3 mb-3">
-            <div>
-              <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>日付</label>
-              <input type="date" value={practiceDate} onChange={e => setPracticeDate(e.target.value)} min={today} className="input" />
-            </div>
-            <div>
-              <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>時間</label>
-              <select value={practiceTime} onChange={e => setPracticeTime(e.target.value)} className="select">
-                {timeOptions.map(t => <option key={t} value={t}>{t}</option>)}
-              </select>
-            </div>
-          </div>
-          <div className="mb-3">
-            <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>メニュー</label>
-            <div className="flex gap-2 flex-wrap mb-2">
-              {menuOptions.map(m => (
-                <button 
-                  key={m} 
-                  onClick={() => setPracticeMenu(m)} 
-                  className={`btn text-sm ${practiceMenu === m ? 'btn-blue' : 'btn-gray'}`}
-                  style={{ padding: '4px 12px' }}
-                >
-                  {m}
-                </button>
-              ))}
-            </div>
-            <input 
-              type="text" 
-              value={practiceMenu} 
-              onChange={e => setPracticeMenu(e.target.value)} 
-              placeholder="または自由入力" 
-              className="input" 
-            />
-          </div>
-          <div className="mb-3">
-            <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>メモ（任意）</label>
-            <input type="text" value={practiceMemo} onChange={e => setPracticeMemo(e.target.value)} placeholder="詳細など" className="input" />
-          </div>
-          <button onClick={submitReservation} className="btn btn-green w-full py-3">予約登録</button>
-        </div>
-      )}
-
-      {/* 自分の予約一覧 */}
-      {selectedStaff && myReservations.length > 0 && (
-        <div className="card">
-          <h3 className="font-bold mb-3">📝 自分の予約一覧</h3>
-          <div className="space-y-2">
-            {myReservations.filter(r => r.date >= today).sort((a, b) => a.date.localeCompare(b.date)).map(r => (
-              <div key={r.id} className="flex justify-between items-center bg-gray-50 p-3 rounded">
-                <div>
-                  <span className="font-bold">{r.date}</span>
-                  <span className="ml-2 text-gray-600">{r.time}</span>
-                  <span className="ml-2 text-blue-600">{r.menu}</span>
-                  {r.memo && <span className="ml-2 text-gray-400 text-sm">({r.memo})</span>}
-                </div>
-                <button onClick={() => deleteReservation(r.id)} className="text-red-500 text-sm">削除</button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ==================== タイムカード ====================
-function TimeCard({ staff, timeRecords, setTimeRecords, isAdmin }) {
-  const [selectedStaff, setSelectedStaff] = useState('')
-  const [mode, setMode] = useState('punch') // 'punch' or 'manual' or 'list'
-  const [manualDate, setManualDate] = useState('')
-  const [manualClockIn, setManualClockIn] = useState('09:00')
-  const [manualClockOut, setManualClockOut] = useState('15:00')
-  const [isSpecial, setIsSpecial] = useState(false)
-  const [specialNote, setSpecialNote] = useState('')
-  const [viewMonth, setViewMonth] = useState(`${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`)
-
-  const today = new Date().toISOString().split('T')[0]
-  const now = new Date()
-
-  // 15分単位の時間オプションを生成
-  const timeOptions = []
-  for (let h = 5; h <= 23; h++) {
-    for (let m = 0; m < 60; m += 15) {
-      timeOptions.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`)
-    }
-  }
-
-  // 今日の記録を取得
-  const getTodayRecord = (staffId) => {
-    return timeRecords.find(r => r.staffId === staffId && r.date === today)
-  }
-
-  // 現在時刻を取得（HH:MM形式）
-  const getCurrentTime = () => {
-    return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
-  }
-
-  // 出勤打刻
-  const punchIn = async () => {
-    if (!selectedStaff) { alert('スタッフを選択してください'); return }
-    const staffMember = staff.find(s => s.id === parseInt(selectedStaff))
-    const existing = getTodayRecord(parseInt(selectedStaff))
-    
-    if (existing) {
-      alert('今日は既に出勤打刻されています')
-      return
-    }
-
-    const currentTime = getCurrentTime()
-    const { data, error } = await supabase.from('time_records').insert({
-      staff_id: parseInt(selectedStaff),
-      staff_name: staffMember.name,
-      record_date: today,
-      clock_in: currentTime,
-      input_type: 'punch'
-    }).select()
-
-    if (!error && data) {
-      setTimeRecords([...timeRecords, {
-        id: data[0].id,
-        staffId: parseInt(selectedStaff),
-        staffName: staffMember.name,
-        date: today,
-        clockIn: currentTime,
-        clockOut: null,
-        isSpecial: false,
-        specialNote: '',
-        inputType: 'punch'
-      }])
-      alert(`${staffMember.name}さん、出勤しました！ (${currentTime})`)
-    }
-  }
-
-  // 退勤打刻
-  const punchOut = async () => {
-    if (!selectedStaff) { alert('スタッフを選択してください'); return }
-    const staffMember = staff.find(s => s.id === parseInt(selectedStaff))
-    const existing = getTodayRecord(parseInt(selectedStaff))
-    
-    if (!existing) {
-      alert('先に出勤打刻をしてください')
-      return
-    }
-    if (existing.clockOut) {
-      alert('今日は既に退勤打刻されています')
-      return
-    }
-
-    const currentTime = getCurrentTime()
-    const { error } = await supabase.from('time_records').update({
-      clock_out: currentTime
-    }).eq('id', existing.id)
-
-    if (!error) {
-      setTimeRecords(timeRecords.map(r => r.id === existing.id ? { ...r, clockOut: currentTime } : r))
-      alert(`${staffMember.name}さん、お疲れ様でした！ (${currentTime})`)
-    }
-  }
-
-  // 手入力で保存
-  const saveManual = async () => {
-    if (!selectedStaff || !manualDate) { alert('スタッフと日付を選択してください'); return }
-    const staffMember = staff.find(s => s.id === parseInt(selectedStaff))
-    const existing = timeRecords.find(r => r.staffId === parseInt(selectedStaff) && r.date === manualDate)
-
-    if (existing) {
-      // 更新
-      const { error } = await supabase.from('time_records').update({
-        clock_in: manualClockIn,
-        clock_out: manualClockOut,
-        is_special: isSpecial,
-        special_note: specialNote,
-        input_type: 'manual'
-      }).eq('id', existing.id)
-
-      if (!error) {
-        setTimeRecords(timeRecords.map(r => r.id === existing.id ? {
-          ...r,
-          clockIn: manualClockIn,
-          clockOut: manualClockOut,
-          isSpecial,
-          specialNote,
-          inputType: 'manual'
-        } : r))
-        alert('更新しました！')
-      }
-    } else {
-      // 新規
-      const { data, error } = await supabase.from('time_records').insert({
-        staff_id: parseInt(selectedStaff),
-        staff_name: staffMember.name,
-        record_date: manualDate,
-        clock_in: manualClockIn,
-        clock_out: manualClockOut,
-        is_special: isSpecial,
-        special_note: specialNote,
-        input_type: 'manual'
-      }).select()
-
-      if (!error && data) {
-        setTimeRecords([...timeRecords, {
-          id: data[0].id,
-          staffId: parseInt(selectedStaff),
-          staffName: staffMember.name,
-          date: manualDate,
-          clockIn: manualClockIn,
-          clockOut: manualClockOut,
-          isSpecial,
-          specialNote,
-          inputType: 'manual'
-        }])
-        alert('保存しました！')
-      }
-    }
-    setManualDate('')
-    setIsSpecial(false)
-    setSpecialNote('')
-  }
-
-  // レコード削除
-  const deleteRecord = async (id) => {
-    if (!confirm('この記録を削除しますか？')) return
-    const { error } = await supabase.from('time_records').delete().eq('id', id)
-    if (!error) setTimeRecords(timeRecords.filter(r => r.id !== id))
-  }
-
-  // 労働時間を計算（分）
-  const calcWorkMinutes = (clockIn, clockOut) => {
-    if (!clockIn || !clockOut) return 0
-    const [inH, inM] = clockIn.split(':').map(Number)
-    const [outH, outM] = clockOut.split(':').map(Number)
-    return (outH * 60 + outM) - (inH * 60 + inM)
-  }
-
-  // 分を「○時間○分」形式に変換
-  const formatMinutes = (minutes) => {
-    if (minutes <= 0) return '-'
-    const h = Math.floor(minutes / 60)
-    const m = minutes % 60
-    return `${h}h${String(m).padStart(2, '0')}m`
-  }
-
-  // 月次集計
-  const getMonthlyStats = (staffId, yearMonth) => {
-    const [year, month] = yearMonth.split('-').map(Number)
-    const records = timeRecords.filter(r => {
-      if (staffId && r.staffId !== staffId) return false
-      const d = new Date(r.date)
-      return d.getFullYear() === year && d.getMonth() + 1 === month
-    })
-    
-    const totalMinutes = records.reduce((sum, r) => sum + calcWorkMinutes(r.clockIn, r.clockOut), 0)
-    const workDays = records.filter(r => r.clockIn && r.clockOut).length
-    
-    return { records, totalMinutes, workDays }
-  }
-
-  const todayRecord = selectedStaff ? getTodayRecord(parseInt(selectedStaff)) : null
-  const monthlyStats = getMonthlyStats(selectedStaff ? parseInt(selectedStaff) : null, viewMonth)
-
-  return (
-    <div className="space-y-4">
-      {/* スタッフ選択 */}
-      <div className="card">
-        <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>スタッフ</label>
-        <select value={selectedStaff} onChange={e => setSelectedStaff(e.target.value)} className="select">
-          <option value="">選択してください</option>
-          {staff.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-        </select>
-      </div>
-
-      {/* モード切替 */}
-      <div className="flex gap-2">
-        <button onClick={() => setMode('punch')} className={`btn flex-1 ${mode === 'punch' ? 'btn-blue' : 'btn-gray'}`}>🕐 打刻</button>
-        <button onClick={() => setMode('manual')} className={`btn flex-1 ${mode === 'manual' ? 'btn-blue' : 'btn-gray'}`}>✏️ 手入力</button>
-        <button onClick={() => setMode('list')} className={`btn flex-1 ${mode === 'list' ? 'btn-blue' : 'btn-gray'}`}>📋 一覧</button>
-      </div>
-
-      {/* 打刻モード */}
-      {mode === 'punch' && (
-        <div className="card">
-          <h3 className="text-lg font-bold mb-4">🕐 出勤・退勤打刻</h3>
-          
-          {!selectedStaff ? (
-            <p className="text-gray-500 text-center py-4">スタッフを選択してください</p>
-          ) : (
-            <div className="text-center">
-              <p className="text-2xl font-bold mb-4">{getCurrentTime()}</p>
-              <p className="text-gray-500 mb-4">{today}</p>
-              
-              {todayRecord ? (
-                <div className="bg-gray-50 p-4 rounded mb-4">
-                  <p>出勤: <span className="font-bold text-green-600">{todayRecord.clockIn}</span></p>
-                  {todayRecord.clockOut ? (
-                    <p>退勤: <span className="font-bold text-blue-600">{todayRecord.clockOut}</span></p>
-                  ) : (
-                    <p className="text-gray-400">退勤: 未打刻</p>
-                  )}
-                  {todayRecord.clockIn && todayRecord.clockOut && (
-                    <p className="mt-2 font-bold">労働時間: {formatMinutes(calcWorkMinutes(todayRecord.clockIn, todayRecord.clockOut))}</p>
-                  )}
-                </div>
-              ) : (
-                <p className="text-gray-400 mb-4">今日の記録はありません</p>
-              )}
-              
-              <div className="grid-2 gap-4">
-                <button 
-                  onClick={punchIn} 
-                  disabled={todayRecord?.clockIn}
-                  className={`btn py-4 text-lg ${todayRecord?.clockIn ? 'btn-gray opacity-50' : 'btn-green'}`}
-                >
-                  出勤
-                </button>
-                <button 
-                  onClick={punchOut} 
-                  disabled={!todayRecord?.clockIn || todayRecord?.clockOut}
-                  className={`btn py-4 text-lg ${!todayRecord?.clockIn || todayRecord?.clockOut ? 'btn-gray opacity-50' : 'btn-blue'}`}
-                >
-                  退勤
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* 手入力モード */}
-      {mode === 'manual' && (
-        <div className="card">
-          <h3 className="text-lg font-bold mb-4">✏️ 手入力（15分単位）</h3>
-          
-          {!selectedStaff ? (
-            <p className="text-gray-500 text-center py-4">スタッフを選択してください</p>
-          ) : (
-            <>
-              <div className="mb-4">
-                <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>日付</label>
-                <input type="date" value={manualDate} onChange={e => setManualDate(e.target.value)} max={today} className="input" />
-              </div>
-              
-              <div className="grid-2 gap-4 mb-4">
-                <div>
-                  <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>出勤</label>
-                  <select value={manualClockIn} onChange={e => setManualClockIn(e.target.value)} className="select">
-                    {timeOptions.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>退勤</label>
-                  <select value={manualClockOut} onChange={e => setManualClockOut(e.target.value)} className="select">
-                    {timeOptions.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                </div>
-              </div>
-              
-              {isAdmin && (
-                <div className="mb-4 bg-yellow-50 p-3 rounded">
-                  <label className="flex items-center gap-2 cursor-pointer mb-2">
-                    <input type="checkbox" checked={isSpecial} onChange={e => setIsSpecial(e.target.checked)} />
-                    <span className="font-semibold">特殊勤務（早朝・ブライダル等）</span>
-                  </label>
-                  {isSpecial && (
-                    <input 
-                      type="text" 
-                      value={specialNote} 
-                      onChange={e => setSpecialNote(e.target.value)} 
-                      placeholder="メモ（例：ブライダル出張）" 
-                      className="input mt-2" 
-                    />
-                  )}
-                </div>
-              )}
-              
-              {manualDate && (
-                <div className="bg-gray-50 p-3 rounded mb-4 text-center">
-                  <p className="text-sm text-gray-600">労働時間</p>
-                  <p className="text-2xl font-bold">{formatMinutes(calcWorkMinutes(manualClockIn, manualClockOut))}</p>
-                </div>
-              )}
-              
-              <button onClick={saveManual} className="btn btn-blue w-full">保存</button>
-            </>
-          )}
-        </div>
-      )}
-
-      {/* 一覧モード */}
-      {mode === 'list' && (
-        <div className="card">
-          <h3 className="text-lg font-bold mb-4">📋 勤務記録</h3>
-          
-          <div className="mb-4">
-            <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>表示月</label>
-            <input type="month" value={viewMonth} onChange={e => setViewMonth(e.target.value)} className="input" />
-          </div>
-          
-          {/* 月次集計 */}
-          <div className="bg-blue-50 p-4 rounded mb-4">
-            <div className="grid-2 gap-4 text-center">
-              <div>
-                <p className="text-sm text-gray-600">出勤日数</p>
-                <p className="text-2xl font-bold text-blue-600">{monthlyStats.workDays}日</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">総労働時間</p>
-                <p className="text-2xl font-bold text-blue-600">
-                  {Math.floor(monthlyStats.totalMinutes / 60)}時間{monthlyStats.totalMinutes % 60}分
-                </p>
-              </div>
-            </div>
-          </div>
-          
-          {/* 記録一覧 */}
-          {monthlyStats.records.length === 0 ? (
-            <p className="text-gray-500 text-center py-4">この月の記録はありません</p>
-          ) : (
-            <div className="space-y-2">
-              {[...monthlyStats.records].sort((a, b) => new Date(b.date) - new Date(a.date)).map(record => {
-                const d = new Date(record.date)
-                const dayNames = ['日', '月', '火', '水', '木', '金', '土']
-                const dayName = dayNames[d.getDay()]
-                const isWeekend = d.getDay() === 0 || d.getDay() === 6
-                
-                return (
-                  <div key={record.id} className={`border rounded p-3 ${record.isSpecial ? 'bg-yellow-50 border-yellow-300' : ''}`}>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <span className={`font-bold ${isWeekend ? 'text-red-500' : ''}`}>
-                          {record.date.slice(5)} ({dayName})
-                        </span>
-                        {!selectedStaff && <span className="text-gray-500 text-sm ml-2">{record.staffName}</span>}
-                        {record.isSpecial && <span className="ml-2 text-yellow-600 text-xs">⚡特殊</span>}
-                        {record.inputType === 'punch' && <span className="ml-2 text-green-600 text-xs">●打刻</span>}
-                      </div>
-                      {isAdmin && (
-                        <button onClick={() => deleteRecord(record.id)} className="text-red-500 text-sm">削除</button>
-                      )}
-                    </div>
-                    <div className="text-sm mt-1">
-                      <span className="text-green-600">{record.clockIn || '-'}</span>
-                      <span className="text-gray-400 mx-2">→</span>
-                      <span className="text-blue-600">{record.clockOut || '-'}</span>
-                      <span className="text-gray-600 ml-4 font-semibold">
-                        {formatMinutes(calcWorkMinutes(record.clockIn, record.clockOut))}
-                      </span>
-                    </div>
-                    {record.specialNote && <p className="text-xs text-yellow-700 mt-1">{record.specialNote}</p>}
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ==================== 有給管理 ====================
-function LeaveManagement({ staff, leaveGrants, setLeaveGrants, leaveRequests, setLeaveRequests, notifications, setNotifications, isAdmin, userRole }) {
-  const [selectedStaff, setSelectedStaff] = useState('')
-  const [mode, setMode] = useState('calendar') // 'calendar', 'status', 'request', 'approve', 'settings'
-  const [requestDate, setRequestDate] = useState('')
-  const [requestType, setRequestType] = useState('paid') // 'paid' or 'summer'
-  const [dayType, setDayType] = useState('full') // 'full', 'am', 'pm'
-  const [requestMemo, setRequestMemo] = useState('')
-  const [calendarMonth, setCalendarMonth] = useState(new Date())
-  const [editingGrantId, setEditingGrantId] = useState(null)
-  const [editGrantData, setEditGrantData] = useState({})
-
-  // 現在の年度を取得（4月始まり）
-  const getCurrentFiscalYear = () => {
-    const now = new Date()
-    const month = now.getMonth() + 1
-    return month >= 4 ? now.getFullYear() : now.getFullYear() - 1
-  }
-
-  const fiscalYear = getCurrentFiscalYear()
-
-  // 勤続年数を計算（月単位）
-  const calcTenureMonths = (joinDate) => {
-    if (!joinDate) return 0
-    const join = new Date(joinDate)
-    const now = new Date()
-    return (now.getFullYear() - join.getFullYear()) * 12 + (now.getMonth() - join.getMonth())
-  }
-
-  // フルタイムの有給日数（法定）
-  const getPaidLeaveDaysFull = (tenureMonths) => {
-    if (tenureMonths < 6) return 0
-    if (tenureMonths < 18) return 10
-    if (tenureMonths < 30) return 11
-    if (tenureMonths < 42) return 12
-    if (tenureMonths < 54) return 14
-    if (tenureMonths < 66) return 16
-    if (tenureMonths < 78) return 18
-    return 20
-  }
-
-  // 週4日の有給日数（比例付与）
-  const getPaidLeaveDaysPartTime = (tenureMonths) => {
-    if (tenureMonths < 6) return 0
-    if (tenureMonths < 18) return 7
-    if (tenureMonths < 30) return 8
-    if (tenureMonths < 42) return 9
-    if (tenureMonths < 54) return 10
-    if (tenureMonths < 66) return 12
-    if (tenureMonths < 78) return 13
-    return 15
-  }
-
-  // スタッフの有給日数を取得
-  const getGrantedDays = (staffMember) => {
-    const tenureMonths = calcTenureMonths(staffMember.joinDate)
-    if (staffMember.workDaysPerWeek <= 4) {
-      return getPaidLeaveDaysPartTime(tenureMonths)
-    }
-    return getPaidLeaveDaysFull(tenureMonths)
-  }
-
-  // 年度内の使用日数を取得
-  const getUsedDays = (staffId, year, leaveType) => {
-    const startDate = `${year}-04-01`
-    const endDate = `${year + 1}-03-31`
-    return leaveRequests
-      .filter(r => r.staffId === staffId && r.leaveType === leaveType && r.status === 'approved' && r.leaveDate >= startDate && r.leaveDate <= endDate)
-      .reduce((sum, r) => sum + r.dayValue, 0)
-  }
-
-  // 残日数を取得
-  const getRemainingDays = (staffId, year, leaveType) => {
-    const grant = leaveGrants.find(g => g.staffId === staffId && g.fiscalYear === year && g.leaveType === leaveType)
-    const total = grant ? (grant.grantedDays + grant.carriedDays) : 0
-    const used = getUsedDays(staffId, year, leaveType)
-    return total - used
-  }
-
-  // 有給申請
-  const submitRequest = async () => {
-    if (!selectedStaff || !requestDate) { alert('スタッフと日付を選択してください'); return }
-    const staffMember = staff.find(s => s.id === parseInt(selectedStaff))
-    const dayValue = dayType === 'full' ? 1.0 : 0.5
-    
-    // 残日数チェック
-    const remaining = getRemainingDays(parseInt(selectedStaff), fiscalYear, requestType)
-    if (remaining < dayValue) {
-      alert('残日数が足りません')
-      return
-    }
-
-    const { data, error } = await supabase.from('leave_requests').insert({
-      staff_id: parseInt(selectedStaff),
-      staff_name: staffMember.name,
-      leave_type: requestType,
-      leave_date: requestDate,
-      day_type: dayType,
-      day_value: dayValue,
-      status: 'pending',
-      memo: requestMemo
-    }).select()
-
-    if (!error && data) {
-      setLeaveRequests([{
-        id: data[0].id,
-        staffId: parseInt(selectedStaff),
-        staffName: staffMember.name,
-        leaveType: requestType,
-        leaveDate: requestDate,
-        dayType,
-        dayValue,
-        status: 'pending',
-        memo: requestMemo,
-        approvedBy: null,
-        approvedAt: null
-      }, ...leaveRequests])
-      
-      // 管理者へ通知
-      const dayTypeLabel = { full: '全休', am: '午前休', pm: '午後休' }
-      const { data: notifData } = await supabase.from('notifications').insert({
-        target_role: 'admin',
-        target_staff_id: null,
-        message: `${staffMember.name}さんが${requestType === 'paid' ? '有給' : '夏休み'}を申請（${requestDate} ${dayTypeLabel[dayType]}）`,
-        link_to: 'leave',
-        is_read: false
-      }).select()
-      
-      if (notifData) {
-        setNotifications([{ id: notifData[0].id, targetRole: 'admin', targetStaffId: null, message: notifData[0].message, linkTo: 'leave', isRead: false, createdAt: notifData[0].created_at }, ...notifications])
-      }
-      
-      alert('申請しました！')
-      setRequestDate('')
-      setRequestMemo('')
-    }
-  }
-
-  // 承認
-  const approveRequest = async (id) => {
-    const request = leaveRequests.find(r => r.id === id)
-    const { error } = await supabase.from('leave_requests').update({
-      status: 'approved',
-      approved_by: '管理者',
-      approved_at: new Date().toISOString()
-    }).eq('id', id)
-
-    if (!error) {
-      setLeaveRequests(leaveRequests.map(r => r.id === id ? {
-        ...r,
-        status: 'approved',
-        approvedBy: '管理者',
-        approvedAt: new Date().toISOString()
-      } : r))
-      
-      // スタッフへ通知
-      if (request) {
-        const { data: notifData } = await supabase.from('notifications').insert({
-          target_role: 'staff',
-          target_staff_id: request.staffId,
-          message: `${request.leaveDate}の${request.leaveType === 'paid' ? '有給' : '夏休み'}申請が承認されました`,
-          link_to: 'leave',
-          is_read: false
-        }).select()
-        
-        if (notifData) {
-          setNotifications([{ id: notifData[0].id, targetRole: 'staff', targetStaffId: request.staffId, message: notifData[0].message, linkTo: 'leave', isRead: false, createdAt: notifData[0].created_at }, ...notifications])
-        }
-      }
-      
-      alert('承認しました')
-    }
-  }
-
-  // 却下
-  const rejectRequest = async (id) => {
-    if (!confirm('この申請を却下しますか？')) return
-    const request = leaveRequests.find(r => r.id === id)
-    const { error } = await supabase.from('leave_requests').update({
-      status: 'rejected'
-    }).eq('id', id)
-
-    if (!error) {
-      setLeaveRequests(leaveRequests.map(r => r.id === id ? { ...r, status: 'rejected' } : r))
-      
-      // スタッフへ通知
-      if (request) {
-        const { data: notifData } = await supabase.from('notifications').insert({
-          target_role: 'staff',
-          target_staff_id: request.staffId,
-          message: `${request.leaveDate}の${request.leaveType === 'paid' ? '有給' : '夏休み'}申請が却下されました`,
-          link_to: 'leave',
-          is_read: false
-        }).select()
-        
-        if (notifData) {
-          setNotifications([{ id: notifData[0].id, targetRole: 'staff', targetStaffId: request.staffId, message: notifData[0].message, linkTo: 'leave', isRead: false, createdAt: notifData[0].created_at }, ...notifications])
-        }
-      }
-    }
-  }
-
-  // 付与設定を保存
-  const saveGrant = async (staffId, staffName, leaveType, grantedDays, carriedDays) => {
-    const existing = leaveGrants.find(g => g.staffId === staffId && g.fiscalYear === fiscalYear && g.leaveType === leaveType)
-    
-    if (existing) {
-      const { error } = await supabase.from('leave_grants').update({
-        granted_days: grantedDays,
-        carried_days: carriedDays
-      }).eq('id', existing.id)
-      
-      if (!error) {
-        setLeaveGrants(leaveGrants.map(g => g.id === existing.id ? { ...g, grantedDays, carriedDays } : g))
-      }
-    } else {
-      const { data, error } = await supabase.from('leave_grants').insert({
-        staff_id: staffId,
-        staff_name: staffName,
-        fiscal_year: fiscalYear,
-        leave_type: leaveType,
-        granted_days: grantedDays,
-        carried_days: carriedDays
-      }).select()
-      
-      if (!error && data) {
-        setLeaveGrants([...leaveGrants, {
-          id: data[0].id,
-          staffId,
-          staffName,
-          fiscalYear,
-          leaveType,
-          grantedDays,
-          carriedDays
-        }])
-      }
-    }
-  }
-
-  // 全スタッフに自動付与
-  const autoGrantAll = async () => {
-    if (!confirm(`${fiscalYear}年度の有給・夏休みを全スタッフに付与しますか？`)) return
-    
-    for (const s of staff) {
-      const paidDays = getGrantedDays(s)
-      // 前年度の残りを繰越（最大で付与日数まで）
-      const prevRemaining = getRemainingDays(s.id, fiscalYear - 1, 'paid')
-      const carriedDays = Math.min(prevRemaining, paidDays)
-      
-      await saveGrant(s.id, s.name, 'paid', paidDays, carriedDays > 0 ? carriedDays : 0)
-      await saveGrant(s.id, s.name, 'summer', 3, 0)
-    }
-    alert('付与完了！')
-  }
-
-  const pendingRequests = leaveRequests.filter(r => r.status === 'pending')
-  const myRequests = selectedStaff ? leaveRequests.filter(r => r.staffId === parseInt(selectedStaff)) : []
-  
-  // 自分宛の通知を取得
-  const myNotifications = notifications.filter(n => {
-    if (isAdmin && n.targetRole === 'admin') return true
-    if (!isAdmin && n.targetRole === 'staff' && n.targetStaffId === parseInt(selectedStaff)) return true
-    return false
-  })
-  
-  // 通知を既読にする
-  const markAsRead = async (id) => {
-    const { error } = await supabase.from('notifications').update({ is_read: true }).eq('id', id)
-    if (!error) {
-      setNotifications(notifications.map(n => n.id === id ? { ...n, isRead: true } : n))
-    }
-  }
-
-  const dayTypeLabel = { full: '全休', am: '午前休', pm: '午後休' }
-  const statusLabel = { pending: '申請中', approved: '承認済', rejected: '却下' }
-  const statusColor = { pending: 'text-yellow-600', approved: 'text-green-600', rejected: 'text-red-600' }
-
-  return (
-    <div className="space-y-4">
-      {/* スタッフ選択 */}
-      <div className="card">
-        <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>スタッフ</label>
-        <select value={selectedStaff} onChange={e => setSelectedStaff(e.target.value)} className="select">
-          <option value="">選択してください</option>
-          {staff.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-        </select>
-      </div>
-
-      {/* モード切替 */}
-      <div className="flex gap-2 flex-wrap">
-        <button onClick={() => setMode('calendar')} className={`btn flex-1 ${mode === 'calendar' ? 'btn-blue' : 'btn-gray'}`}>📅 カレンダー</button>
-        <button onClick={() => setMode('status')} className={`btn flex-1 ${mode === 'status' ? 'btn-blue' : 'btn-gray'}`}>📊 残日数</button>
-        <button onClick={() => setMode('request')} className={`btn flex-1 ${mode === 'request' ? 'btn-blue' : 'btn-gray'}`}>📝 申請</button>
-        {isAdmin && <button onClick={() => setMode('approve')} className={`btn flex-1 ${mode === 'approve' ? 'btn-blue' : 'btn-gray'}`}>✅ 承認{pendingRequests.length > 0 && <span className="ml-1 bg-red-500 text-white text-xs px-1 rounded">{pendingRequests.length}</span>}</button>}
-        {isAdmin && <button onClick={() => setMode('settings')} className={`btn flex-1 ${mode === 'settings' ? 'btn-blue' : 'btn-gray'}`}>⚙️ 設定</button>}
-      </div>
-
-      {/* 通知表示 */}
-      {myNotifications.filter(n => !n.isRead).length > 0 && (
-        <div className="card bg-yellow-50 border-yellow-300">
-          <h4 className="font-bold mb-2">🔔 新着通知</h4>
-          <div className="space-y-2">
-            {myNotifications.filter(n => !n.isRead).map(n => (
-              <div key={n.id} className="flex justify-between items-center bg-white p-2 rounded text-sm">
-                <span>{n.message}</span>
-                <button onClick={() => markAsRead(n.id)} className="text-blue-500 text-xs">既読</button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* カレンダー表示 */}
-      {mode === 'calendar' && (
-        <div className="card">
-          <div className="flex justify-between items-center mb-4">
-            <button onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1))} className="btn btn-gray" style={{ padding: '0.5rem 1rem' }}>◀</button>
-            <h3 className="text-xl font-bold">{calendarMonth.getFullYear()}年{calendarMonth.getMonth() + 1}月</h3>
-            <button onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1))} className="btn btn-gray" style={{ padding: '0.5rem 1rem' }}>▶</button>
-          </div>
-          
-          {/* 凡例 */}
-          <div className="flex gap-3 mb-3 text-xs justify-center flex-wrap">
-            <span><span className="inline-block w-3 h-3 bg-gray-300 rounded mr-1"></span>定休日</span>
-            <span><span className="inline-block w-3 h-3 bg-blue-100 rounded mr-1"></span>有給</span>
-            <span><span className="inline-block w-3 h-3 bg-green-100 rounded mr-1"></span>夏休み</span>
-          </div>
-          
-          {/* 曜日ヘッダー */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px', marginBottom: '2px' }}>
-            {['日', '月', '火', '水', '木', '金', '土'].map((d, i) => (
-              <div key={d} style={{ 
-                textAlign: 'center', 
-                padding: '8px 0', 
-                fontWeight: 'bold',
-                backgroundColor: i === 1 || i === 2 ? '#e5e7eb' : '#f9fafb',
-                color: i === 0 ? '#ef4444' : i === 6 ? '#3b82f6' : i === 1 || i === 2 ? '#9ca3af' : '#374151'
-              }}>{d}</div>
-            ))}
-          </div>
-          
-          {/* カレンダー本体 */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px' }}>
-            {(() => {
-              const year = calendarMonth.getFullYear()
-              const month = calendarMonth.getMonth()
-              const firstDay = new Date(year, month, 1).getDay()
-              const lastDate = new Date(year, month + 1, 0).getDate()
-              const cells = []
-              
-              // 第三日曜日を計算
-              let sundayCount = 0
-              let thirdSunday = null
-              for (let d = 1; d <= lastDate; d++) {
-                if (new Date(year, month, d).getDay() === 0) {
-                  sundayCount++
-                  if (sundayCount === 3) { thirdSunday = d; break }
-                }
-              }
-              
-              // 空白セル
-              for (let i = 0; i < firstDay; i++) {
-                cells.push(<div key={`empty-${i}`} style={{ minHeight: '70px', backgroundColor: '#f9fafb' }}></div>)
-              }
-              
-              // 日付セル
-              for (let date = 1; date <= lastDate; date++) {
-                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`
-                const dayRequests = leaveRequests.filter(r => r.leaveDate === dateStr && r.status === 'approved')
-                const dayOfWeek = new Date(year, month, date).getDay()
-                const isHoliday = dayOfWeek === 1 || dayOfWeek === 2 || date === thirdSunday
-                const isToday = dateStr === new Date().toISOString().split('T')[0]
-                
-                let bgColor = '#ffffff'
-                if (isHoliday) bgColor = '#d1d5db'
-                else if (dayOfWeek === 0) bgColor = '#fef2f2'
-                else if (dayOfWeek === 6) bgColor = '#eff6ff'
-                
-                cells.push(
-                  <div key={date} style={{ 
-                    minHeight: '70px', 
-                    backgroundColor: bgColor,
-                    border: isToday ? '2px solid #3b82f6' : '1px solid #e5e7eb',
-                    padding: '4px',
-                    position: 'relative'
-                  }}>
-                    <div style={{ 
-                      fontWeight: 'bold', 
-                      fontSize: '14px',
-                      color: isHoliday ? '#9ca3af' : dayOfWeek === 0 ? '#ef4444' : dayOfWeek === 6 ? '#3b82f6' : '#374151',
-                      marginBottom: '2px'
-                    }}>
-                      {date}
-                      {isToday && <span style={{ marginLeft: '4px', fontSize: '10px', color: '#3b82f6' }}>今日</span>}
-                    </div>
-                    {!isHoliday && dayRequests.length > 0 && (
-                      <div style={{ fontSize: '11px', lineHeight: '1.3' }}>
-                        {dayRequests.slice(0, 3).map(r => (
-                          <div key={r.id} style={{ 
-                            backgroundColor: r.leaveType === 'paid' ? '#dbeafe' : '#dcfce7',
-                            color: r.leaveType === 'paid' ? '#1d4ed8' : '#166534',
-                            padding: '1px 3px',
-                            borderRadius: '2px',
-                            marginBottom: '1px',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap'
-                          }}>
-                            {r.staffName}{r.dayType === 'am' ? '(午前)' : r.dayType === 'pm' ? '(午後)' : ''}
-                          </div>
-                        ))}
-                        {dayRequests.length > 3 && (
-                          <div style={{ color: '#6b7280', fontSize: '10px' }}>+{dayRequests.length - 3}人</div>
-                        )}
-                      </div>
-                    )}
-                    {isHoliday && (
-                      <div style={{ fontSize: '10px', color: '#9ca3af' }}>定休日</div>
-                    )}
-                  </div>
-                )
-              }
-              
-              return cells
-            })()}
-          </div>
-        </div>
-      )}
-
-      {/* 残日数表示 */}
-      {mode === 'status' && (
-        <div className="card">
-          <h3 className="text-lg font-bold mb-4">📊 {fiscalYear}年度 有給残日数</h3>
-          
-          {!selectedStaff ? (
-            <div className="space-y-3">
-              {staff.map(s => {
-                const paidGrant = leaveGrants.find(g => g.staffId === s.id && g.fiscalYear === fiscalYear && g.leaveType === 'paid')
-                const summerGrant = leaveGrants.find(g => g.staffId === s.id && g.fiscalYear === fiscalYear && g.leaveType === 'summer')
-                const paidTotal = paidGrant ? (paidGrant.grantedDays + paidGrant.carriedDays) : 0
-                const summerTotal = summerGrant ? summerGrant.grantedDays : 0
-                const paidUsed = getUsedDays(s.id, fiscalYear, 'paid')
-                const summerUsed = getUsedDays(s.id, fiscalYear, 'summer')
-                
-                return (
-                  <div key={s.id} className="border rounded p-3">
-                    <div className="font-bold mb-2">{s.name}</div>
-                    <div className="grid-2 gap-2 text-sm">
-                      <div>
-                        <span className="text-gray-500">有給: </span>
-                        <span className="font-bold text-blue-600">{paidTotal - paidUsed}日</span>
-                        <span className="text-gray-400 text-xs ml-1">/ {paidTotal}日</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">夏休: </span>
-                        <span className="font-bold text-green-600">{summerTotal - summerUsed}日</span>
-                        <span className="text-gray-400 text-xs ml-1">/ {summerTotal}日</span>
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          ) : (
-            <div>
-              {(() => {
-                const s = staff.find(st => st.id === parseInt(selectedStaff))
-                if (!s) return null
-                const paidGrant = leaveGrants.find(g => g.staffId === s.id && g.fiscalYear === fiscalYear && g.leaveType === 'paid')
-                const summerGrant = leaveGrants.find(g => g.staffId === s.id && g.fiscalYear === fiscalYear && g.leaveType === 'summer')
-                const paidTotal = paidGrant ? (paidGrant.grantedDays + paidGrant.carriedDays) : 0
-                const summerTotal = summerGrant ? summerGrant.grantedDays : 0
-                const paidUsed = getUsedDays(s.id, fiscalYear, 'paid')
-                const summerUsed = getUsedDays(s.id, fiscalYear, 'summer')
-                const paidRemaining = paidTotal - paidUsed
-                const summerRemaining = summerTotal - summerUsed
-                
-                return (
-                  <>
-                    <div className="text-center mb-4">
-                      <p className="text-gray-500 text-sm">入社日: {s.joinDate || '未設定'}</p>
-                      <p className="text-gray-500 text-sm">週{s.workDaysPerWeek}日勤務</p>
-                    </div>
-                    
-                    <div className="grid-2 gap-4 mb-4">
-                      <div className="bg-blue-50 p-4 rounded text-center">
-                        <p className="text-sm text-gray-600 mb-1">有給休暇</p>
-                        <p className="text-3xl font-bold text-blue-600">{paidRemaining}日</p>
-                        <p className="text-xs text-gray-500">付与{paidGrant?.grantedDays || 0} + 繰越{paidGrant?.carriedDays || 0} - 使用{paidUsed}</p>
-                        <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                          <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${paidTotal > 0 ? (paidRemaining / paidTotal) * 100 : 0}%` }}></div>
-                        </div>
-                      </div>
-                      <div className="bg-green-50 p-4 rounded text-center">
-                        <p className="text-sm text-gray-600 mb-1">夏季休暇</p>
-                        <p className="text-3xl font-bold text-green-600">{summerRemaining}日</p>
-                        <p className="text-xs text-gray-500">付与{summerTotal} - 使用{summerUsed}</p>
-                        <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                          <div className="bg-green-500 h-2 rounded-full" style={{ width: `${summerTotal > 0 ? (summerRemaining / summerTotal) * 100 : 0}%` }}></div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* 履歴 */}
-                    <h4 className="font-bold mb-2">取得履歴</h4>
-                    {myRequests.filter(r => r.status === 'approved').length === 0 ? (
-                      <p className="text-gray-500 text-center py-4">まだ取得履歴がありません</p>
-                    ) : (
-                      <div className="space-y-2">
-                        {myRequests.filter(r => r.status === 'approved').map(r => (
-                          <div key={r.id} className="border rounded p-2 text-sm">
-                            <span className="font-semibold">{r.leaveDate}</span>
-                            <span className={`ml-2 ${r.leaveType === 'paid' ? 'text-blue-600' : 'text-green-600'}`}>
-                              {r.leaveType === 'paid' ? '有給' : '夏休'}
-                            </span>
-                            <span className="ml-2">{dayTypeLabel[r.dayType]}</span>
-                            {r.memo && <span className="ml-2 text-gray-500">({r.memo})</span>}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </>
-                )
-              })()}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* 申請フォーム */}
-      {mode === 'request' && (
-        <div className="card">
-          <h3 className="text-lg font-bold mb-4">📝 有給申請</h3>
-          
-          {!selectedStaff ? (
-            <p className="text-gray-500 text-center py-4">スタッフを選択してください</p>
-          ) : (
-            <>
-              <div className="mb-4">
-                <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>休暇種類</label>
-                <div className="flex gap-2">
-                  <button onClick={() => setRequestType('paid')} className={`btn flex-1 ${requestType === 'paid' ? 'btn-blue' : 'btn-gray'}`}>有給休暇</button>
-                  <button onClick={() => setRequestType('summer')} className={`btn flex-1 ${requestType === 'summer' ? 'btn-green' : 'btn-gray'}`}>夏季休暇</button>
-                </div>
-              </div>
-              
-              <div className="mb-4">
-                <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>日付</label>
-                <input type="date" value={requestDate} onChange={e => setRequestDate(e.target.value)} className="input" />
-              </div>
-              
-              <div className="mb-4">
-                <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>種別</label>
-                <div className="flex gap-2">
-                  <button onClick={() => setDayType('full')} className={`btn flex-1 ${dayType === 'full' ? 'btn-blue' : 'btn-gray'}`}>全休</button>
-                  <button onClick={() => setDayType('am')} className={`btn flex-1 ${dayType === 'am' ? 'btn-blue' : 'btn-gray'}`}>午前休</button>
-                  <button onClick={() => setDayType('pm')} className={`btn flex-1 ${dayType === 'pm' ? 'btn-blue' : 'btn-gray'}`}>午後休</button>
-                </div>
-              </div>
-              
-              <div className="mb-4">
-                <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>メモ（任意）</label>
-                <input type="text" value={requestMemo} onChange={e => setRequestMemo(e.target.value)} placeholder="理由など" className="input" />
-              </div>
-              
-              <div className="bg-gray-50 p-3 rounded mb-4 text-sm">
-                <p>申請内容: {requestType === 'paid' ? '有給休暇' : '夏季休暇'} {dayTypeLabel[dayType]}（{dayType === 'full' ? '1日' : '0.5日'}）</p>
-                <p>残日数: {getRemainingDays(parseInt(selectedStaff), fiscalYear, requestType)}日</p>
-              </div>
-              
-              <button onClick={submitRequest} className="btn btn-blue w-full">申請する</button>
-              
-              {/* 自分の申請履歴 */}
-              {myRequests.length > 0 && (
-                <div className="mt-4">
-                  <h4 className="font-bold mb-2">申請履歴</h4>
-                  <div className="space-y-2">
-                    {myRequests.slice(0, 5).map(r => (
-                      <div key={r.id} className="border rounded p-2 text-sm flex justify-between items-center">
-                        <div>
-                          <span className="font-semibold">{r.leaveDate}</span>
-                          <span className={`ml-2 ${r.leaveType === 'paid' ? 'text-blue-600' : 'text-green-600'}`}>
-                            {r.leaveType === 'paid' ? '有給' : '夏休'}
-                          </span>
-                          <span className="ml-2">{dayTypeLabel[r.dayType]}</span>
-                        </div>
-                        <span className={`font-bold ${statusColor[r.status]}`}>{statusLabel[r.status]}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      )}
-
-      {/* 承認画面（管理者のみ） */}
-      {mode === 'approve' && isAdmin && (
-        <div className="card">
-          <h3 className="text-lg font-bold mb-4">✅ 承認待ち</h3>
-          
-          {pendingRequests.length === 0 ? (
-            <p className="text-gray-500 text-center py-4">承認待ちの申請はありません</p>
-          ) : (
-            <div className="space-y-3">
-              {pendingRequests.map(r => (
-                <div key={r.id} className="border rounded p-3 bg-yellow-50">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <span className="font-bold">{r.staffName}</span>
-                      <span className={`ml-2 ${r.leaveType === 'paid' ? 'text-blue-600' : 'text-green-600'}`}>
-                        {r.leaveType === 'paid' ? '有給' : '夏休'}
-                      </span>
-                    </div>
-                    <span className="text-yellow-600 font-bold">申請中</span>
-                  </div>
-                  <p className="text-sm mb-2">
-                    {r.leaveDate} {dayTypeLabel[r.dayType]}
-                    {r.memo && <span className="text-gray-500 ml-2">({r.memo})</span>}
-                  </p>
-                  <div className="flex gap-2">
-                    <button onClick={() => approveRequest(r.id)} className="btn btn-green flex-1">承認</button>
-                    <button onClick={() => rejectRequest(r.id)} className="btn btn-red flex-1">却下</button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* 設定画面（管理者のみ） */}
-      {mode === 'settings' && isAdmin && (
-        <div className="card">
-          <h3 className="text-lg font-bold mb-4">⚙️ {fiscalYear}年度 付与設定</h3>
-          
-          <button onClick={autoGrantAll} className="btn btn-blue w-full mb-4">
-            🎁 全スタッフに自動付与（法定日数）
-          </button>
-          
-          <div className="space-y-4">
-            {staff.map(s => {
-              const paidGrant = leaveGrants.find(g => g.staffId === s.id && g.fiscalYear === fiscalYear && g.leaveType === 'paid')
-              const summerGrant = leaveGrants.find(g => g.staffId === s.id && g.fiscalYear === fiscalYear && g.leaveType === 'summer')
-              const suggestedDays = getGrantedDays(s)
-              const isEditing = editingGrantId === s.id
-              
-              return (
-                <div key={s.id} className="border rounded p-3">
-                  <div className="flex justify-between items-center mb-3">
-                    <div>
-                      <span className="font-bold">{s.name}</span>
-                      <span className="text-sm text-gray-500 ml-2">
-                        （{s.workType === 'full' ? 'フル' : '時短'}・週{s.workDaysPerWeek}日）
-                      </span>
-                    </div>
-                    {!isEditing && (
-                      <button onClick={() => {
-                        setEditingGrantId(s.id)
-                        setEditGrantData({
-                          paidGranted: paidGrant?.grantedDays || suggestedDays,
-                          paidCarried: paidGrant?.carriedDays || 0,
-                          summerGranted: summerGrant?.grantedDays || 3
-                        })
-                      }} className="text-blue-500 text-sm">編集</button>
-                    )}
-                  </div>
-                  
-                  {isEditing ? (
-                    <div className="bg-yellow-50 p-3 rounded">
-                      <div className="grid-3 gap-3 mb-3">
-                        <div>
-                          <label className="text-xs text-gray-500">有給付与</label>
-                          <input type="number" value={editGrantData.paidGranted} onChange={e => setEditGrantData({...editGrantData, paidGranted: parseFloat(e.target.value) || 0})} className="input" min="0" max="40" step="0.5" />
-                        </div>
-                        <div>
-                          <label className="text-xs text-gray-500">繰越（上限{suggestedDays}日）</label>
-                          <input type="number" value={editGrantData.paidCarried} onChange={e => setEditGrantData({...editGrantData, paidCarried: Math.min(parseFloat(e.target.value) || 0, suggestedDays)})} className="input" min="0" max={suggestedDays} step="0.5" />
-                        </div>
-                        <div>
-                          <label className="text-xs text-gray-500">夏休み</label>
-                          <input type="number" value={editGrantData.summerGranted} onChange={e => setEditGrantData({...editGrantData, summerGranted: parseFloat(e.target.value) || 0})} className="input" min="0" max="10" step="1" />
-                        </div>
-                      </div>
-                      <div className="text-xs text-gray-500 mb-3">
-                        法定付与: {suggestedDays}日（{s.workDaysPerWeek === 5 ? 'フルタイム' : '週4日'}）
-                      </div>
-                      <div className="flex gap-2">
-                        <button onClick={async () => {
-                          await saveGrant(s.id, s.name, 'paid', editGrantData.paidGranted, editGrantData.paidCarried)
-                          await saveGrant(s.id, s.name, 'summer', editGrantData.summerGranted, 0)
-                          setEditingGrantId(null)
-                          alert('保存しました')
-                        }} className="btn btn-green flex-1">保存</button>
-                        <button onClick={() => setEditingGrantId(null)} className="btn btn-gray flex-1">取消</button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="grid-2 gap-2 text-sm">
-                      <div className="bg-blue-50 p-2 rounded">
-                        <span className="text-gray-500">有給: </span>
-                        <span className="font-bold text-blue-600">
-                          {paidGrant ? `${paidGrant.grantedDays}日` : '未設定'}
-                        </span>
-                        {paidGrant && paidGrant.carriedDays > 0 && (
-                          <span className="text-blue-400 text-xs ml-1">+ 繰越{paidGrant.carriedDays}日</span>
-                        )}
-                      </div>
-                      <div className="bg-green-50 p-2 rounded">
-                        <span className="text-gray-500">夏休: </span>
-                        <span className="font-bold text-green-600">
-                          {summerGrant ? `${summerGrant.grantedDays}日` : '未設定'}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ==================== 月次レポート ====================
-function MonthlyReport({ monthlyReports, setMonthlyReports, stockIn, products, staffPurchases, isAdmin }) {
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1)
-  const [totalSales, setTotalSales] = useState('')
-  const [retailSales, setRetailSales] = useState('')
-  const [prolaboPurchase, setProlaboPurchase] = useState('')
-  const [editingId, setEditingId] = useState(null)
-  const [editData, setEditData] = useState({})
-  const [chartType, setChartType] = useState('material') // 'material' or 'retail'
-
-  const BASE_RATE = 20
-
-  // 指定月の入荷金額を計算
-  const calcMonthlyStockIn = (year, month) => {
-    const startDate = `${year}-${String(month).padStart(2, '0')}-01`
-    const endDate = month === 12 
-      ? `${year + 1}-01-01` 
-      : `${year}-${String(month + 1).padStart(2, '0')}-01`
-    
-    return stockIn.filter(s => s.date >= startDate && s.date < endDate).reduce((sum, s) => {
-      const product = products.find(p => p.id === s.productId)
-      return sum + (product ? s.quantity * product.purchasePrice : 0)
-    }, 0)
-  }
-
-  // 指定月のスタッフ購入金額を計算
-  const calcMonthlyStaffPurchases = (year, month) => {
-    const startDate = `${year}-${String(month).padStart(2, '0')}-01`
-    const endDate = month === 12 
-      ? `${year + 1}-01-01` 
-      : `${year}-${String(month + 1).padStart(2, '0')}-01`
-    
-    return staffPurchases.filter(p => p.date >= startDate && p.date < endDate).reduce((sum, p) => {
-      return sum + (p.purchasePrice * p.quantity)
-    }, 0)
-  }
-
-  // 材料費（自動計算）
-  const calcAutoMaterialCost = (year, month) => {
-    return calcMonthlyStockIn(year, month) - calcMonthlyStaffPurchases(year, month)
-  }
-
-  // 材料費率を計算
-  const calcMaterialRate = (report) => {
-    if (!report.totalSales || report.totalSales <= 0) return 0
-    const effectiveCost = (report.materialCost || 0) - (report.prolaboPurchase || 0)
-    return (effectiveCost / report.totalSales) * 100
-  }
-
-  // 店販比率を計算
-  const calcRetailRate = (report) => {
-    if (!report.totalSales || report.totalSales <= 0) return 0
-    return ((report.retailSales || 0) / report.totalSales) * 100
-  }
-
-  const saveReport = async () => {
-    if (!totalSales) { alert('売上を入力してください'); return }
-    
-    const autoMaterialCost = calcAutoMaterialCost(selectedYear, selectedMonth)
-    const existing = monthlyReports.find(r => r.year === selectedYear && r.month === selectedMonth)
-    
-    if (existing) {
-      const { error } = await supabase.from('monthly_reports').update({
-        total_sales: parseInt(totalSales) || 0,
-        retail_sales: parseInt(retailSales) || 0,
-        material_cost: autoMaterialCost,
-        prolabo_purchase: parseInt(prolaboPurchase) || 0
-      }).eq('id', existing.id)
-      
-      if (!error) {
-        setMonthlyReports(monthlyReports.map(r => r.id === existing.id ? {
-          ...r,
-          totalSales: parseInt(totalSales) || 0,
-          retailSales: parseInt(retailSales) || 0,
-          materialCost: autoMaterialCost,
-          prolaboPurchase: parseInt(prolaboPurchase) || 0
-        } : r))
-        alert('更新しました！')
-      }
-    } else {
-      const { data, error } = await supabase.from('monthly_reports').insert({
-        year: selectedYear,
-        month: selectedMonth,
-        total_sales: parseInt(totalSales) || 0,
-        retail_sales: parseInt(retailSales) || 0,
-        material_cost: autoMaterialCost,
-        prolabo_purchase: parseInt(prolaboPurchase) || 0
-      }).select()
-      
-      if (!error && data) {
-        setMonthlyReports([...monthlyReports, {
-          id: data[0].id,
-          year: selectedYear,
-          month: selectedMonth,
-          totalSales: parseInt(totalSales) || 0,
-          retailSales: parseInt(retailSales) || 0,
-          materialCost: autoMaterialCost,
-          prolaboPurchase: parseInt(prolaboPurchase) || 0
-        }])
-        alert('保存しました！')
-      }
-    }
-    setTotalSales(''); setRetailSales(''); setProlaboPurchase('')
-  }
-
-  const deleteReport = async (id) => {
-    if (!confirm('この月のデータを削除しますか？')) return
-    const { error } = await supabase.from('monthly_reports').delete().eq('id', id)
-    if (!error) setMonthlyReports(monthlyReports.filter(r => r.id !== id))
-  }
-
-  // 既存データがあれば入力欄に反映
-  const loadExistingData = () => {
-    const existing = monthlyReports.find(r => r.year === selectedYear && r.month === selectedMonth)
-    if (existing) {
-      setTotalSales(existing.totalSales?.toString() || '')
-      setRetailSales(existing.retailSales?.toString() || '')
-      setProlaboPurchase(existing.prolaboPurchase?.toString() || '')
-    } else {
-      setTotalSales(''); setRetailSales(''); setProlaboPurchase('')
-    }
-  }
-
-  // 年月が変わったら既存データを読み込む
-  React.useEffect(() => { loadExistingData() }, [selectedYear, selectedMonth])
-
-  // グラフ用データ（直近12ヶ月）
-  const getChartData = () => {
-    const data = []
-    const now = new Date()
-    for (let i = 11; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
-      const year = d.getFullYear()
-      const month = d.getMonth() + 1
-      const report = monthlyReports.find(r => r.year === year && r.month === month)
-      data.push({
-        label: `${month}月`,
-        year,
-        month,
-        materialRate: report ? calcMaterialRate(report) : null,
-        retailRate: report ? calcRetailRate(report) : null,
-        hasData: !!report
-      })
-    }
-    return data
-  }
-
-  const chartData = getChartData()
-  const existingReport = monthlyReports.find(r => r.year === selectedYear && r.month === selectedMonth)
-  const autoMaterial = calcAutoMaterialCost(selectedYear, selectedMonth)
-
-  // SVGで折れ線グラフを描画
-  const renderChart = () => {
-    const data = chartData
-    const width = 350
-    const height = 200
-    const padding = { top: 20, right: 20, bottom: 30, left: 40 }
-    const chartWidth = width - padding.left - padding.right
-    const chartHeight = height - padding.top - padding.bottom
-
-    const values = data.map(d => chartType === 'material' ? d.materialRate : d.retailRate).filter(v => v !== null)
-    const maxValue = chartType === 'material' ? Math.max(25, ...values) : Math.max(20, ...values)
-    const minValue = 0
-
-    const getX = (i) => padding.left + (i / (data.length - 1)) * chartWidth
-    const getY = (v) => v === null ? null : padding.top + chartHeight - ((v - minValue) / (maxValue - minValue)) * chartHeight
-
-    const points = data.map((d, i) => {
-      const value = chartType === 'material' ? d.materialRate : d.retailRate
-      return value !== null ? `${getX(i)},${getY(value)}` : null
-    }).filter(p => p !== null)
-
-    const targetY = chartType === 'material' ? getY(BASE_RATE) : null
-
-    return (
-      <svg width="100%" viewBox={`0 0 ${width} ${height}`} style={{ maxWidth: '400px' }}>
-        {/* 背景のグリッド */}
-        {[0, 5, 10, 15, 20, 25].filter(v => v <= maxValue).map(v => (
-          <g key={v}>
-            <line x1={padding.left} y1={getY(v)} x2={width - padding.right} y2={getY(v)} stroke="#e5e7eb" strokeWidth="1" />
-            <text x={padding.left - 5} y={getY(v) + 4} textAnchor="end" fontSize="10" fill="#6b7280">{v}%</text>
-          </g>
-        ))}
-        
-        {/* 目標ライン（材料費率のみ） */}
-        {chartType === 'material' && targetY && (
-          <line x1={padding.left} y1={targetY} x2={width - padding.right} y2={targetY} stroke="#ef4444" strokeWidth="2" strokeDasharray="5,5" />
-        )}
-        
-        {/* 折れ線 */}
-        {points.length > 1 && (
-          <polyline
-            fill="none"
-            stroke={chartType === 'material' ? '#3b82f6' : '#10b981'}
-            strokeWidth="2"
-            points={points.join(' ')}
-          />
-        )}
-        
-        {/* データポイント */}
-        {data.map((d, i) => {
-          const value = chartType === 'material' ? d.materialRate : d.retailRate
-          if (value === null) return null
-          const isGood = chartType === 'material' ? value <= BASE_RATE : true
-          return (
-            <g key={i}>
-              <circle
-                cx={getX(i)}
-                cy={getY(value)}
-                r="5"
-                fill={chartType === 'material' ? (isGood ? '#10b981' : '#ef4444') : '#10b981'}
-                stroke="white"
-                strokeWidth="2"
-              />
-              <text x={getX(i)} y={getY(value) - 10} textAnchor="middle" fontSize="9" fill="#374151">
-                {value.toFixed(1)}%
-              </text>
-            </g>
-          )
-        })}
-        
-        {/* X軸ラベル */}
-        {data.map((d, i) => (
-          <text key={i} x={getX(i)} y={height - 5} textAnchor="middle" fontSize="9" fill="#6b7280">
-            {d.label}
-          </text>
-        ))}
-      </svg>
-    )
+    if (data.length === 0) { alert('出力するデータがありません'); return }
+    const csv = generateCSV(data, headers); downloadCSV(csv, filename); alert(`${data.length}件のデータを出力しました`)
   }
 
   return (
     <div className="space-y-4">
-      {/* グラフ */}
       <div className="card">
-        <h3 className="text-lg font-bold mb-4">📊 推移グラフ</h3>
-        
-        {/* 切り替えボタン */}
-        <div className="flex gap-2 mb-4">
-          <button 
-            onClick={() => setChartType('material')} 
-            className={`btn flex-1 ${chartType === 'material' ? 'btn-blue' : 'btn-gray'}`}
-          >
-            材料費率
-          </button>
-          <button 
-            onClick={() => setChartType('retail')} 
-            className={`btn flex-1 ${chartType === 'retail' ? 'btn-green' : 'btn-gray'}`}
-          >
-            店販比率
-          </button>
-        </div>
-        
-        {/* グラフ表示 */}
-        <div className="flex justify-center">
-          {renderChart()}
-        </div>
-        
-        {chartType === 'material' && (
-          <div className="text-center text-sm text-gray-500 mt-2">
-            <span className="inline-block w-3 h-0.5 bg-red-500 mr-1"></span>
-            目標ライン（{BASE_RATE}%）
-          </div>
-        )}
-      </div>
-
-      {/* 月次データ入力（管理者のみ） */}
-      {isAdmin && (
-        <div className="card">
-          <h3 className="text-lg font-bold mb-4">✏️ 月次データ入力</h3>
-          
-          <div className="grid-2 mb-4">
-            <div>
-              <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>年</label>
-              <select value={selectedYear} onChange={e => setSelectedYear(parseInt(e.target.value))} className="select">
-                {[2024, 2025, 2026, 2027].map(y => <option key={y} value={y}>{y}年</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>月</label>
-              <select value={selectedMonth} onChange={e => setSelectedMonth(parseInt(e.target.value))} className="select">
-                {[1,2,3,4,5,6,7,8,9,10,11,12].map(m => <option key={m} value={m}>{m}月</option>)}
-              </select>
-            </div>
-          </div>
-          
-          {existingReport && (
-            <div className="bg-blue-50 p-3 rounded mb-4 text-sm">
-              <p className="font-semibold text-blue-700">📝 {selectedYear}年{selectedMonth}月のデータが登録済み</p>
-            </div>
+        <h3 className="text-lg font-bold mb-4">📤 データ出力</h3>
+        <div className="space-y-4">
+          <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>出力データ</label><select value={exportType} onChange={e => setExportType(e.target.value)} className="select">{exportTypes.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}</select></div>
+          {!['products', 'staff'].includes(exportType) && (
+            <div className="grid-2"><div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>開始日</label><input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="input" /></div><div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>終了日</label><input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="input" /></div></div>
           )}
-          
-          <div className="grid-2 mb-4">
-            <div>
-              <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>値引き後総売上</label>
-              <input type="number" value={totalSales} onChange={e => setTotalSales(e.target.value)} placeholder="例: 7500000" className="input" />
-            </div>
-            <div>
-              <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>店販売上</label>
-              <input type="number" value={retailSales} onChange={e => setRetailSales(e.target.value)} placeholder="例: 800000" className="input" />
-            </div>
-          </div>
-          
-          <div className="bg-gray-50 p-3 rounded mb-4 text-sm">
-            <p className="font-semibold mb-1">材料費（自動計算）</p>
-            <p>入荷: ¥{calcMonthlyStockIn(selectedYear, selectedMonth).toLocaleString()}</p>
-            <p>スタッフ購入: -¥{calcMonthlyStaffPurchases(selectedYear, selectedMonth).toLocaleString()}</p>
-            <p className="font-bold">= ¥{autoMaterial.toLocaleString()}</p>
-          </div>
-          
-          <div className="mb-4">
-            <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>−）プロラボ分</label>
-            <input type="number" value={prolaboPurchase} onChange={e => setProlaboPurchase(e.target.value)} placeholder="例: 80000" className="input" />
-          </div>
-          
-          {totalSales && (
-            <div className="bg-green-50 p-3 rounded mb-4">
-              <div className="grid-2 gap-4">
-                <div className="text-center">
-                  <div className="text-sm text-gray-600">材料費率</div>
-                  <div className={`text-2xl font-bold ${((autoMaterial - (parseInt(prolaboPurchase) || 0)) / parseInt(totalSales) * 100) <= BASE_RATE ? 'text-green-600' : 'text-red-600'}`}>
-                    {((autoMaterial - (parseInt(prolaboPurchase) || 0)) / parseInt(totalSales) * 100).toFixed(1)}%
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div className="text-sm text-gray-600">店販比率</div>
-                  <div className="text-2xl font-bold text-green-600">
-                    {((parseInt(retailSales) || 0) / parseInt(totalSales) * 100).toFixed(1)}%
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          <button onClick={saveReport} className="btn btn-blue w-full">
-            {existingReport ? '更新する' : '保存する'}
-          </button>
+          <button onClick={handleExport} className="btn btn-green w-full py-3"><Icons.Download /> CSVダウンロード</button>
         </div>
-      )}
-
-      {/* 月次データ一覧 */}
-      <div className="card">
-        <h4 className="font-bold mb-4">📋 月次データ一覧</h4>
-        {monthlyReports.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <p>データがありません</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {[...monthlyReports].sort((a, b) => b.year - a.year || b.month - a.month).map(report => {
-              const materialRate = calcMaterialRate(report)
-              const retailRate = calcRetailRate(report)
-              const effectiveCost = (report.materialCost || 0) - (report.prolaboPurchase || 0)
-              const isGood = materialRate <= BASE_RATE
-              
-              return (
-                <div key={report.id} className="border rounded p-3">
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="font-bold">{report.year}年{report.month}月</div>
-                    {isAdmin && (
-                      <button onClick={() => deleteReport(report.id)} className="text-red-500 text-sm">削除</button>
-                    )}
-                  </div>
-                  <div className="grid-2 gap-2 text-sm">
-                    <div>
-                      <span className="text-gray-500">売上: </span>
-                      <span className="font-semibold">¥{report.totalSales?.toLocaleString()}</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">店販: </span>
-                      <span className="font-semibold">¥{report.retailSales?.toLocaleString()}</span>
-                      <span className="text-green-600 text-xs ml-1">({retailRate.toFixed(1)}%)</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">材料費: </span>
-                      <span className="font-semibold">¥{effectiveCost.toLocaleString()}</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">材料費率: </span>
-                      <span className={`font-bold ${isGood ? 'text-green-600' : 'text-red-600'}`}>
-                        {materialRate.toFixed(1)}% {isGood ? '✅' : '⚠️'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        )}
       </div>
     </div>
   )
 }
 
-// ==================== ボーナス原資管理 ====================
-function BonusManagement({ staff, bonusSettings, setBonusSettings, stockIn, products, staffPurchases, isAdmin }) {
-  const [periodStart, setPeriodStart] = useState('')
-  const [periodEnd, setPeriodEnd] = useState('')
-  const [totalSales, setTotalSales] = useState('')
-  const [retailSales, setRetailSales] = useState('')
-  const [manualMaterialCost, setManualMaterialCost] = useState('')
-  const [dealerPurchase, setDealerPurchase] = useState('')
-  const [editingId, setEditingId] = useState(null)
-  const [editData, setEditData] = useState({})
-
-  const BASE_RATE = 20 // 基準材料費率 20%
-  const LABOR_RATE = 40 // 人件費率 40%
-
-  // 期間内の入荷金額を計算（全入荷）
-  const calcTotalStockIn = (start, end) => {
-    return stockIn.filter(s => s.date >= start && s.date <= end).reduce((sum, s) => {
-      const product = products.find(p => p.id === s.productId)
-      return sum + (product ? s.quantity * product.purchasePrice : 0)
-    }, 0)
-  }
-
-  // 期間内のスタッフ購入金額を計算
-  const calcStaffPurchases = (start, end) => {
-    return staffPurchases.filter(p => p.date >= start && p.date <= end).reduce((sum, p) => {
-      return sum + (p.purchasePrice * p.quantity)
-    }, 0)
-  }
-
-  // 材料費 = 全入荷 - スタッフ購入（自動計算）
-  const calcMaterialCost = (start, end) => {
-    return calcTotalStockIn(start, end) - calcStaffPurchases(start, end)
-  }
-
-  // 実際に使用する材料費（手入力優先、プロラボ分を引く）
-  const getEffectiveMaterialCost = (setting) => {
-    let baseCost = 0
-    if (setting.manualMaterialCost !== null && setting.manualMaterialCost !== undefined && setting.manualMaterialCost !== '') {
-      baseCost = setting.manualMaterialCost
-    } else {
-      baseCost = setting.actualPurchase || 0
-    }
-    // プロラボ分を引く
-    const dealerPurch = setting.dealerPurchase || 0
-    return baseCost - dealerPurch
-  }
-
-  // ボーナス原資の計算
-  const calcBonusPool = (sales, materialCost) => {
-    if (!sales || sales <= 0) return { rate: 0, diff: 0, pool: 0 }
-    const rate = (materialCost / sales) * 100
-    const diff = BASE_RATE - rate
-    const pool = diff > 0 ? Math.round(sales * (diff / 100) * (LABOR_RATE / 100)) : 0
-    return { rate, diff, pool }
-  }
-
-  // 配分計算
-  const calcDistribution = (pool) => {
-    if (pool <= 0) return []
-    let totalCoef = 0
-    const staffCoefs = staff.map(s => {
-      const workCoef = s.workType === 'part' ? (s.partTimeRate / 100) : 1
-      const coef = (s.tenureRate / 100) * workCoef * (1 + s.specialRate / 100)
-      totalCoef += coef
-      return { ...s, coef }
-    })
-    return staffCoefs.map(s => ({ 
-      ...s, 
-      share: totalCoef > 0 ? Math.round(pool * s.coef / totalCoef) : 0 
-    }))
-  }
-
-  const savePeriod = async () => {
-    if (!periodStart || !periodEnd || !totalSales) { alert('期間と売上を入力してください'); return }
-    const autoMaterialCost = calcMaterialCost(periodStart, periodEnd)
-    const manualCost = manualMaterialCost ? parseInt(manualMaterialCost) : null
-    const dealerPurch = dealerPurchase ? parseInt(dealerPurchase) : 0
-    const { data, error } = await supabase.from('bonus_settings').insert({ 
-      period_start: periodStart, 
-      period_end: periodEnd, 
-      target_sales: parseInt(totalSales) || 0,
-      retail_sales: parseInt(retailSales) || 0,
-      target_rate: BASE_RATE, 
-      actual_purchase: autoMaterialCost,
-      manual_material_cost: manualCost,
-      dealer_purchase: dealerPurch,
-      memo: '' 
-    }).select()
-    if (!error && data) {
-      setBonusSettings([...bonusSettings, { 
-        id: data[0].id, 
-        periodStart, 
-        periodEnd, 
-        targetSales: parseInt(totalSales) || 0,
-        retailSales: parseInt(retailSales) || 0,
-        targetRate: BASE_RATE, 
-        actualPurchase: autoMaterialCost,
-        manualMaterialCost: manualCost,
-        dealerPurchase: dealerPurch,
-        memo: '' 
-      }])
-      alert('保存しました！'); setPeriodStart(''); setPeriodEnd(''); setTotalSales(''); setRetailSales(''); setManualMaterialCost(''); setDealerPurchase('')
-    }
-  }
-
-  const deletePeriod = async (id) => {
-    if (!confirm('この期間を削除しますか？')) return
-    const { error } = await supabase.from('bonus_settings').delete().eq('id', id)
-    if (!error) setBonusSettings(bonusSettings.filter(b => b.id !== id))
-  }
-
-  const startEdit = (setting) => {
-    setEditingId(setting.id)
-    setEditData({ 
-      totalSales: setting.targetSales, 
-      retailSales: setting.retailSales || 0,
-      manualMaterialCost: setting.manualMaterialCost || '',
-      dealerPurchase: setting.dealerPurchase || ''
-    })
-  }
-
-  const saveEditedPeriod = async (id) => {
-    const setting = bonusSettings.find(b => b.id === id)
-    const autoMaterialCost = calcMaterialCost(setting.periodStart, setting.periodEnd)
-    const manualCost = editData.manualMaterialCost ? parseInt(editData.manualMaterialCost) : null
-    const dealerPurch = editData.dealerPurchase ? parseInt(editData.dealerPurchase) : 0
-    const { error } = await supabase.from('bonus_settings').update({ 
-      target_sales: parseInt(editData.totalSales) || 0,
-      retail_sales: parseInt(editData.retailSales) || 0,
-      actual_purchase: autoMaterialCost,
-      manual_material_cost: manualCost,
-      dealer_purchase: dealerPurch
-    }).eq('id', id)
-    if (!error) {
-      setBonusSettings(bonusSettings.map(b => b.id === id ? { 
-        ...b, 
-        targetSales: parseInt(editData.totalSales) || 0,
-        retailSales: parseInt(editData.retailSales) || 0,
-        actualPurchase: autoMaterialCost,
-        manualMaterialCost: manualCost,
-        dealerPurchase: dealerPurch
-      } : b))
-      setEditingId(null)
-    }
-  }
-
-  // 最新の期間設定を取得
-  const latestSetting = bonusSettings.length > 0 ? bonusSettings[bonusSettings.length - 1] : null
-  const latestMaterialCost = latestSetting ? getEffectiveMaterialCost(latestSetting) : 0
-  const latestCalc = latestSetting ? calcBonusPool(latestSetting.targetSales, latestMaterialCost) : null
-
-  // スタッフ用のシンプル表示
-  if (!isAdmin) {
-    return (
-      <div className="space-y-4">
-        <div className="card">
-          <h3 className="text-lg font-bold mb-4">🎯 材料費達成率</h3>
-          {!latestSetting ? (
-            <div className="text-center py-8 text-gray-500">
-              <p>まだ期間が設定されていません</p>
-            </div>
-          ) : (
-            <div className="text-center py-6">
-              <div className="text-sm text-gray-500 mb-2">
-                {latestSetting.periodStart} 〜 {latestSetting.periodEnd}
-              </div>
-              <div className="mb-4">
-                <div className="text-sm text-gray-600 mb-1">目標</div>
-                <div className="text-2xl font-bold">{BASE_RATE}%以内</div>
-              </div>
-              <div className="mb-4">
-                <div className="text-sm text-gray-600 mb-1">実績</div>
-                <div className={`text-4xl font-bold ${latestCalc.rate <= BASE_RATE ? 'text-green-600' : 'text-red-600'}`}>
-                  {latestCalc.rate.toFixed(1)}%
-                </div>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-4 mb-4">
-                <div 
-                  className={`h-4 rounded-full ${latestCalc.rate <= BASE_RATE ? 'bg-green-500' : 'bg-red-500'}`}
-                  style={{ width: `${Math.min(100, (latestCalc.rate / BASE_RATE) * 100)}%` }}
-                ></div>
-              </div>
-              {latestCalc.diff > 0 ? (
-                <div className="bg-green-50 p-4 rounded">
-                  <p className="text-green-700 font-bold text-lg">🎉 {latestCalc.diff.toFixed(1)}%の削減達成！</p>
-                  <p className="text-green-600 text-sm mt-1">みんなの頑張りがボーナスに反映されます💪</p>
-                </div>
-              ) : (
-                <div className="bg-yellow-50 p-4 rounded">
-                  <p className="text-yellow-700 font-bold">もう少しで目標達成！</p>
-                  <p className="text-yellow-600 text-sm mt-1">材料を大切に使っていこう✨</p>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-    )
-  }
-
-  // 管理者用の詳細表示
-  return (
-    <div className="space-y-4">
-      <div className="card">
-        <h3 className="text-lg font-bold mb-4">💎 ボーナス原資管理</h3>
-        <div className="bg-blue-50 p-3 rounded mb-4 text-sm">
-          <p><strong>計算式：</strong></p>
-          <p>原資 = 売上 × (20% − 材料費率) × 40%</p>
-        </div>
-        <div className="grid-2 mb-4">
-          <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>期間開始</label><input type="date" value={periodStart} onChange={e => setPeriodStart(e.target.value)} className="input" /></div>
-          <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>期間終了</label><input type="date" value={periodEnd} onChange={e => setPeriodEnd(e.target.value)} className="input" /></div>
-        </div>
-        <div className="grid-2 mb-4">
-          <div>
-            <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>値引き後総売上</label>
-            <input type="number" value={totalSales} onChange={e => setTotalSales(e.target.value)} placeholder="例: 45000000" className="input" />
-          </div>
-          <div>
-            <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>店販売上</label>
-            <input type="number" value={retailSales} onChange={e => setRetailSales(e.target.value)} placeholder="例: 5000000" className="input" />
-          </div>
-        </div>
-        {totalSales && (
-          <div className="bg-gray-50 p-3 rounded mb-4 text-sm">
-            <p>施術売上（自動）：¥{((parseInt(totalSales) || 0) - (parseInt(retailSales) || 0)).toLocaleString()}</p>
-          </div>
-        )}
-        
-        {periodStart && periodEnd && (
-          <div className="bg-gray-100 p-4 rounded mb-4">
-            <p className="font-semibold mb-2">📊 材料費（自動計算・参考）</p>
-            <div className="text-sm text-gray-600 mb-2">
-              <p>入荷: ¥{calcTotalStockIn(periodStart, periodEnd).toLocaleString()}</p>
-              <p>スタッフ購入: -¥{calcStaffPurchases(periodStart, periodEnd).toLocaleString()}</p>
-              <p className="font-bold">= ¥{calcMaterialCost(periodStart, periodEnd).toLocaleString()}</p>
-            </div>
-          </div>
-        )}
-        
-        <div className="mb-4">
-          <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>✏️ 材料費（手入力・試算表の数字）</label>
-          <input type="number" value={manualMaterialCost} onChange={e => setManualMaterialCost(e.target.value)} placeholder="空欄なら自動計算を使用" className="input" />
-        </div>
-        
-        <div className="mb-4">
-          <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>−）プロラボ分（スタッフ購入用）</label>
-          <input type="number" value={dealerPurchase} onChange={e => setDealerPurchase(e.target.value)} placeholder="例: 500000" className="input" />
-          <p className="text-xs text-gray-500 mt-1">※材料費から引かれます</p>
-        </div>
-        
-        {manualMaterialCost && (
-          <div className="bg-green-50 p-3 rounded mb-4 text-sm">
-            <p className="font-bold">材料費（実質）：¥{((parseInt(manualMaterialCost) || 0) - (parseInt(dealerPurchase) || 0)).toLocaleString()}</p>
-          </div>
-        )}
-        
-        <button onClick={savePeriod} className="btn btn-blue">期間を追加</button>
-      </div>
-
-      {bonusSettings.length > 0 && (
-        <div className="card">
-          <h4 className="font-bold mb-4">登録済み期間</h4>
-          <div className="space-y-4">
-            {[...bonusSettings].reverse().map(setting => {
-              const effectiveMaterialCost = getEffectiveMaterialCost(setting)
-              const { rate, diff, pool } = calcBonusPool(setting.targetSales, effectiveMaterialCost)
-              const distribution = calcDistribution(pool)
-              const staffBonus = distribution.filter(s => !s.isManagement).reduce((sum, s) => sum + s.share, 0)
-              const internalReserve = distribution.filter(s => s.isManagement).reduce((sum, s) => sum + s.share, 0)
-              const serviceSales = (setting.targetSales || 0) - (setting.retailSales || 0)
-              const isManualCost = setting.manualMaterialCost !== null && setting.manualMaterialCost !== undefined
-              const baseMaterialCost = isManualCost ? setting.manualMaterialCost : setting.actualPurchase
-              
-              return (
-                <div key={setting.id} className="border rounded p-4">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <div className="font-bold text-lg">{setting.periodStart} 〜 {setting.periodEnd}</div>
-                    </div>
-                    <div className="flex gap-2">
-                      {editingId !== setting.id && (
-                        <>
-                          <button onClick={() => startEdit(setting)} className="text-blue-500 text-sm">編集</button>
-                          <button onClick={() => deletePeriod(setting.id)} className="text-red-500 text-sm">削除</button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-
-                  {editingId === setting.id ? (
-                    <div className="bg-yellow-50 p-4 rounded mb-4">
-                      <div className="grid-2 mb-4">
-                        <div>
-                          <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>値引き後総売上</label>
-                          <input type="number" value={editData.totalSales} onChange={e => setEditData({...editData, totalSales: e.target.value})} className="input" />
-                        </div>
-                        <div>
-                          <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>店販売上</label>
-                          <input type="number" value={editData.retailSales} onChange={e => setEditData({...editData, retailSales: e.target.value})} className="input" />
-                        </div>
-                      </div>
-                      <div className="grid-2 mb-4">
-                        <div>
-                          <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>材料費（試算表）</label>
-                          <input type="number" value={editData.manualMaterialCost} onChange={e => setEditData({...editData, manualMaterialCost: e.target.value})} placeholder="空欄なら自動計算" className="input" />
-                        </div>
-                        <div>
-                          <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>プロラボ分</label>
-                          <input type="number" value={editData.dealerPurchase} onChange={e => setEditData({...editData, dealerPurchase: e.target.value})} placeholder="0" className="input" />
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <button onClick={() => saveEditedPeriod(setting.id)} className="btn btn-green">保存</button>
-                        <button onClick={() => setEditingId(null)} className="btn btn-gray">取消</button>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="grid-3 gap-4 mb-4">
-                        <div className="bg-gray-50 p-3 rounded">
-                          <div className="text-sm text-gray-600">値引き後総売上</div>
-                          <div className="text-xl font-bold">¥{setting.targetSales?.toLocaleString()}</div>
-                        </div>
-                        <div className="bg-gray-50 p-3 rounded">
-                          <div className="text-sm text-gray-600">店販売上</div>
-                          <div className="text-xl font-bold">¥{(setting.retailSales || 0).toLocaleString()}</div>
-                        </div>
-                        <div className="bg-gray-50 p-3 rounded">
-                          <div className="text-sm text-gray-600">施術売上</div>
-                          <div className="text-xl font-bold">¥{serviceSales.toLocaleString()}</div>
-                        </div>
-                      </div>
-                      
-                      <div className={`p-3 rounded mb-4 ${isManualCost ? 'bg-yellow-50 border border-yellow-300' : 'bg-gray-50'}`}>
-                        <div className="text-sm text-gray-600 mb-1">
-                          材料費 {isManualCost && <span className="text-yellow-600">（試算表）</span>}
-                        </div>
-                        <div className="text-sm">
-                          <span className="text-lg font-bold">¥{baseMaterialCost?.toLocaleString()}</span>
-                          {setting.dealerPurchase > 0 && (
-                            <>
-                              <span className="text-gray-500 mx-2">−</span>
-                              <span className="text-red-600">¥{setting.dealerPurchase.toLocaleString()}</span>
-                              <span className="text-gray-500 text-xs ml-1">(プロラボ分)</span>
-                            </>
-                          )}
-                        </div>
-                        <div className="text-xl font-bold text-blue-600 mt-1">
-                          = ¥{effectiveMaterialCost.toLocaleString()}
-                        </div>
-                      </div>
-                      
-                      <div className="grid-3 gap-4 mb-4">
-                        <div className={`p-3 rounded text-center ${rate <= BASE_RATE ? 'bg-green-50' : 'bg-red-50'}`}>
-                          <div className="text-sm text-gray-600">材料費率</div>
-                          <div className={`text-2xl font-bold ${rate <= BASE_RATE ? 'text-green-600' : 'text-red-600'}`}>{rate.toFixed(1)}%</div>
-                        </div>
-                        <div className={`p-3 rounded text-center ${diff > 0 ? 'bg-green-50' : 'bg-gray-50'}`}>
-                          <div className="text-sm text-gray-600">基準との差</div>
-                          <div className={`text-2xl font-bold ${diff > 0 ? 'text-green-600' : 'text-gray-400'}`}>{diff > 0 ? `-${diff.toFixed(1)}%` : `+${Math.abs(diff).toFixed(1)}%`}</div>
-                        </div>
-                        <div className={`p-3 rounded text-center ${pool > 0 ? 'bg-blue-50' : 'bg-gray-50'}`}>
-                          <div className="text-sm text-gray-600">ボーナス原資</div>
-                          <div className={`text-2xl font-bold ${pool > 0 ? 'text-blue-600' : 'text-gray-400'}`}>¥{pool.toLocaleString()}</div>
-                        </div>
-                      </div>
-
-                      {pool > 0 && (
-                        <>
-                          <div className="grid-2 gap-4 mb-4">
-                            <div className="bg-green-50 p-3 rounded text-center">
-                              <div className="text-sm text-gray-600">スタッフへ</div>
-                              <div className="text-xl font-bold text-green-600">¥{staffBonus.toLocaleString()}</div>
-                            </div>
-                            <div className="bg-blue-50 p-3 rounded text-center">
-                              <div className="text-sm text-gray-600">🏠 お店の成長へ</div>
-                              <div className="text-xl font-bold text-blue-600">¥{internalReserve.toLocaleString()}</div>
-                            </div>
-                          </div>
-
-                          <details>
-                            <summary className="cursor-pointer text-blue-500 font-semibold">📊 配分シミュレーション</summary>
-                            <div className="mt-4 overflow-x-auto">
-                              <table className="text-sm">
-                                <thead>
-                                  <tr>
-                                    <th>スタッフ</th>
-                                    <th className="text-center">係数</th>
-                                    <th className="text-right">配分</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {distribution.map(s => (
-                                    <tr key={s.id} className={s.isManagement ? 'bg-blue-50' : ''}>
-                                      <td className="font-semibold">
-                                        {s.name}
-                                        {s.isManagement && <span className="ml-2 text-blue-600 text-xs">👑</span>}
-                                      </td>
-                                      <td className="text-center">{(s.coef * 100).toFixed(0)}%</td>
-                                      <td className="text-right font-bold">
-                                        {s.isManagement ? (
-                                          <span className="text-blue-600">→ お店の成長へ</span>
-                                        ) : (
-                                          <span className="text-green-600">¥{s.share.toLocaleString()}</span>
-                                        )}
-                                      </td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                            </div>
-                          </details>
-                        </>
-                      )}
-                    </>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ==================== ロス入力（スタッフも使用可） ====================
-function LossInput({ lossRecords, setLossRecords, lossPrices, isAdmin }) {
+// ==================== ロス入力 ====================
+function LossInput({ products, lossRecords, setLossRecords, lossPrices, currentUser }) {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
-  const [selectedCategory, setSelectedCategory] = useState('')
-  const [lossGrams, setLossGrams] = useState('')
-  const [memo, setMemo] = useState('')
+  const [lossType, setLossType] = useState('color')
+  const [staffName, setStaffName] = useState(currentUser)
+  const [amount, setAmount] = useState('')
+  const [note, setNote] = useState('')
+  const [showHistory, setShowHistory] = useState(false)
+  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7))
 
-  const selectedPrice = lossPrices.find(p => p.categoryName === selectedCategory)
-  const pricePerGram = selectedPrice ? selectedPrice.pricePerGram : 0
-  const lossAmount = pricePerGram * (parseFloat(lossGrams) || 0)
+  const lossTypes = [{ value: 'color', label: 'カラーロス' }, { value: 'perm', label: 'パーマロス' }, { value: 'treatment', label: 'トリートメントロス' }, { value: 'other', label: 'その他' }]
 
-  const recordLoss = async () => {
-    if (!selectedCategory || !lossGrams) { alert('カテゴリとロスg数を入力してください'); return }
-    const { data, error } = await supabase.from('loss_records').insert({ record_date: date, category_name: selectedCategory, price_per_gram: pricePerGram, loss_grams: parseFloat(lossGrams), loss_amount: lossAmount, memo }).select()
-    if (!error && data) {
-      setLossRecords([...lossRecords, { id: data[0].id, date, categoryName: selectedCategory, pricePerGram, lossGrams: parseFloat(lossGrams), lossAmount, memo }])
-      alert('ロスを記録しました！'); setLossGrams(''); setMemo('')
-    }
+  const addLoss = async () => {
+    if (!amount || parseFloat(amount) <= 0) { alert('量を入力してください'); return }
+    const priceInfo = lossPrices.find(p => p.lossType === lossType)
+    const unitPrice = priceInfo?.unitPrice || 0
+    const totalPrice = parseFloat(amount) * unitPrice
+    const { data, error } = await supabase.from('loss_records').insert({ loss_date: date, loss_type: lossType, staff_name: staffName, amount: parseFloat(amount), unit_price: unitPrice, total_price: totalPrice, note }).select()
+    if (!error && data) { setLossRecords([...lossRecords, { id: data[0].id, date, lossType, staffName, amount: parseFloat(amount), unitPrice, totalPrice, note }]); setAmount(''); setNote(''); alert('ロスを記録しました') }
   }
-
-  const deleteLoss = async (id) => {
-    if (!confirm('このロス記録を削除しますか？')) return
-    const { error } = await supabase.from('loss_records').delete().eq('id', id)
-    if (!error) setLossRecords(lossRecords.filter(l => l.id !== id))
-  }
-
-  const totalLoss = lossRecords.reduce((sum, l) => sum + l.lossAmount, 0)
+  const deleteLoss = async (id) => { if (!confirm('この記録を削除しますか？')) return; const { error } = await supabase.from('loss_records').delete().eq('id', id); if (!error) setLossRecords(lossRecords.filter(r => r.id !== id)) }
+  const getTypeLabel = (type) => { const found = lossTypes.find(t => t.value === type); return found ? found.label : type }
+  const monthlyLoss = lossRecords.filter(r => r.date?.startsWith(selectedMonth))
+  const totalLoss = monthlyLoss.reduce((sum, r) => sum + r.totalPrice, 0)
+  const lossByType = {}; monthlyLoss.forEach(r => { if (!lossByType[r.lossType]) lossByType[r.lossType] = 0; lossByType[r.lossType] += r.totalPrice })
+  const currentPrice = lossPrices.find(p => p.lossType === lossType)?.unitPrice || 0
 
   return (
     <div className="space-y-4">
       <div className="card">
-        <h3 className="text-lg font-bold mb-4">📉 ロス入力</h3>
-        {lossPrices.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <p className="mb-2">単価設定がありません</p>
-            <p className="text-sm">{isAdmin ? '下の「単価設定」でカテゴリを追加してください' : '管理者に単価設定を依頼してください'}</p>
+        <div className="flex justify-between items-center mb-4"><h3 className="text-lg font-bold">🗑️ ロス入力</h3><button onClick={() => setShowHistory(!showHistory)} className={`btn ${showHistory ? 'btn-blue' : 'btn-gray'}`}>{showHistory ? '入力に戻る' : '履歴'}</button></div>
+        {!showHistory ? (
+          <div className="space-y-4">
+            <div className="grid-2"><div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>日付</label><input type="date" value={date} onChange={e => setDate(e.target.value)} className="input" /></div><div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>種類</label><select value={lossType} onChange={e => setLossType(e.target.value)} className="select">{lossTypes.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}</select></div></div>
+            <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>量（g）</label><input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="例: 50" className="input" min="0" step="0.1" /></div>
+            {currentPrice > 0 && amount && (<div className="bg-blue-50 p-3 rounded text-center"><span className="text-gray-600">金額: </span><span className="text-xl font-bold text-blue-600">¥{(parseFloat(amount) * currentPrice).toLocaleString()}</span><span className="text-sm text-gray-500 ml-2">(@¥{currentPrice}/g)</span></div>)}
+            <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>備考</label><input type="text" value={note} onChange={e => setNote(e.target.value)} placeholder="任意" className="input" /></div>
+            <button onClick={addLoss} className="btn btn-blue w-full"><Icons.Plus /> 記録する</button>
           </div>
         ) : (
           <>
-            <div className="grid-2 mb-4">
-              <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>記録日</label><input type="date" value={date} onChange={e => setDate(e.target.value)} className="input" /></div>
-              <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>カテゴリー</label>
-                <select value={selectedCategory} onChange={e => setSelectedCategory(e.target.value)} className="select">
-                  <option value="">選択してください</option>
-                  {lossPrices.map(p => <option key={p.id} value={p.categoryName}>{p.categoryName}（¥{p.pricePerGram}/g）</option>)}
-                </select>
-              </div>
+            <div className="mb-4"><input type="month" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="input" style={{ width: 'auto' }} /></div>
+            <div className="bg-red-50 p-4 rounded mb-4 text-center"><div className="text-sm text-gray-600">今月のロス合計</div><div className="text-2xl font-bold text-red-600">¥{totalLoss.toLocaleString()}</div></div>
+            <div className="grid-2 gap-2 mb-4">{Object.entries(lossByType).map(([type, total]) => (<div key={type} className="bg-gray-50 p-2 rounded text-center"><div className="text-xs text-gray-500">{getTypeLabel(type)}</div><div className="font-bold">¥{total.toLocaleString()}</div></div>))}</div>
+            <div className="overflow-x-auto">
+              <table className="text-sm"><thead><tr><th>日付</th><th>種類</th><th>スタッフ</th><th className="text-right">量</th><th className="text-right">金額</th><th>操作</th></tr></thead>
+                <tbody>{monthlyLoss.sort((a, b) => b.date.localeCompare(a.date)).map(r => (<tr key={r.id}><td>{r.date}</td><td>{getTypeLabel(r.lossType)}</td><td>{r.staffName}</td><td className="text-right">{r.amount}g</td><td className="text-right">¥{r.totalPrice.toLocaleString()}</td><td><button onClick={() => deleteLoss(r.id)} className="text-red-500 text-sm">削除</button></td></tr>))}</tbody>
+              </table>
             </div>
-            {selectedCategory && (
-              <>
-                <div className="bg-gray-50 p-3 rounded mb-4">
-                  <div className="text-sm text-gray-600">単価：<span className="font-bold">¥{pricePerGram}/g</span></div>
-                </div>
-                <div className="mb-4">
-                  <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>ロスg数</label>
-                  <input type="number" value={lossGrams} onChange={e => setLossGrams(e.target.value)} placeholder="例: 500" className="input" step="0.1" />
-                </div>
-                <div className="bg-red-50 p-4 rounded mb-4 text-center">
-                  <div className="text-sm text-gray-600">ロス金額（自動計算）</div>
-                  <div className="text-2xl font-bold text-red-600">¥{lossAmount.toLocaleString()}</div>
-                </div>
-                <div className="mb-4"><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>メモ（任意）</label><input type="text" value={memo} onChange={e => setMemo(e.target.value)} placeholder="備考" className="input" /></div>
-                <button onClick={recordLoss} className="btn btn-red w-full py-3">ロスを記録</button>
-              </>
-            )}
           </>
         )}
       </div>
-
-      <div className="card">
-        <div className="flex justify-between items-center mb-4">
-          <h4 className="font-bold">ロス履歴</h4>
-          <div className="text-red-600 font-bold">累計: ¥{totalLoss.toLocaleString()}</div>
-        </div>
-        {lossRecords.length === 0 ? (<p className="text-gray-500 text-center py-4">ロス記録はありません</p>) : (
-          <div className="overflow-x-auto">
-            <table className="text-sm">
-              <thead><tr><th>日付</th><th>カテゴリー</th><th className="text-right">単価/g</th><th className="text-right">ロスg</th><th className="text-right">金額</th><th>メモ</th>{isAdmin && <th className="text-center">操作</th>}</tr></thead>
-              <tbody>
-                {[...lossRecords].reverse().map(l => (
-                  <tr key={l.id}>
-                    <td>{l.date}</td><td>{l.categoryName}</td><td className="text-right">¥{l.pricePerGram}</td><td className="text-right">{l.lossGrams}g</td><td className="text-right text-red-600 font-semibold">¥{l.lossAmount.toLocaleString()}</td><td className="text-gray-500">{l.memo || '-'}</td>
-                    {isAdmin && <td className="text-center"><button onClick={() => deleteLoss(l.id)} className="text-red-500 text-sm">削除</button></td>}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
     </div>
   )
 }
 
-// ==================== ロス単価設定（管理者のみ） ====================
-function LossPriceSettings({ lossPrices, setLossPrices }) {
-  const [newCategory, setNewCategory] = useState('')
-  const [newPrice, setNewPrice] = useState('')
-  const [editingId, setEditingId] = useState(null)
+// ==================== ロス単価設定 ====================
+function LossPriceSettings({ lossPrices, setLossPrices, isAdmin }) {
+  const [editingType, setEditingType] = useState(null)
   const [editPrice, setEditPrice] = useState('')
 
-  const addPrice = async () => {
-    if (!newCategory || !newPrice) { alert('カテゴリと単価を入力してください'); return }
-    if (lossPrices.find(p => p.categoryName === newCategory)) { alert('このカテゴリは既に登録されています'); return }
-    const { data, error } = await supabase.from('loss_price_settings').insert({ category_name: newCategory, price_per_gram: parseFloat(newPrice) }).select()
-    if (!error && data) {
-      setLossPrices([...lossPrices, { id: data[0].id, categoryName: newCategory, pricePerGram: parseFloat(newPrice) }])
-      setNewCategory(''); setNewPrice('')
-    }
-  }
+  const lossTypes = [{ value: 'color', label: 'カラーロス' }, { value: 'perm', label: 'パーマロス' }, { value: 'treatment', label: 'トリートメントロス' }, { value: 'other', label: 'その他' }]
 
-  const startEdit = (p) => { setEditingId(p.id); setEditPrice(p.pricePerGram.toString()) }
-  const saveEdit = async (id) => {
-    const { error } = await supabase.from('loss_price_settings').update({ price_per_gram: parseFloat(editPrice) }).eq('id', id)
-    if (!error) { setLossPrices(lossPrices.map(p => p.id === id ? { ...p, pricePerGram: parseFloat(editPrice) } : p)); setEditingId(null) }
+  const startEdit = (type, currentPrice) => { setEditingType(type); setEditPrice(currentPrice?.toString() || '0') }
+  const saveEdit = async (type) => {
+    const existing = lossPrices.find(p => p.lossType === type)
+    if (existing) { const { error } = await supabase.from('loss_prices').update({ unit_price: parseFloat(editPrice) || 0 }).eq('id', existing.id); if (!error) setLossPrices(lossPrices.map(p => p.lossType === type ? { ...p, unitPrice: parseFloat(editPrice) || 0 } : p)) }
+    else { const { data, error } = await supabase.from('loss_prices').insert({ loss_type: type, unit_price: parseFloat(editPrice) || 0 }).select(); if (!error && data) setLossPrices([...lossPrices, { id: data[0].id, lossType: type, unitPrice: parseFloat(editPrice) || 0 }]) }
+    setEditingType(null)
   }
-
-  const deletePrice = async (id) => {
-    if (!confirm('この単価設定を削除しますか？')) return
-    const { error } = await supabase.from('loss_price_settings').delete().eq('id', id)
-    if (!error) setLossPrices(lossPrices.filter(p => p.id !== id))
-  }
+  const getPrice = (type) => { const found = lossPrices.find(p => p.lossType === type); return found ? found.unitPrice : 0 }
 
   return (
-    <div className="card">
-      <h3 className="text-lg font-bold mb-4">⚙️ ロス単価設定</h3>
-      <div className="grid-2 mb-4">
-        <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>カテゴリー名</label><input type="text" value={newCategory} onChange={e => setNewCategory(e.target.value)} placeholder="例: カラー材" className="input" /></div>
-        <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>1gあたり金額（円）</label><input type="number" value={newPrice} onChange={e => setNewPrice(e.target.value)} placeholder="例: 10" className="input" step="0.1" /></div>
-      </div>
-      <button onClick={addPrice} className="btn btn-blue mb-4"><Icons.Plus /> 単価を追加</button>
-
-      {lossPrices.length === 0 ? (<p className="text-gray-500 text-center py-4">単価設定がありません</p>) : (
-        <div className="overflow-x-auto">
-          <table>
-            <thead><tr><th>カテゴリー</th><th className="text-right">単価/g</th><th className="text-center">操作</th></tr></thead>
-            <tbody>
-              {lossPrices.map(p => (
-                editingId === p.id ? (
-                  <tr key={p.id} style={{ background: '#fef9c3' }}>
-                    <td className="font-semibold">{p.categoryName}</td>
-                    <td className="text-right"><input type="number" value={editPrice} onChange={e => setEditPrice(e.target.value)} className="input" style={{ width: '100px' }} step="0.1" /></td>
-                    <td className="text-center"><button onClick={() => saveEdit(p.id)} className="text-green-600 text-sm mr-2">保存</button><button onClick={() => setEditingId(null)} className="text-gray-500 text-sm">取消</button></td>
-                  </tr>
-                ) : (
-                  <tr key={p.id}>
-                    <td className="font-semibold">{p.categoryName}</td>
-                    <td className="text-right">¥{p.pricePerGram}</td>
-                    <td className="text-center"><button onClick={() => startEdit(p)} className="text-blue-500 text-sm mr-2">編集</button><button onClick={() => deletePrice(p.id)} className="text-red-500 text-sm">削除</button></td>
-                  </tr>
-                )
-              ))}
-            </tbody>
-          </table>
+    <div className="space-y-4">
+      <div className="card">
+        <h3 className="text-lg font-bold mb-4">⚙️ ロス単価設定</h3>
+        <p className="text-sm text-gray-600 mb-4">各ロスタイプの1gあたりの単価を設定します</p>
+        <div className="space-y-3">
+          {lossTypes.map(t => (
+            <div key={t.value} className="flex justify-between items-center p-3 bg-gray-50 rounded">
+              <span className="font-semibold">{t.label}</span>
+              {editingType === t.value ? (
+                <div className="flex items-center gap-2">
+                  <span>¥</span><input type="number" value={editPrice} onChange={e => setEditPrice(e.target.value)} className="input" style={{ width: '100px' }} min="0" /><span>/g</span>
+                  <button onClick={() => saveEdit(t.value)} className="btn btn-green btn-sm">保存</button><button onClick={() => setEditingType(null)} className="btn btn-gray btn-sm">取消</button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2"><span className="text-lg font-bold">¥{getPrice(t.value).toLocaleString()}/g</span>{isAdmin && <button onClick={() => startEdit(t.value, getPrice(t.value))} className="btn btn-blue btn-sm">編集</button>}</div>
+              )}
+            </div>
+          ))}
         </div>
-      )}
-    </div>
-  )
-}
-
-// ==================== アプリ設定（管理者のみ） ====================
-function AppSettings({ passwords, setPasswords }) {
-  const [adminPw, setAdminPw] = useState(passwords.admin)
-  const [staffPw, setStaffPw] = useState(passwords.staff)
-  const [showAdmin, setShowAdmin] = useState(false)
-  const [showStaff, setShowStaff] = useState(false)
-
-  const savePasswords = async () => {
-    await supabase.from('app_settings').update({ setting_value: adminPw }).eq('setting_key', 'admin_password')
-    await supabase.from('app_settings').update({ setting_value: staffPw }).eq('setting_key', 'staff_password')
-    setPasswords({ admin: adminPw, staff: staffPw })
-    alert('パスワードを更新しました！')
-  }
-
-  return (
-    <div className="card">
-      <h3 className="text-lg font-bold mb-4">⚙️ アプリ設定</h3>
-      <div className="space-y-4">
-        <div>
-          <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>管理者パスワード</label>
-          <div className="flex gap-2">
-            <input type={showAdmin ? 'text' : 'password'} value={adminPw} onChange={e => setAdminPw(e.target.value)} className="input" />
-            <button onClick={() => setShowAdmin(!showAdmin)} className="btn btn-gray">{showAdmin ? <Icons.EyeOff /> : <Icons.Eye />}</button>
-          </div>
-        </div>
-        <div>
-          <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>スタッフパスワード</label>
-          <div className="flex gap-2">
-            <input type={showStaff ? 'text' : 'password'} value={staffPw} onChange={e => setStaffPw(e.target.value)} className="input" />
-            <button onClick={() => setShowStaff(!showStaff)} className="btn btn-gray">{showStaff ? <Icons.EyeOff /> : <Icons.Eye />}</button>
-          </div>
-        </div>
-        <button onClick={savePasswords} className="btn btn-green"><Icons.Save /> パスワードを保存</button>
       </div>
     </div>
   )
 }
+
+// ==================== アプリ設定 ====================
+function AppSettings({ appSettings, setAppSettings, isAdmin }) {
+  const [editSettings, setEditSettings] = useState({ ...appSettings })
+  const [isEditing, setIsEditing] = useState(false)
+
+  const saveSettings = async () => {
+    const { error } = await supabase.from('app_settings').upsert({ id: 1, salon_name: editSettings.salonName, regular_holidays: editSettings.regularHolidays, business_hours_start: editSettings.businessHoursStart, business_hours_end: editSettings.businessHoursEnd })
+    if (!error) { setAppSettings(editSettings); setIsEditing(false); alert('設定を保存しました') }
+  }
+
+  const holidays = [{ value: 'monday', label: '月曜' }, { value: 'tuesday', label: '火曜' }, { value: 'wednesday', label: '水曜' }, { value: 'thursday', label: '木曜' }, { value: 'friday', label: '金曜' }, { value: 'saturday', label: '土曜' }, { value: 'sunday', label: '日曜' }]
+
+  const toggleHoliday = (day) => { const current = editSettings.regularHolidays || []; if (current.includes(day)) setEditSettings({ ...editSettings, regularHolidays: current.filter(d => d !== day) }); else setEditSettings({ ...editSettings, regularHolidays: [...current, day] }) }
+
+  return (
+    <div className="space-y-4">
+      <div className="card">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-bold">⚙️ アプリ設定</h3>
+          {isAdmin && (!isEditing ? (<button onClick={() => setIsEditing(true)} className="btn btn-blue">編集</button>) : (<div className="flex gap-2"><button onClick={saveSettings} className="btn btn-green">保存</button><button onClick={() => { setIsEditing(false); setEditSettings({ ...appSettings }) }} className="btn btn-gray">取消</button></div>))}
+        </div>
+        <div className="space-y-4">
+          <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>サロン名</label>{isEditing ? (<input type="text" value={editSettings.salonName || ''} onChange={e => setEditSettings({ ...editSettings, salonName: e.target.value })} className="input" />) : (<p className="text-lg">{appSettings.salonName || '未設定'}</p>)}</div>
+          <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>定休日</label>{isEditing ? (<div className="flex flex-wrap gap-2">{holidays.map(h => (<button key={h.value} onClick={() => toggleHoliday(h.value)} className={`btn btn-sm ${(editSettings.regularHolidays || []).includes(h.value) ? 'btn-blue' : 'btn-gray'}`}>{h.label}</button>))}</div>) : (<p>{(appSettings.regularHolidays || []).map(d => holidays.find(h => h.value === d)?.label).join('、') || '未設定'}</p>)}</div>
+          <div className="grid-2">
+            <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>営業開始</label>{isEditing ? (<input type="time" value={editSettings.businessHoursStart || ''} onChange={e => setEditSettings({ ...editSettings, businessHoursStart: e.target.value })} className="input" />) : (<p>{appSettings.businessHoursStart || '未設定'}</p>)}</div>
+            <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>営業終了</label>{isEditing ? (<input type="time" value={editSettings.businessHoursEnd || ''} onChange={e => setEditSettings({ ...editSettings, businessHoursEnd: e.target.value })} className="input" />) : (<p>{appSettings.businessHoursEnd || '未設定'}</p>)}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ==================== Export ====================
+export default SalonApp
