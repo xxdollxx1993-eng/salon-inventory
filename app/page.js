@@ -116,6 +116,7 @@ function LoginScreen({ passwords, onLogin }) {
 // ==================== メインアプリ ====================
 function MainApp({ userRole, onLogout, passwords, setPasswords }) {
   const [tab, setTab] = useState('usage')
+  const [showHelp, setShowHelp] = useState(false)
   const [staff, setStaff] = useState([])
   const [products, setProducts] = useState([])
   const [categories, setCategories] = useState({ large: [], medium: [] })
@@ -218,6 +219,358 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
 
   const isAdmin = userRole === 'admin'
 
+  // ヘルプコンテンツ
+  const helpContents = {
+    usage: {
+      title: '📦 使用入力',
+      staff: `🎯 目的
+施術で使った商品の数を記録して、在庫を正確に管理します。
+
+✅ 使い方
+1. 日付を選択（今日が初期値）
+2. ⭐お気に入り or 🔍検索で商品を探す
+3. 数量を入力して「記録」
+
+💡 ポイント
+・お気に入り登録すると次から楽！
+・履歴から過去の記録も確認・修正できます`,
+      admin: `🎯 目的
+施術で使った商品の数を記録して、在庫を正確に管理します。
+
+✅ 使い方
+1. 日付を選択（今日が初期値）
+2. ⭐お気に入り or 🔍検索で商品を探す
+3. 数量を入力して「記録」
+
+💡 管理者メモ
+・使用データは月次レポートに反映
+・棚卸時の理論在庫計算に使用`
+    },
+    stockin: {
+      title: '📥 入荷',
+      staff: `🎯 目的
+届いた商品を登録して、在庫数を更新します。
+
+✅ 使い方
+1. 日付を選択
+2. ディーラー → 種類 → 商品を選択
+3. 数量を入力して「入荷登録」
+
+💡 ポイント
+・伝票を見ながら正確に入力
+・間違えたら履歴から修正できます`,
+      admin: `🎯 目的
+届いた商品を登録して、在庫数を更新します。
+
+✅ 使い方
+1. 日付を選択
+2. ディーラー → 種類 → 商品を選択
+3. 数量を入力して「入荷登録」
+
+💡 管理者メモ
+・入荷データは仕入れ額の計算に使用
+・月次レポートに自動反映`
+    },
+    timecard: {
+      title: '🕐 打刻',
+      staff: `🎯 目的
+出勤・退勤時間を記録します。
+
+✅ 使い方
+【打刻モード】
+・出勤時 → 「出勤」ボタン
+・退勤時 → 「退勤」ボタン
+
+【手動入力】
+・過去の記録を修正したい場合に使用
+
+💡 ポイント
+・打刻忘れは早めに手動入力で修正
+・月次サマリーで勤務時間を確認できます`,
+      admin: `🎯 目的
+出勤・退勤時間を記録します。
+
+✅ 管理機能
+・全スタッフの打刻履歴を確認
+・月次サマリーで勤務時間を集計
+・データは給与計算の参考に`
+    },
+    practice: {
+      title: '🎨 練習予約',
+      staff: `🎯 目的
+モデル練習の日時を予約して共有します。
+
+✅ 使い方
+1. スタッフを選択
+2. 日付・時間を選択
+3. メニューを選ぶ or 自由入力
+4. 「予約登録」
+
+💡 ポイント
+・カレンダーで他の人の予約も確認
+・定休日（月火・第三日曜）は予約不可
+・モデルルールも確認してね`,
+      admin: `🎯 目的
+モデル練習の日時を予約して共有します。
+
+✅ 管理機能
+・モデルルールの編集が可能
+・全スタッフの予約状況を一覧で確認`
+    },
+    contact: {
+      title: '📓 連絡帳',
+      staff: `📒✨ 連絡帳とは？
+
+🎯 目的
+・これは「管理」じゃなくて、あなたのための連絡帳だよ☺️
+・毎日の積み重ねを見える化して、自分のペースを知るためのツール
+・怒られるためのものじゃないから、安心して使ってね🌱
+
+✅ 使い方
+・週1回、できた日に✔をつけて提出するだけ
+・0日の週だけ、理由を選択式で選ぼう（考え込まなくてOK）
+・月末は3つの質問に答えて、今月を振り返ろう✍️
+
+💭 心構え
+・完璧じゃなくて大丈夫
+・できた日を大切にしよう◎`,
+      admin: `🗂️👀 連絡帳（管理者）
+
+🎯 目的
+・スタッフの「調子」と「ペース」を静かに見守るためのツール
+・できている／できていないを判断するものではないよ🌿
+
+✅ 各タブの使い方
+・📊管理：今週の提出状況を一覧で確認
+・🎯目標：面談内容をもとに目標と毎日やることを設定
+・👥対象者：連絡帳を使うスタッフを選択
+・👤詳細：個人の週次・月次の流れを確認
+
+💡 関わり方のポイント
+・返信は0日の人だけ、事実確認＋質問1つまで
+・アドバイスはしない、深追いしない◎`
+    },
+    order: {
+      title: '🔗 発注リンク',
+      staff: `🎯 目的
+各ディーラーの発注サイトにすぐアクセスできます。
+
+✅ 使い方
+・リンクをタップするだけ！
+・新しいタブで発注サイトが開きます`,
+      admin: `🎯 目的
+各ディーラーの発注サイトにすぐアクセスできます。
+
+✅ 管理機能
+・発注リンクの追加・編集・削除が可能
+・ディーラーごとに管理`
+    },
+    inventory: {
+      title: '📋 棚卸',
+      staff: `🎯 目的
+月末に実際の在庫を数えて記録します。
+
+✅ 使い方
+1. 担当者を選択
+2. 商品ごとに実在庫を入力
+3. 「棚卸保存」で確定
+
+💡 ポイント
+・理論在庫との差が自動計算される
+・差が大きい場合は原因を確認`,
+      admin: `🎯 目的
+月末に実際の在庫を数えて記録します。
+
+💡 管理者メモ
+・棚卸データは月次レポートに反映
+・ロス計算の基準になります`
+    },
+    purchase: {
+      title: '🛒 スタッフ購入',
+      staff: `🎯 目的
+スタッフが商品を購入した記録をつけます。
+
+✅ 使い方
+1. スタッフと日付を選択
+2. 商品を選ぶ（ディーラーで絞り込み可）
+3. 🛒カートに追加 or ⚡直接登録
+4. カートの場合は「まとめて登録」
+
+💡 ポイント
+・金額は自動で仕入れ値が入る
+・セール品は金額変更＆タグ付け可能`,
+      admin: `🎯 目的
+スタッフが商品を購入した記録をつけます。
+
+💡 管理者メモ
+・購入データは材料費計算から除外
+・PDF出力で一覧確認可能`
+    },
+    dealer: {
+      title: '💰 予算管理',
+      staff: `🎯 目的
+ディーラーごとの仕入れ予算と実績を確認できます。`,
+      admin: `🎯 目的
+ディーラーごとの仕入れ予算を設定・管理します。
+
+✅ 使い方
+1. 年月を選択
+2. 各ディーラーの予算を入力
+3. 実績は自動集計
+
+💡 ポイント
+・前月データのコピーも可能
+・達成率で仕入れ状況を把握`
+    },
+    loss: {
+      title: '📉 ロス入力',
+      staff: `🎯 目的
+破損・期限切れなどのロスを記録します。
+
+✅ 使い方
+1. ロス区分を選択
+2. 数量を入力
+3. 「記録」
+
+💡 ポイント
+・正直に記録することが大切
+・ロス削減はお店の利益につながる`,
+      admin: `🎯 目的
+破損・期限切れなどのロスを記録・管理します。
+
+💡 管理者メモ
+・ロス単価は別途設定可能
+・ロス削減達成でボーナス加算の仕組みあり`
+    },
+    monthly: {
+      title: '📊 月次レポート',
+      staff: `🎯 目的
+月ごとの仕入れ・使用・売上データを確認できます。`,
+      admin: `🎯 目的
+月ごとの経営データをまとめて確認・管理します。
+
+✅ 機能
+・仕入れ額・使用額の自動集計
+・売上・材料比率の入力
+・グラフで推移を可視化
+・PDF出力で帳簿作成`
+    },
+    bonus: {
+      title: '🎁 材料費達成率',
+      staff: `🎯 目的
+材料費の目標達成率を確認できます。`,
+      admin: `🎯 目的
+材料費目標の達成状況を管理します。
+
+✅ 機能
+・基準額の設定
+・達成率の自動計算
+・賞与計算との連動`
+    },
+    leave: {
+      title: '🏖️ 有給管理',
+      staff: `🌴📅 有給管理
+
+✅ 使い方
+・カレンダーでお店とみんなの休みをチェック👀
+・休みたい日を選んで、有給・夏休み・半休を申請しよう
+・申請すると管理者に通知が届くよ📩
+
+🔍 確認できること
+・自分の残り有給日数
+・誰がいつ休みか、全体の流れ
+
+⚠️ 注意点
+・月火・第三日曜は定休日でグレー表示だよ
+・シフト調整のため、できるだけ早めの申請が助かる🙏`,
+      admin: `🛠️📘 有給管理（管理者）
+
+🎯 目的
+・休みの偏りを防ぎながら、安心して有給を使える環境をつくるため
+・法定ルールを守りつつ、現場が回る状態を保つ👥
+
+✅ 各タブの使い方
+・📅カレンダー：全員の休みを一目で確認
+・📝申請一覧：承認待ち・承認済みを管理
+・⚙️設定：スタッフごとの付与日数を調整
+
+💡 運用のコツ
+・申請は早めに確認してシフト調整
+・同日休みが重なる時は無理のない相談を◎`
+    },
+    products: {
+      title: '📦 商品管理',
+      staff: `🎯 目的
+登録されている商品を確認できます。`,
+      admin: `🎯 目的
+商品の追加・編集・削除を行います。
+
+✅ 使い方
+1. ディーラー → カテゴリ → 商品名を入力
+2. 仕入れ値・売値を設定
+3. 「追加」で登録
+
+💡 ポイント
+・並び替えで表示順を変更可能
+・業務用/店販の区分あり`
+    },
+    staff: {
+      title: '👥 スタッフ',
+      staff: `🎯 目的
+登録されているスタッフを確認できます。`,
+      admin: `🎯 目的
+スタッフの追加・編集・設定を行います。
+
+✅ 設定項目
+・名前・入社日
+・勤務形態（正社員/パート）
+・在籍率・特別手当
+・連絡帳の対象設定`
+    },
+    export: {
+      title: '📤 出力',
+      staff: `🎯 目的
+データをCSVファイルで出力します。`,
+      admin: `🎯 目的
+各種データをCSVファイルで出力します。
+
+✅ 出力可能なデータ
+・使用履歴
+・入荷履歴
+・棚卸履歴
+・商品マスタ
+・スタッフマスタ`
+    },
+    lossprice: {
+      title: '⚙️ ロス単価設定',
+      staff: ``,
+      admin: `🎯 目的
+ロス区分ごとの単価を設定します。
+
+✅ 使い方
+1. ロス区分（カラー剤残、期限切れ等）を選択
+2. 単価を入力
+3. 保存
+
+💡 ポイント
+・ロス金額の計算に使用
+・ロス削減ボーナスに影響`
+    },
+    settings: {
+      title: '⚙️ 設定',
+      staff: ``,
+      admin: `🎯 目的
+アプリ全体の設定を管理します。
+
+✅ 設定項目
+・スタッフ用パスワード
+・管理者用パスワード
+
+⚠️ 注意
+パスワードは忘れないように！`
+    }
+  }
+
   const mainTabs = [
     { key: 'usage', label: '使用入力' },
     { key: 'stockin', label: '入荷' },
@@ -254,6 +607,7 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold">美容室在庫管理</h1>
           <div className="flex items-center gap-2">
+            <button onClick={() => setShowHelp(true)} className="btn btn-gray" style={{ padding: '0.25rem 0.5rem', fontSize: '16px' }}>❓</button>
             <span className={`badge ${isAdmin ? 'badge-red' : 'badge-blue'}`}>{isAdmin ? '管理者' : 'スタッフ'}</span>
             <button onClick={onLogout} className="btn btn-gray" style={{ padding: '0.25rem 0.5rem' }}><Icons.Logout /></button>
           </div>
@@ -299,6 +653,44 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
       {tab === 'loss' && <LossInput lossRecords={lossRecords} setLossRecords={setLossRecords} lossPrices={lossPrices} isAdmin={isAdmin} />}
       {tab === 'lossprice' && isAdmin && <LossPriceSettings lossPrices={lossPrices} setLossPrices={setLossPrices} />}
       {tab === 'settings' && isAdmin && <AppSettings passwords={passwords} setPasswords={setPasswords} />}
+
+      {/* ヘルプモーダル */}
+      {showHelp && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div style={{ backgroundColor: 'white', borderRadius: '12px', maxWidth: '500px', width: '100%', maxHeight: '80vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ padding: '1rem', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2 style={{ fontWeight: 'bold', fontSize: '18px' }}>{helpContents[tab]?.title || '📖 ヘルプ'}</h2>
+              <button onClick={() => setShowHelp(false)} style={{ fontSize: '24px', background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af' }}>×</button>
+            </div>
+            <div style={{ padding: '1rem', overflowY: 'auto', flex: 1 }}>
+              <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6', fontSize: '14px' }}>
+                {helpContents[tab] ? (isAdmin ? helpContents[tab].admin : helpContents[tab].staff) : 'このタブのヘルプはまだ準備中です。'}
+              </div>
+              
+              {/* 全ヘルプ一覧へのリンク */}
+              <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid #e5e7eb' }}>
+                <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '0.5rem' }}>📖 他の機能のヘルプ</p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                  {Object.entries(helpContents).filter(([key, val]) => {
+                    const content = isAdmin ? val.admin : val.staff
+                    return content && content !== '【後で設定】' && content.length > 0 && key !== tab
+                  }).map(([key, val]) => (
+                    <button key={key} onClick={() => setTab(key)} style={{ 
+                      fontSize: '11px', padding: '4px 8px', backgroundColor: '#f3f4f6', 
+                      border: 'none', borderRadius: '4px', cursor: 'pointer' 
+                    }}>
+                      {val.title}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div style={{ padding: '1rem', borderTop: '1px solid #e5e7eb' }}>
+              <button onClick={() => setShowHelp(false)} className="btn btn-blue w-full">閉じる</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
