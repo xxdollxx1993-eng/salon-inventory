@@ -571,34 +571,64 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
     }
   }
 
-  const mainTabs = [
-    { key: 'home', label: '🏠 ホーム' },
-    { key: 'usage', label: '使用入力' },
-    { key: 'stockin', label: '入荷' },
+  // スタッフ用タブ（メイン + その他）
+  const staffMainTabs = [
+    { key: 'home', label: '🏠' },
+    { key: 'usage', label: '📦 使用' },
+    { key: 'stockin', label: '📥 入荷' },
     { key: 'timecard', label: '🕐 打刻' },
+    { key: 'practice', label: '🎨 練習' },
+    { key: 'contact', label: '📓 連絡帳' },
+    { key: 'leave', label: '🏖️ 有給' }
+  ]
+  const staffOtherTabs = [
+    { key: 'inventory', label: '📋 棚卸' },
+    { key: 'purchase', label: '🛒 スタッフ購入' },
+    { key: 'loss', label: '📉 ロス入力' },
+    { key: 'bonus', label: '🎯 材料費達成率' },
+    { key: 'products', label: '📦 商品管理' },
+    { key: 'staff', label: '👥 スタッフ' },
+    { key: 'order', label: '🔗 発注リンク' },
+    { key: 'export', label: '📤 出力' }
+  ]
+
+  // 管理者用タブ（グループ分け）
+  const adminMainTabs = [
+    { key: 'home', label: '🏠' },
+    { key: 'usage', label: '📦 使用' },
+    { key: 'stockin', label: '📥 入荷' },
+    { key: 'timecard', label: '🕐 打刻' }
+  ]
+  const adminManageTabs = [
     { key: 'practice', label: '🎨 練習予約' },
     { key: 'contact', label: '📓 連絡帳' },
-    { key: 'order', label: '発注リンク' }
+    { key: 'leave', label: '🏖️ 有給管理' }
   ]
-  const otherTabs = [
-    { key: 'inventory', label: '棚卸' },
-    { key: 'dealer', label: '予算管理' },
-    { key: 'purchase', label: 'スタッフ購入' },
-    { key: 'loss', label: 'ロス入力' },
+  const adminBusinessTabs = [
+    { key: 'inventory', label: '📋 棚卸' },
     { key: 'monthly', label: '📊 月次レポート' },
-    { key: 'bonus', label: '材料費達成率' },
-    { key: 'leave', label: '🏖️ 有給管理' },
-    { key: 'products', label: '商品管理' },
-    { key: 'staff', label: 'スタッフ' },
-    { key: 'export', label: '出力' },
-    ...(isAdmin ? [
-      { key: 'lossprice', label: 'ロス単価設定' },
-      { key: 'settings', label: '設定' }
-    ] : [])
+    { key: 'dealer', label: '💰 予算管理' },
+    { key: 'loss', label: '📉 ロス入力' },
+    { key: 'purchase', label: '🛒 スタッフ購入' },
+    { key: 'bonus', label: '🎯 材料費達成率' }
   ]
-  const allTabs = [...mainTabs, ...otherTabs]
-  const currentLabel = allTabs.find(t => t.key === tab)?.label || '使用入力'
-  const isOtherTab = otherTabs.some(t => t.key === tab)
+  const adminSettingsTabs = [
+    { key: 'products', label: '📦 商品管理' },
+    { key: 'staff', label: '👥 スタッフ' },
+    { key: 'order', label: '🔗 発注リンク' },
+    { key: 'export', label: '📤 出力' },
+    { key: 'lossprice', label: '⚙️ ロス単価' },
+    { key: 'settings', label: '⚙️ 設定' }
+  ]
+
+  // 全タブ（ヘルプ用）
+  const allTabs = [...staffMainTabs, ...staffOtherTabs, ...adminBusinessTabs, ...adminSettingsTabs]
+  
+  // 現在のグループ判定
+  const isStaffOtherTab = staffOtherTabs.some(t => t.key === tab)
+  const isManageTab = adminManageTabs.some(t => t.key === tab)
+  const isBusinessTab = adminBusinessTabs.some(t => t.key === tab)
+  const isSettingsTab = adminSettingsTabs.some(t => t.key === tab)
 
   if (loading) return <div className="container" style={{ paddingTop: '4rem', textAlign: 'center' }}><p>読み込み中...</p></div>
 
@@ -614,20 +644,67 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
           </div>
         </div>
         <div className="flex gap-2 flex-wrap">
-          {mainTabs.map(t => (
-            <button key={t.key} className={`tab ${tab === t.key ? 'active' : ''}`} onClick={() => setTab(t.key)}>{t.label}</button>
-          ))}
-          <select
-            value={isOtherTab ? tab : ''}
-            onChange={e => e.target.value && setTab(e.target.value)}
-            className={`select ${isOtherTab ? 'bg-blue-100 border-blue-500' : ''}`}
-            style={{ minWidth: '120px' }}
-          >
-            <option value="">{isOtherTab ? currentLabel : 'その他 ▼'}</option>
-            {otherTabs.map(t => (
-              <option key={t.key} value={t.key}>{t.label}</option>
-            ))}
-          </select>
+          {/* スタッフ用：メイン + その他 */}
+          {!isAdmin && (
+            <>
+              {staffMainTabs.map(t => (
+                <button key={t.key} className={`tab ${tab === t.key ? 'active' : ''}`} onClick={() => setTab(t.key)}>{t.label}</button>
+              ))}
+              <select
+                value={isStaffOtherTab ? tab : ''}
+                onChange={e => e.target.value && setTab(e.target.value)}
+                className={`select ${isStaffOtherTab ? 'bg-blue-100 border-blue-500' : ''}`}
+                style={{ minWidth: '100px', padding: '0.5rem' }}
+              >
+                <option value="">その他 ▼</option>
+                {staffOtherTabs.map(t => (
+                  <option key={t.key} value={t.key}>{t.label}</option>
+                ))}
+              </select>
+            </>
+          )}
+          
+          {/* 管理者用：グループ分けタブ */}
+          {isAdmin && (
+            <>
+              {adminMainTabs.map(t => (
+                <button key={t.key} className={`tab ${tab === t.key ? 'active' : ''}`} onClick={() => setTab(t.key)}>{t.label}</button>
+              ))}
+              <select
+                value={isManageTab ? tab : ''}
+                onChange={e => e.target.value && setTab(e.target.value)}
+                className={`select ${isManageTab ? 'bg-blue-100 border-blue-500' : ''}`}
+                style={{ minWidth: '90px', padding: '0.5rem' }}
+              >
+                <option value="">管理 ▼</option>
+                {adminManageTabs.map(t => (
+                  <option key={t.key} value={t.key}>{t.label}</option>
+                ))}
+              </select>
+              <select
+                value={isBusinessTab ? tab : ''}
+                onChange={e => e.target.value && setTab(e.target.value)}
+                className={`select ${isBusinessTab ? 'bg-green-100 border-green-500' : ''}`}
+                style={{ minWidth: '90px', padding: '0.5rem' }}
+              >
+                <option value="">経営 ▼</option>
+                {adminBusinessTabs.map(t => (
+                  <option key={t.key} value={t.key}>{t.label}</option>
+                ))}
+              </select>
+              <select
+                value={isSettingsTab ? tab : ''}
+                onChange={e => e.target.value && setTab(e.target.value)}
+                className={`select ${isSettingsTab ? 'bg-gray-200 border-gray-500' : ''}`}
+                style={{ minWidth: '90px', padding: '0.5rem' }}
+              >
+                <option value="">設定 ▼</option>
+                {adminSettingsTabs.map(t => (
+                  <option key={t.key} value={t.key}>{t.label}</option>
+                ))}
+              </select>
+            </>
+          )}
         </div>
       </div>
 
