@@ -1904,60 +1904,180 @@ function InventoryInput({ products, staff, usage, stockIn, inventoryHistory, set
       <div className="card">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-bold">📋 棚卸</h3>
-          <button onClick={() => setShowHistory(!showHistory)} className={`btn ${showHistory ? 'btn-green' : 'btn-gray'}`}><Icons.History /> {showHistory ? '入力に戻る' : '履歴'}</button>
+          <button onClick={() => setShowHistory(!showHistory)} style={{
+            padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: '600', fontSize: '14px',
+            backgroundColor: showHistory ? '#22c55e' : '#f3f4f6', color: showHistory ? '#fff' : '#374151'
+          }}>
+            {showHistory ? '← 入力に戻る' : '📋 履歴'}
+          </button>
         </div>
         {!showHistory ? (
           <>
-            <div className="grid-2 mb-4">
-              <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>棚卸日</label><input type="date" value={date} onChange={e => setDate(e.target.value)} className="input" /></div>
-              <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>担当者</label><select value={currStaff} onChange={e => setCurrStaff(e.target.value)} className="select"><option value="">選択</option>{staff.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}</select></div>
-            </div>
-            {lastDate && (<><div className="bg-gray-50 p-3 rounded mb-4 text-sm">前回棚卸日：<span className="font-semibold">{lastDate}</span></div><button onClick={applyExpectedToAll} className="btn btn-blue w-full py-3 mb-4"><Icons.Calculator /> 予想在庫を自動入力</button></>)}
-            <div className="bg-blue-50 p-4 rounded mb-4 grid-2">
-              <div className="summary-card"><div className="label">在庫資産</div><div className="value text-blue-600">¥{totP.toLocaleString()}</div></div>
-              <div className="summary-card"><div className="label">差異あり</div><div className={`value ${productsWithDiff > 0 ? 'text-orange-600' : 'text-green-600'}`}>{productsWithDiff}件</div></div>
-            </div>
-            {lastDate && (<button onClick={() => setShowOnlyDiff(!showOnlyDiff)} className={`btn w-full mb-4 ${showOnlyDiff ? 'btn-yellow' : 'btn-gray'}`}><Icons.Filter /> {showOnlyDiff ? `差異ありのみ表示中（${productsWithDiff}件）` : '差異ありだけ表示'}</button>)}
-            {Object.keys(grouped).map(lg => { const cats = Object.keys(grouped[lg]).filter(md => getFilteredProducts(grouped[lg][md]).length > 0); if (cats.length === 0) return null; return (
-              <div key={lg} className="card mb-4">
-                <h3 className="text-lg font-bold mb-4 text-blue-600">{lg}</h3>
-                {cats.map(md => { const filtered = getFilteredProducts(grouped[lg][md]); if (filtered.length === 0) return null; return (
-                  <div key={md} className="mb-4">
-                    <h4 className="font-semibold mb-2 text-gray-700">{md}</h4>
-                    <div className="overflow-x-auto">
-                      <table className="text-sm">
-                        <thead><tr><th>商品</th><th className="text-right">前回</th><th className="text-right text-red-600">使用</th><th className="text-right text-purple-600">入荷</th><th className="text-right text-blue-600">予想</th><th className="text-center">実際</th><th className="text-center">差異</th></tr></thead>
-                        <tbody>{filtered.map(p => { const q = inv[p.id] || 0; const last = getLastInventory(p.id); const usageQty = getUsageSinceLastInventory(p.id); const stockInQty = getStockInSinceLastInventory(p.id); const expected = getExpectedInventory(p.id); const diff = getDifference(p.id); return (
-                          <tr key={p.id} style={{ background: diff !== null && diff !== 0 ? '#fefce8' : '' }}>
-                            <td>{p.name}</td><td className="text-right text-gray-500">{last !== null ? last : '-'}</td><td className="text-right text-red-600 font-semibold">{last !== null ? `-${usageQty}` : '-'}</td><td className="text-right text-purple-600 font-semibold">{last !== null && stockInQty > 0 ? `+${stockInQty}` : '-'}</td><td className="text-right text-blue-600 font-semibold">{expected !== null ? expected : '-'}</td>
-                            <td className="text-center"><input type="number" value={inv[p.id] === 0 ? '' : inv[p.id]} onChange={e => setInv({...inv, [p.id]: e.target.value === '' ? 0 : parseInt(e.target.value) || 0})} className="input" style={{ width: '5rem', textAlign: 'center' }} min="0" placeholder="0" /></td>
-                            <td className="text-center">{diff !== null ? (<span className={`badge ${diff === 0 ? 'badge-green' : diff > 0 ? 'badge-blue' : 'badge-red'}`}>{diff === 0 ? <><Icons.Check /> OK</> : <><Icons.Alert /> {diff > 0 ? '+' : ''}{diff}</>}</span>) : '-'}</td>
-                          </tr>
-                        ) })}</tbody>
-                      </table>
-                    </div>
-                  </div>
-                ) })}
+            {/* 日付・担当者 */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>棚卸日</label>
+                <input type="date" value={date} onChange={e => setDate(e.target.value)} className="input" />
               </div>
-            ) })}
-            <button onClick={saveInv} className="btn btn-green w-full py-3" style={{ fontSize: '1.1rem' }}><Icons.Save /> 棚卸保存</button>
+              <div>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>担当者</label>
+                <select value={currStaff} onChange={e => setCurrStaff(e.target.value)} className="select">
+                  <option value="">選択</option>
+                  {staff.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
+                </select>
+              </div>
+            </div>
+            
+            {/* 前回棚卸日・自動入力 */}
+            {lastDate && (
+              <>
+                <div style={{ backgroundColor: '#f9fafb', padding: '12px 16px', borderRadius: '10px', marginBottom: '12px', fontSize: '14px' }}>
+                  前回棚卸日：<span style={{ fontWeight: '600' }}>{lastDate}</span>
+                </div>
+                <button onClick={applyExpectedToAll} style={{
+                  width: '100%', padding: '14px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+                  backgroundColor: '#3b82f6', color: '#fff', fontSize: '15px', fontWeight: 'bold', marginBottom: '16px'
+                }}>🧮 予想在庫を自動入力</button>
+              </>
+            )}
+            
+            {/* サマリー */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+              <div style={{ backgroundColor: '#eff6ff', padding: '16px', borderRadius: '12px', textAlign: 'center' }}>
+                <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>在庫資産</div>
+                <div style={{ fontSize: '22px', fontWeight: 'bold', color: '#2563eb' }}>¥{totP.toLocaleString()}</div>
+              </div>
+              <div style={{ backgroundColor: productsWithDiff > 0 ? '#fef3c7' : '#f0fdf4', padding: '16px', borderRadius: '12px', textAlign: 'center' }}>
+                <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>差異あり</div>
+                <div style={{ fontSize: '22px', fontWeight: 'bold', color: productsWithDiff > 0 ? '#d97706' : '#16a34a' }}>{productsWithDiff}<span style={{ fontSize: '14px', marginLeft: '2px' }}>件</span></div>
+              </div>
+            </div>
+            
+            {/* 差異フィルター */}
+            {lastDate && (
+              <button onClick={() => setShowOnlyDiff(!showOnlyDiff)} style={{
+                width: '100%', padding: '12px', borderRadius: '10px', border: 'none', cursor: 'pointer', marginBottom: '16px',
+                backgroundColor: showOnlyDiff ? '#fef3c7' : '#f3f4f6', color: showOnlyDiff ? '#92400e' : '#374151',
+                fontWeight: '600', fontSize: '14px'
+              }}>🔍 {showOnlyDiff ? `差異ありのみ表示中（${productsWithDiff}件）` : '差異ありだけ表示'}</button>
+            )}
+            
+            {/* 商品リスト */}
+            {Object.keys(grouped).map(lg => { 
+              const cats = Object.keys(grouped[lg]).filter(md => getFilteredProducts(grouped[lg][md]).length > 0)
+              if (cats.length === 0) return null
+              return (
+                <div key={lg} style={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '16px', marginBottom: '16px' }}>
+                  <h3 style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '16px', color: '#2563eb', borderBottom: '2px solid #dbeafe', paddingBottom: '8px' }}>{lg}</h3>
+                  {cats.map(md => { 
+                    const filtered = getFilteredProducts(grouped[lg][md])
+                    if (filtered.length === 0) return null
+                    return (
+                      <div key={md} style={{ marginBottom: '16px' }}>
+                        <h4 style={{ fontWeight: '600', marginBottom: '8px', color: '#6b7280', fontSize: '14px' }}>{md}</h4>
+                        <div style={{ overflowX: 'auto' }}>
+                          <table style={{ width: '100%', fontSize: '13px', borderCollapse: 'collapse' }}>
+                            <thead>
+                              <tr style={{ backgroundColor: '#f9fafb' }}>
+                                <th style={{ padding: '10px 8px', textAlign: 'left', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>商品</th>
+                                <th style={{ padding: '10px 6px', textAlign: 'right', fontWeight: '600', borderBottom: '2px solid #e5e7eb', color: '#6b7280' }}>前回</th>
+                                <th style={{ padding: '10px 6px', textAlign: 'right', fontWeight: '600', borderBottom: '2px solid #e5e7eb', color: '#ef4444' }}>使用</th>
+                                <th style={{ padding: '10px 6px', textAlign: 'right', fontWeight: '600', borderBottom: '2px solid #e5e7eb', color: '#8b5cf6' }}>入荷</th>
+                                <th style={{ padding: '10px 6px', textAlign: 'right', fontWeight: '600', borderBottom: '2px solid #e5e7eb', color: '#3b82f6' }}>予想</th>
+                                <th style={{ padding: '10px 6px', textAlign: 'center', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>実際</th>
+                                <th style={{ padding: '10px 6px', textAlign: 'center', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>差異</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {filtered.map(p => { 
+                                const q = inv[p.id] || 0
+                                const last = getLastInventory(p.id)
+                                const usageQty = getUsageSinceLastInventory(p.id)
+                                const stockInQty = getStockInSinceLastInventory(p.id)
+                                const expected = getExpectedInventory(p.id)
+                                const diff = getDifference(p.id)
+                                return (
+                                  <tr key={p.id} style={{ borderBottom: '1px solid #f3f4f6', backgroundColor: diff !== null && diff !== 0 ? '#fefce8' : '#fff' }}>
+                                    <td style={{ padding: '10px 8px', fontWeight: '500' }}>{p.name}</td>
+                                    <td style={{ padding: '10px 6px', textAlign: 'right', color: '#6b7280' }}>{last !== null ? last : '-'}</td>
+                                    <td style={{ padding: '10px 6px', textAlign: 'right', color: '#ef4444', fontWeight: '600' }}>{last !== null ? `-${usageQty}` : '-'}</td>
+                                    <td style={{ padding: '10px 6px', textAlign: 'right', color: '#8b5cf6', fontWeight: '600' }}>{last !== null && stockInQty > 0 ? `+${stockInQty}` : '-'}</td>
+                                    <td style={{ padding: '10px 6px', textAlign: 'right', color: '#3b82f6', fontWeight: '600' }}>{expected !== null ? expected : '-'}</td>
+                                    <td style={{ padding: '8px 4px', textAlign: 'center' }}>
+                                      <input type="number" value={inv[p.id] === 0 ? '' : inv[p.id]} onChange={e => setInv({...inv, [p.id]: e.target.value === '' ? 0 : parseInt(e.target.value) || 0})} style={{
+                                        width: '56px', height: '36px', textAlign: 'center', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '14px', fontWeight: '600'
+                                      }} min="0" placeholder="0" />
+                                    </td>
+                                    <td style={{ padding: '10px 6px', textAlign: 'center' }}>
+                                      {diff !== null ? (
+                                        <span style={{
+                                          display: 'inline-block', padding: '4px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: '600',
+                                          backgroundColor: diff === 0 ? '#dcfce7' : diff > 0 ? '#dbeafe' : '#fee2e2',
+                                          color: diff === 0 ? '#166534' : diff > 0 ? '#1e40af' : '#dc2626'
+                                        }}>{diff === 0 ? '✓ OK' : (diff > 0 ? '+' : '') + diff}</span>
+                                      ) : '-'}
+                                    </td>
+                                  </tr>
+                                )
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )
+            })}
+            
+            {/* 保存ボタン */}
+            <button onClick={saveInv} style={{
+              width: '100%', padding: '16px', borderRadius: '12px', border: 'none', cursor: 'pointer',
+              backgroundColor: '#22c55e', color: '#fff', fontSize: '16px', fontWeight: 'bold'
+            }}>✓ 棚卸保存</button>
           </>
         ) : (
           <div>
-            <h4 className="font-semibold mb-4">棚卸履歴</h4>
-            {inventoryHistory.length === 0 ? (<p className="text-gray-500 text-center py-4">まだ棚卸記録がありません</p>) : (
-              <div className="space-y-3">
+            <h4 style={{ fontWeight: '600', marginBottom: '16px', fontSize: '16px' }}>棚卸履歴</h4>
+            {inventoryHistory.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '32px 16px', color: '#9ca3af' }}>
+                <div style={{ fontSize: '32px', marginBottom: '8px' }}>📭</div>
+                <p style={{ fontWeight: '600' }}>まだ棚卸記録がありません</p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {[...inventoryHistory].reverse().map(h => (
-                  <div key={h.id} className="border rounded p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <div><div className="font-bold">{h.date}</div><div className="text-sm text-gray-500">担当: {h.staff}</div></div>
-                      <div className="text-right"><div className="font-bold text-blue-600">¥{h.totalPurchaseValue?.toLocaleString() || 0}</div><button onClick={() => deleteHistory(h.id)} className="text-red-500 text-sm">削除</button></div>
+                  <div key={h.id} style={{ border: '1px solid #e5e7eb', borderRadius: '12px', padding: '16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                      <div>
+                        <div style={{ fontWeight: 'bold', fontSize: '15px' }}>{h.date}</div>
+                        <div style={{ fontSize: '13px', color: '#6b7280' }}>担当: {h.staff}</div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontWeight: 'bold', color: '#2563eb', fontSize: '16px' }}>¥{h.totalPurchaseValue?.toLocaleString() || 0}</div>
+                        <button onClick={() => deleteHistory(h.id)} style={{ color: '#ef4444', fontSize: '13px', background: 'none', border: 'none', cursor: 'pointer' }}>削除</button>
+                      </div>
                     </div>
                     <details>
-                      <summary className="cursor-pointer text-sm text-blue-500">詳細を見る</summary>
-                      <div className="mt-2 max-h-48 overflow-y-auto">
-                        <table className="text-xs"><thead><tr><th>商品</th><th className="text-right">数量</th><th className="text-right">金額</th></tr></thead>
-                          <tbody>{h.data?.filter(d => d.quantity > 0).map((d, i) => (<tr key={i}><td>{d.name}</td><td className="text-right">{d.quantity}</td><td className="text-right">¥{(d.quantity * d.purchasePrice).toLocaleString()}</td></tr>))}</tbody>
+                      <summary style={{ cursor: 'pointer', fontSize: '13px', color: '#3b82f6', fontWeight: '500' }}>詳細を見る</summary>
+                      <div style={{ marginTop: '12px', maxHeight: '200px', overflowY: 'auto' }}>
+                        <table style={{ width: '100%', fontSize: '12px', borderCollapse: 'collapse' }}>
+                          <thead>
+                            <tr style={{ backgroundColor: '#f9fafb' }}>
+                              <th style={{ padding: '8px', textAlign: 'left', fontWeight: '600' }}>商品</th>
+                              <th style={{ padding: '8px', textAlign: 'right', fontWeight: '600' }}>数量</th>
+                              <th style={{ padding: '8px', textAlign: 'right', fontWeight: '600' }}>金額</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {h.data?.filter(d => d.quantity > 0).map((d, i) => (
+                              <tr key={i} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                                <td style={{ padding: '8px' }}>{d.name}</td>
+                                <td style={{ padding: '8px', textAlign: 'right' }}>{d.quantity}</td>
+                                <td style={{ padding: '8px', textAlign: 'right' }}>¥{(d.quantity * d.purchasePrice).toLocaleString()}</td>
+                              </tr>
+                            ))}
+                          </tbody>
                         </table>
                       </div>
                     </details>
@@ -2522,46 +2642,165 @@ function ProductManagement({ products, setProducts, categories, setCategories })
 
   return (
     <div className="space-y-4">
+      {/* カテゴリー管理 */}
       <div className="card">
-        <h3 className="text-lg font-bold mb-4">カテゴリー管理</h3>
-        <div className="grid-2">
-          <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>ディーラー</label><div className="flex gap-2"><input type="text" value={newLarge} onChange={e => setNewLarge(e.target.value)} placeholder="例：〇〇商事" className="input" /><button onClick={() => addCategory('large', newLarge, setNewLarge)} className="btn btn-blue">追加</button></div><div className="flex gap-2 mt-2 flex-wrap">{categories.large.map((c, i) => (<span key={i} className="bg-blue-50 px-3 py-1 rounded text-sm flex items-center gap-1">{c.name}<button onClick={() => deleteCategory('large', c.name)} className="text-red-500 ml-1">×</button></span>))}</div></div>
-          <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>種類</label><div className="flex gap-2"><input type="text" value={newMedium} onChange={e => setNewMedium(e.target.value)} placeholder="例：シャンプー" className="input" /><button onClick={() => addCategory('medium', newMedium, setNewMedium)} className="btn btn-green">追加</button></div><div className="flex gap-2 mt-2 flex-wrap">{categories.medium.map((c, i) => (<span key={i} className="bg-green-50 px-3 py-1 rounded text-sm flex items-center gap-1">{c}<button onClick={() => deleteCategory('medium', c)} className="text-red-500 ml-1">×</button></span>))}</div></div>
+        <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span>📁</span> カテゴリー管理
+        </h3>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          {/* ディーラー */}
+          <div>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>ディーラー</label>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+              <input type="text" value={newLarge} onChange={e => setNewLarge(e.target.value)} placeholder="例：〇〇商事" className="input" style={{ flex: 1 }} />
+              <button onClick={() => addCategory('large', newLarge, setNewLarge)} style={{
+                padding: '10px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+                backgroundColor: '#3b82f6', color: '#fff', fontWeight: '600', fontSize: '14px'
+              }}>追加</button>
+            </div>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              {categories.large.map((c, i) => (
+                <span key={i} style={{
+                  backgroundColor: '#eff6ff', padding: '6px 12px', borderRadius: '20px', fontSize: '13px',
+                  display: 'flex', alignItems: 'center', gap: '6px', color: '#1e40af'
+                }}>
+                  {c.name}
+                  <button onClick={() => deleteCategory('large', c.name)} style={{
+                    background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', fontWeight: 'bold', fontSize: '14px'
+                  }}>×</button>
+                </span>
+              ))}
+            </div>
+          </div>
+          {/* 種類 */}
+          <div>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>種類</label>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+              <input type="text" value={newMedium} onChange={e => setNewMedium(e.target.value)} placeholder="例：シャンプー" className="input" style={{ flex: 1 }} />
+              <button onClick={() => addCategory('medium', newMedium, setNewMedium)} style={{
+                padding: '10px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+                backgroundColor: '#22c55e', color: '#fff', fontWeight: '600', fontSize: '14px'
+              }}>追加</button>
+            </div>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              {categories.medium.map((c, i) => (
+                <span key={i} style={{
+                  backgroundColor: '#f0fdf4', padding: '6px 12px', borderRadius: '20px', fontSize: '13px',
+                  display: 'flex', alignItems: 'center', gap: '6px', color: '#166534'
+                }}>
+                  {c}
+                  <button onClick={() => deleteCategory('medium', c)} style={{
+                    background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', fontWeight: 'bold', fontSize: '14px'
+                  }}>×</button>
+                </span>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
+      
+      {/* 商品登録 */}
       <div className="card">
-        <h3 className="text-lg font-bold mb-4">商品登録</h3>
-        <div className="grid-2 mb-4"><select value={newProduct.largeCategory} onChange={e => setNewProduct({ ...newProduct, largeCategory: e.target.value })} className="select"><option value="">ディーラー</option>{categories.large.map((c, i) => <option key={i} value={c.name}>{c.name}</option>)}</select><select value={newProduct.mediumCategory} onChange={e => setNewProduct({ ...newProduct, mediumCategory: e.target.value })} className="select"><option value="">種類</option>{categories.medium.map((c, i) => <option key={i} value={c}>{c}</option>)}</select></div>
-        <div className="grid-2 mb-4"><input type="text" value={newProduct.name} onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} placeholder="商品名" className="input" /><select value={newProduct.productType} onChange={e => setNewProduct({ ...newProduct, productType: e.target.value })} className="select">{productTypes.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}</select></div>
-        <div className="grid-2 mb-4"><input type="number" value={newProduct.purchasePrice} onChange={e => setNewProduct({ ...newProduct, purchasePrice: e.target.value })} placeholder="仕入れ価格" className="input" /><input type="number" value={newProduct.sellingPrice} onChange={e => setNewProduct({ ...newProduct, sellingPrice: e.target.value })} placeholder="販売価格" className="input" /></div>
-        <button onClick={addProduct} className="btn btn-blue"><Icons.Plus /> 商品を追加</button>
-      </div>
-      <div className="card">
-        <h3 className="text-lg font-bold mb-4">商品一覧 ({filteredProducts.length}件)</h3>
-        <div className="grid-3 gap-2 mb-4">
-          <select value={filterDealer} onChange={e => setFilterDealer(e.target.value)} className="select"><option value="">全ディーラー</option>{categories.large.map((c, i) => <option key={i} value={c.name}>{c.name}</option>)}</select>
-          <select value={filterCategory} onChange={e => setFilterCategory(e.target.value)} className="select"><option value="">全種類</option>{categories.medium.map((c, i) => <option key={i} value={c}>{c}</option>)}</select>
-          <div className="flex items-center gap-2"><Icons.Search /><input type="text" value={searchText} onChange={e => setSearchText(e.target.value)} placeholder="商品名検索" className="input" /></div>
+        <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span>➕</span> 商品登録
+        </h3>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+          <select value={newProduct.largeCategory} onChange={e => setNewProduct({ ...newProduct, largeCategory: e.target.value })} className="select">
+            <option value="">ディーラー</option>
+            {categories.large.map((c, i) => <option key={i} value={c.name}>{c.name}</option>)}
+          </select>
+          <select value={newProduct.mediumCategory} onChange={e => setNewProduct({ ...newProduct, mediumCategory: e.target.value })} className="select">
+            <option value="">種類</option>
+            {categories.medium.map((c, i) => <option key={i} value={c}>{c}</option>)}
+          </select>
         </div>
-        <div className="overflow-x-auto">
-          <table><thead><tr><th>タイプ</th><th>ディーラー</th><th>種類</th><th>商品名</th><th className="text-right">仕入れ</th><th className="text-right">販売</th><th className="text-center">操作</th></tr></thead>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+          <input type="text" value={newProduct.name} onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} placeholder="商品名" className="input" />
+          <select value={newProduct.productType} onChange={e => setNewProduct({ ...newProduct, productType: e.target.value })} className="select">
+            {productTypes.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+          </select>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+          <input type="number" value={newProduct.purchasePrice} onChange={e => setNewProduct({ ...newProduct, purchasePrice: e.target.value })} placeholder="仕入れ価格" className="input" />
+          <input type="number" value={newProduct.sellingPrice} onChange={e => setNewProduct({ ...newProduct, sellingPrice: e.target.value })} placeholder="販売価格" className="input" />
+        </div>
+        <button onClick={addProduct} style={{
+          padding: '12px 24px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+          backgroundColor: '#3b82f6', color: '#fff', fontWeight: '600', fontSize: '15px'
+        }}>＋ 商品を追加</button>
+      </div>
+      
+      {/* 商品一覧 */}
+      <div className="card">
+        <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span>📦</span> 商品一覧 <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: 'normal' }}>({filteredProducts.length}件)</span>
+        </h3>
+        
+        {/* フィルター */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '16px' }}>
+          <select value={filterDealer} onChange={e => setFilterDealer(e.target.value)} className="select">
+            <option value="">全ディーラー</option>
+            {categories.large.map((c, i) => <option key={i} value={c.name}>{c.name}</option>)}
+          </select>
+          <select value={filterCategory} onChange={e => setFilterCategory(e.target.value)} className="select">
+            <option value="">全種類</option>
+            {categories.medium.map((c, i) => <option key={i} value={c}>{c}</option>)}
+          </select>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#f9fafb', borderRadius: '8px', padding: '0 12px' }}>
+            <span style={{ color: '#9ca3af' }}>🔍</span>
+            <input type="text" value={searchText} onChange={e => setSearchText(e.target.value)} placeholder="商品名検索" style={{
+              flex: 1, border: 'none', background: 'transparent', padding: '10px 0', outline: 'none', fontSize: '14px'
+            }} />
+          </div>
+        </div>
+        
+        {/* テーブル */}
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', fontSize: '13px', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ backgroundColor: '#f9fafb' }}>
+                <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>タイプ</th>
+                <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>ディーラー</th>
+                <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>種類</th>
+                <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>商品名</th>
+                <th style={{ padding: '12px 8px', textAlign: 'right', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>仕入れ</th>
+                <th style={{ padding: '12px 8px', textAlign: 'right', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>販売</th>
+                <th style={{ padding: '12px 8px', textAlign: 'center', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>操作</th>
+              </tr>
+            </thead>
             <tbody>
               {filteredProducts.map(p => (
                 editingId === p.id ? (
-                  <tr key={p.id} style={{ background: '#fef9c3' }}>
-                    <td><select value={editData.productType} onChange={e => setEditData({...editData, productType: e.target.value})} className="select">{productTypes.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}</select></td>
-                    <td><select value={editData.largeCategory} onChange={e => setEditData({...editData, largeCategory: e.target.value})} className="select">{categories.large.map((c, i) => <option key={i} value={c.name}>{c.name}</option>)}</select></td>
-                    <td><select value={editData.mediumCategory} onChange={e => setEditData({...editData, mediumCategory: e.target.value})} className="select">{categories.medium.map((c, i) => <option key={i} value={c}>{c}</option>)}</select></td>
-                    <td><input type="text" value={editData.name} onChange={e => setEditData({...editData, name: e.target.value})} className="input" /></td>
-                    <td><input type="number" value={editData.purchasePrice} onChange={e => setEditData({...editData, purchasePrice: e.target.value})} className="input" style={{ width: '80px' }} /></td>
-                    <td><input type="number" value={editData.sellingPrice} onChange={e => setEditData({...editData, sellingPrice: e.target.value})} className="input" style={{ width: '80px' }} /></td>
-                    <td className="text-center"><button onClick={() => saveEdit(p.id)} className="text-green-600 text-sm mr-2">保存</button><button onClick={() => setEditingId(null)} className="text-gray-500 text-sm">取消</button></td>
+                  <tr key={p.id} style={{ backgroundColor: '#fef9c3' }}>
+                    <td style={{ padding: '8px' }}><select value={editData.productType} onChange={e => setEditData({...editData, productType: e.target.value})} className="select" style={{ fontSize: '12px' }}>{productTypes.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}</select></td>
+                    <td style={{ padding: '8px' }}><select value={editData.largeCategory} onChange={e => setEditData({...editData, largeCategory: e.target.value})} className="select" style={{ fontSize: '12px' }}>{categories.large.map((c, i) => <option key={i} value={c.name}>{c.name}</option>)}</select></td>
+                    <td style={{ padding: '8px' }}><select value={editData.mediumCategory} onChange={e => setEditData({...editData, mediumCategory: e.target.value})} className="select" style={{ fontSize: '12px' }}>{categories.medium.map((c, i) => <option key={i} value={c}>{c}</option>)}</select></td>
+                    <td style={{ padding: '8px' }}><input type="text" value={editData.name} onChange={e => setEditData({...editData, name: e.target.value})} className="input" style={{ fontSize: '12px' }} /></td>
+                    <td style={{ padding: '8px' }}><input type="number" value={editData.purchasePrice} onChange={e => setEditData({...editData, purchasePrice: e.target.value})} className="input" style={{ width: '80px', fontSize: '12px' }} /></td>
+                    <td style={{ padding: '8px' }}><input type="number" value={editData.sellingPrice} onChange={e => setEditData({...editData, sellingPrice: e.target.value})} className="input" style={{ width: '80px', fontSize: '12px' }} /></td>
+                    <td style={{ padding: '8px', textAlign: 'center' }}>
+                      <button onClick={() => saveEdit(p.id)} style={{ color: '#16a34a', fontSize: '13px', marginRight: '8px', background: 'none', border: 'none', cursor: 'pointer' }}>保存</button>
+                      <button onClick={() => setEditingId(null)} style={{ color: '#6b7280', fontSize: '13px', background: 'none', border: 'none', cursor: 'pointer' }}>取消</button>
+                    </td>
                   </tr>
                 ) : (
-                  <tr key={p.id}>
-                    <td><span className={`badge ${p.productType === 'retail' ? 'badge-blue' : p.productType === 'both' ? 'badge-yellow' : 'badge-green'}`}>{getTypeLabel(p.productType)}</span></td>
-                    <td>{p.largeCategory}</td><td>{p.mediumCategory}</td><td>{p.name}</td><td className="text-right">¥{p.purchasePrice.toLocaleString()}</td><td className="text-right">¥{p.sellingPrice.toLocaleString()}</td>
-                    <td className="text-center"><button onClick={() => startEdit(p)} className="text-blue-500 text-sm mr-2">編集</button><button onClick={() => deleteProduct(p.id)} className="text-red-500 text-sm">削除</button></td>
+                  <tr key={p.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                    <td style={{ padding: '10px 8px' }}>
+                      <span style={{
+                        display: 'inline-block', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: '600',
+                        backgroundColor: p.productType === 'retail' ? '#dbeafe' : p.productType === 'both' ? '#fef3c7' : '#dcfce7',
+                        color: p.productType === 'retail' ? '#1e40af' : p.productType === 'both' ? '#92400e' : '#166534'
+                      }}>{getTypeLabel(p.productType)}</span>
+                    </td>
+                    <td style={{ padding: '10px 8px' }}>{p.largeCategory}</td>
+                    <td style={{ padding: '10px 8px' }}>{p.mediumCategory}</td>
+                    <td style={{ padding: '10px 8px', fontWeight: '500' }}>{p.name}</td>
+                    <td style={{ padding: '10px 8px', textAlign: 'right' }}>¥{p.purchasePrice.toLocaleString()}</td>
+                    <td style={{ padding: '10px 8px', textAlign: 'right' }}>¥{p.sellingPrice.toLocaleString()}</td>
+                    <td style={{ padding: '10px 8px', textAlign: 'center' }}>
+                      <button onClick={() => startEdit(p)} style={{ color: '#3b82f6', fontSize: '13px', marginRight: '8px', background: 'none', border: 'none', cursor: 'pointer' }}>編集</button>
+                      <button onClick={() => deleteProduct(p.id)} style={{ color: '#ef4444', fontSize: '13px', background: 'none', border: 'none', cursor: 'pointer' }}>削除</button>
+                    </td>
                   </tr>
                 )
               ))}
@@ -2628,17 +2867,21 @@ function StaffManagement({ staff, setStaff, categories, isAdmin }) {
   if (!isAdmin) {
     return (
       <div className="card">
-        <h3 className="text-lg font-bold mb-4">スタッフ一覧 ({staff.length}名)</h3>
-        <div className="space-y-3">
+        <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span>👥</span> スタッフ一覧 <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: 'normal' }}>({staff.length}名)</span>
+        </h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {staff.map(s => (
-            <div key={s.id} className="border rounded p-4">
-              <div className="font-bold text-lg mb-2">{s.name}</div>
+            <div key={s.id} style={{ border: '1px solid #e5e7eb', borderRadius: '12px', padding: '16px' }}>
+              <div style={{ fontWeight: 'bold', fontSize: '16px', marginBottom: '8px' }}>{s.name}</div>
               {s.dealer && (
                 <div>
-                  <span className="text-sm text-gray-500">発注担当：</span>
-                  <div className="flex flex-wrap gap-1 mt-1">
+                  <span style={{ fontSize: '13px', color: '#6b7280' }}>発注担当：</span>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' }}>
                     {s.dealer.split(',').filter(d => d).map((d, i) => (
-                      <span key={i} className="bg-blue-50 px-2 py-1 rounded text-sm">{d}</span>
+                      <span key={i} style={{
+                        backgroundColor: '#eff6ff', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', color: '#1e40af'
+                      }}>{d}</span>
                     ))}
                   </div>
                 </div>
@@ -2653,100 +2896,242 @@ function StaffManagement({ staff, setStaff, categories, isAdmin }) {
   // 管理者用のフル表示
   return (
     <div className="space-y-4">
+      {/* スタッフ追加 */}
       <div className="card">
-        <h3 className="text-lg font-bold mb-4">スタッフ追加</h3>
-        <div className="grid-2 mb-4">
-          <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>スタッフ名</label><input type="text" value={newStaff} onChange={e => setNewStaff(e.target.value)} placeholder="名前" className="input" /></div>
-          <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>入社日</label><input type="date" value={newJoinDate} onChange={e => setNewJoinDate(e.target.value)} className="input" /></div>
+        <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span>➕</span> スタッフ追加
+        </h3>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>スタッフ名</label>
+            <input type="text" value={newStaff} onChange={e => setNewStaff(e.target.value)} placeholder="名前" className="input" />
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>入社日</label>
+            <input type="date" value={newJoinDate} onChange={e => setNewJoinDate(e.target.value)} className="input" />
+          </div>
         </div>
-        <div className="grid-2 mb-4">
-          <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>勤続係数</label><select value={newTenureRate} onChange={e => setNewTenureRate(parseInt(e.target.value))} className="select">{tenureRateOptions.map(r => <option key={r} value={r}>{r}%</option>)}</select></div>
-          <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>勤務形態</label><select value={newWorkType} onChange={e => setNewWorkType(e.target.value)} className="select"><option value="full">フル</option><option value="part">時短</option></select></div>
-          <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>週勤務日数</label><select value={newWorkDaysPerWeek} onChange={e => setNewWorkDaysPerWeek(parseInt(e.target.value))} className="select"><option value={5}>5日</option><option value={4}>4日</option><option value={3}>3日</option></select></div>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>勤続係数</label>
+            <select value={newTenureRate} onChange={e => setNewTenureRate(parseInt(e.target.value))} className="select">
+              {tenureRateOptions.map(r => <option key={r} value={r}>{r}%</option>)}
+            </select>
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>勤務形態</label>
+            <select value={newWorkType} onChange={e => setNewWorkType(e.target.value)} className="select">
+              <option value="full">フル</option>
+              <option value="part">時短</option>
+            </select>
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>週勤務日数</label>
+            <select value={newWorkDaysPerWeek} onChange={e => setNewWorkDaysPerWeek(parseInt(e.target.value))} className="select">
+              <option value={5}>5日</option>
+              <option value={4}>4日</option>
+              <option value={3}>3日</option>
+            </select>
+          </div>
         </div>
+        
         {newWorkType === 'part' && (
-          <div className="mb-4"><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>時短係数</label><select value={newPartTimeRate} onChange={e => setNewPartTimeRate(parseInt(e.target.value))} className="select">{partTimeRateOptions.map(r => <option key={r} value={r}>{r}%</option>)}</select></div>
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>時短係数</label>
+            <select value={newPartTimeRate} onChange={e => setNewPartTimeRate(parseInt(e.target.value))} className="select" style={{ width: 'auto' }}>
+              {partTimeRateOptions.map(r => <option key={r} value={r}>{r}%</option>)}
+            </select>
+          </div>
         )}
-        <div className="grid-2 mb-4">
-          <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>オープニングスタッフ</label><label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={newIsOpening} onChange={e => setNewIsOpening(e.target.checked)} /><span>はい</span></label></div>
-          <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>特別係数</label><select value={newSpecialRate} onChange={e => setNewSpecialRate(parseInt(e.target.value))} className="select">{specialRateOptions.map(r => <option key={r} value={r}>+{r}%</option>)}</select></div>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>オープニングスタッフ</label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+              <input type="checkbox" checked={newIsOpening} onChange={e => setNewIsOpening(e.target.checked)} style={{ width: '18px', height: '18px' }} />
+              <span>はい</span>
+            </label>
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>特別係数</label>
+            <select value={newSpecialRate} onChange={e => setNewSpecialRate(parseInt(e.target.value))} className="select" style={{ width: 'auto' }}>
+              {specialRateOptions.map(r => <option key={r} value={r}>+{r}%</option>)}
+            </select>
+          </div>
         </div>
-        <div className="mb-4">
-          <label className="flex items-center gap-2 cursor-pointer p-3 bg-red-50 rounded border border-red-200">
-            <input type="checkbox" checked={newIsManagement} onChange={e => setNewIsManagement(e.target.checked)} />
-            <span className="font-semibold text-red-700">👑 経営陣（ボーナス対象外・内部留保）</span>
+        
+        <div style={{ marginBottom: '16px' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '12px', backgroundColor: '#fef2f2', borderRadius: '10px', border: '1px solid #fecaca' }}>
+            <input type="checkbox" checked={newIsManagement} onChange={e => setNewIsManagement(e.target.checked)} style={{ width: '18px', height: '18px' }} />
+            <span style={{ fontWeight: '600', color: '#dc2626' }}>👑 経営陣（ボーナス対象外・内部留保）</span>
           </label>
         </div>
-        <div className="mb-4"><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>発注担当ディーラー</label>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        
+        <div style={{ marginBottom: '16px' }}>
+          <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>発注担当ディーラー</label>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '8px' }}>
             {categories.large.map((c, i) => (
-              <label key={i} className={`flex items-center gap-2 px-3 py-2 rounded cursor-pointer border ${newDealers.includes(c.name) ? 'bg-blue-100 border-blue-500' : 'bg-gray-50 border-gray-200'}`}>
-                <input type="checkbox" checked={newDealers.includes(c.name)} onChange={() => toggleNewDealer(c.name)} />
-                <span className="text-sm">{c.name}</span>
+              <label key={i} style={{
+                display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', borderRadius: '8px', cursor: 'pointer',
+                backgroundColor: newDealers.includes(c.name) ? '#dbeafe' : '#f9fafb',
+                border: newDealers.includes(c.name) ? '2px solid #3b82f6' : '1px solid #e5e7eb'
+              }}>
+                <input type="checkbox" checked={newDealers.includes(c.name)} onChange={() => toggleNewDealer(c.name)} style={{ width: '16px', height: '16px' }} />
+                <span style={{ fontSize: '13px' }}>{c.name}</span>
               </label>
             ))}
           </div>
         </div>
-        <button onClick={addStaff} className="btn btn-blue">追加</button>
+        
+        <button onClick={addStaff} style={{
+          padding: '12px 24px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+          backgroundColor: '#3b82f6', color: '#fff', fontWeight: '600', fontSize: '15px'
+        }}>＋ スタッフを追加</button>
       </div>
+      
+      {/* スタッフ一覧 */}
       <div className="card">
-        <h3 className="text-lg font-bold mb-4">スタッフ一覧 ({staff.length}名)</h3>
-        <div className="space-y-4">
+        <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span>👥</span> スタッフ一覧 <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: 'normal' }}>({staff.length}名)</span>
+        </h3>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {staff.map(s => (
             editingId === s.id ? (
-              <div key={s.id} className="border rounded p-4 bg-yellow-50">
-                <h4 className="font-bold mb-4">✏️ {s.name} を編集中</h4>
-                <div className="grid-2 mb-3">
-                  <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>名前</label><input type="text" value={editData.name} onChange={e => setEditData({...editData, name: e.target.value})} className="input" /></div>
-                  <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>入社日</label><input type="date" value={editData.joinDate} onChange={e => setEditData({...editData, joinDate: e.target.value})} className="input" /></div>
+              <div key={s.id} style={{ border: '1px solid #fcd34d', borderRadius: '12px', padding: '16px', backgroundColor: '#fef9c3' }}>
+                <h4 style={{ fontWeight: 'bold', marginBottom: '16px', fontSize: '15px' }}>✏️ {s.name} を編集中</h4>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px', color: '#374151' }}>名前</label>
+                    <input type="text" value={editData.name} onChange={e => setEditData({...editData, name: e.target.value})} className="input" />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px', color: '#374151' }}>入社日</label>
+                    <input type="date" value={editData.joinDate} onChange={e => setEditData({...editData, joinDate: e.target.value})} className="input" />
+                  </div>
                 </div>
-                <div className="grid-2 mb-3">
-                  <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>勤続係数</label><select value={editData.tenureRate} onChange={e => setEditData({...editData, tenureRate: parseInt(e.target.value)})} className="select">{tenureRateOptions.map(r => <option key={r} value={r}>{r}%</option>)}</select></div>
-                  <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>勤務形態</label><select value={editData.workType} onChange={e => setEditData({...editData, workType: e.target.value})} className="select"><option value="full">フル</option><option value="part">時短</option></select></div>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px', color: '#374151' }}>勤続係数</label>
+                    <select value={editData.tenureRate} onChange={e => setEditData({...editData, tenureRate: parseInt(e.target.value)})} className="select">
+                      {tenureRateOptions.map(r => <option key={r} value={r}>{r}%</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px', color: '#374151' }}>勤務形態</label>
+                    <select value={editData.workType} onChange={e => setEditData({...editData, workType: e.target.value})} className="select">
+                      <option value="full">フル</option>
+                      <option value="part">時短</option>
+                    </select>
+                  </div>
                 </div>
-                {editData.workType === 'part' && (<div className="mb-3"><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>時短係数</label><select value={editData.partTimeRate} onChange={e => setEditData({...editData, partTimeRate: parseInt(e.target.value)})} className="select" style={{ width: 'auto' }}>{partTimeRateOptions.map(r => <option key={r} value={r}>{r}%</option>)}</select></div>)}
-                <div className="mb-3"><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>週勤務日数</label><select value={editData.workDaysPerWeek} onChange={e => setEditData({...editData, workDaysPerWeek: parseInt(e.target.value)})} className="select" style={{ width: 'auto' }}><option value={5}>5日</option><option value={4}>4日</option><option value={3}>3日</option></select></div>
-                <div className="grid-2 mb-3">
-                  <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>オープニング</label><label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={editData.isOpeningStaff} onChange={e => setEditData({...editData, isOpeningStaff: e.target.checked})} /><span>はい</span></label></div>
-                  <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>特別係数</label><select value={editData.specialRate} onChange={e => setEditData({...editData, specialRate: parseInt(e.target.value)})} className="select">{specialRateOptions.map(r => <option key={r} value={r}>+{r}%</option>)}</select></div>
+                
+                {editData.workType === 'part' && (
+                  <div style={{ marginBottom: '12px' }}>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px', color: '#374151' }}>時短係数</label>
+                    <select value={editData.partTimeRate} onChange={e => setEditData({...editData, partTimeRate: parseInt(e.target.value)})} className="select" style={{ width: 'auto' }}>
+                      {partTimeRateOptions.map(r => <option key={r} value={r}>{r}%</option>)}
+                    </select>
+                  </div>
+                )}
+                
+                <div style={{ marginBottom: '12px' }}>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px', color: '#374151' }}>週勤務日数</label>
+                  <select value={editData.workDaysPerWeek} onChange={e => setEditData({...editData, workDaysPerWeek: parseInt(e.target.value)})} className="select" style={{ width: 'auto' }}>
+                    <option value={5}>5日</option>
+                    <option value={4}>4日</option>
+                    <option value={3}>3日</option>
+                  </select>
                 </div>
-                <div className="mb-3">
-                  <label className="flex items-center gap-2 cursor-pointer p-3 bg-red-50 rounded border border-red-200">
-                    <input type="checkbox" checked={editData.isManagement} onChange={e => setEditData({...editData, isManagement: e.target.checked})} />
-                    <span className="font-semibold text-red-700">👑 経営陣（ボーナス対象外）</span>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px', color: '#374151' }}>オープニング</label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                      <input type="checkbox" checked={editData.isOpeningStaff} onChange={e => setEditData({...editData, isOpeningStaff: e.target.checked})} style={{ width: '16px', height: '16px' }} />
+                      <span>はい</span>
+                    </label>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px', color: '#374151' }}>特別係数</label>
+                    <select value={editData.specialRate} onChange={e => setEditData({...editData, specialRate: parseInt(e.target.value)})} className="select" style={{ width: 'auto' }}>
+                      {specialRateOptions.map(r => <option key={r} value={r}>+{r}%</option>)}
+                    </select>
+                  </div>
+                </div>
+                
+                <div style={{ marginBottom: '12px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '10px', backgroundColor: '#fef2f2', borderRadius: '8px', border: '1px solid #fecaca' }}>
+                    <input type="checkbox" checked={editData.isManagement} onChange={e => setEditData({...editData, isManagement: e.target.checked})} style={{ width: '16px', height: '16px' }} />
+                    <span style={{ fontWeight: '600', color: '#dc2626', fontSize: '13px' }}>👑 経営陣（ボーナス対象外）</span>
                   </label>
                 </div>
-                <div className="mb-4">
-                  <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>発注担当</label>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>発注担当</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '6px' }}>
                     {categories.large.map((c, i) => (
-                      <label key={i} className={`flex items-center gap-2 px-3 py-2 rounded cursor-pointer text-sm border ${editData.dealers.includes(c.name) ? 'bg-blue-100 border-blue-500' : 'bg-white border-gray-200'}`}>
-                        <input type="checkbox" checked={editData.dealers.includes(c.name)} onChange={() => toggleEditDealer(c.name)} className="w-4 h-4" />
+                      <label key={i} style={{
+                        display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px',
+                        backgroundColor: editData.dealers.includes(c.name) ? '#dbeafe' : '#fff',
+                        border: editData.dealers.includes(c.name) ? '2px solid #3b82f6' : '1px solid #e5e7eb'
+                      }}>
+                        <input type="checkbox" checked={editData.dealers.includes(c.name)} onChange={() => toggleEditDealer(c.name)} style={{ width: '14px', height: '14px' }} />
                         <span>{c.name}</span>
                       </label>
                     ))}
                   </div>
                 </div>
-                <div className="flex gap-2"><button onClick={() => saveEdit(s.id)} className="btn btn-green">保存</button><button onClick={() => setEditingId(null)} className="btn btn-gray">取消</button></div>
+                
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button onClick={() => saveEdit(s.id)} style={{
+                    padding: '10px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+                    backgroundColor: '#22c55e', color: '#fff', fontWeight: '600', fontSize: '14px'
+                  }}>保存</button>
+                  <button onClick={() => setEditingId(null)} style={{
+                    padding: '10px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+                    backgroundColor: '#e5e7eb', color: '#374151', fontWeight: '600', fontSize: '14px'
+                  }}>取消</button>
+                </div>
               </div>
             ) : (
-              <div key={s.id} className="border rounded p-4">
-                <div className="flex justify-between items-start">
+              <div key={s.id} style={{ border: '1px solid #e5e7eb', borderRadius: '12px', padding: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
-                    <div className="font-bold text-lg">{s.name}</div>
-                    <div className="text-sm text-gray-500">入社: {s.joinDate || '-'} ({calcTenure(s.joinDate)})</div>
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {s.isManagement && <span className="badge badge-red">👑 経営陣</span>}
-                      <span className="badge badge-blue">勤続{s.tenureRate}%</span>
-                      <span className="badge badge-green">{s.workType === 'full' ? 'フル' : `時短${s.partTimeRate}%`}</span>
-                      {s.isOpeningStaff && <span className="badge badge-yellow">オープニング</span>}
-                      {s.specialRate > 0 && <span className="badge badge-red">特別+{s.specialRate}%</span>}
+                    <div style={{ fontWeight: 'bold', fontSize: '16px', marginBottom: '4px' }}>{s.name}</div>
+                    <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '8px' }}>
+                      入社: {s.joinDate || '-'} ({calcTenure(s.joinDate)})
                     </div>
-                    {s.dealer && (<div className="flex flex-wrap gap-1 mt-2">{s.dealer.split(',').filter(d => d).map((d, i) => (<span key={i} className="bg-gray-100 px-2 py-1 rounded text-xs">{d}</span>))}</div>)}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '8px' }}>
+                      {s.isManagement && (
+                        <span style={{ display: 'inline-block', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: '600', backgroundColor: '#fee2e2', color: '#dc2626' }}>👑 経営陣</span>
+                      )}
+                      <span style={{ display: 'inline-block', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: '600', backgroundColor: '#dbeafe', color: '#1e40af' }}>勤続{s.tenureRate}%</span>
+                      <span style={{ display: 'inline-block', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: '600', backgroundColor: '#dcfce7', color: '#166534' }}>
+                        {s.workType === 'full' ? 'フル' : `時短${s.partTimeRate}%`}
+                      </span>
+                      {s.isOpeningStaff && (
+                        <span style={{ display: 'inline-block', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: '600', backgroundColor: '#fef3c7', color: '#92400e' }}>オープニング</span>
+                      )}
+                      {s.specialRate > 0 && (
+                        <span style={{ display: 'inline-block', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: '600', backgroundColor: '#fee2e2', color: '#dc2626' }}>特別+{s.specialRate}%</span>
+                      )}
+                    </div>
+                    {s.dealer && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                        {s.dealer.split(',').filter(d => d).map((d, i) => (
+                          <span key={i} style={{ backgroundColor: '#f3f4f6', padding: '4px 8px', borderRadius: '4px', fontSize: '11px', color: '#4b5563' }}>{d}</span>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  <div className="flex gap-2">
-                    <button onClick={() => startEdit(s)} className="text-blue-500 text-sm">編集</button>
-                    <button onClick={() => deleteStaff(s.id, s.name)} className="text-red-500 text-sm">削除</button>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button onClick={() => startEdit(s)} style={{ color: '#3b82f6', fontSize: '13px', background: 'none', border: 'none', cursor: 'pointer' }}>編集</button>
+                    <button onClick={() => deleteStaff(s.id, s.name)} style={{ color: '#ef4444', fontSize: '13px', background: 'none', border: 'none', cursor: 'pointer' }}>削除</button>
                   </div>
                 </div>
               </div>
@@ -2769,8 +3154,26 @@ function DataExport({ products, staff, usage, stockIn, inventoryHistory }) {
 
   return (
     <div className="card">
-      <h3 className="text-lg font-bold mb-4">📊 データ出力</h3>
-      <div className="space-y-3">{items.map((item, i) => (<div key={i} className="flex justify-between items-center p-4 bg-gray-50 rounded"><div><span className="font-semibold">{item.label}</span><span className="text-sm text-gray-500 ml-2">({item.count}件)</span></div><button onClick={item.fn} className="btn btn-green">CSV出力</button></div>))}</div>
+      <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <span>📊</span> データ出力
+      </h3>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        {items.map((item, i) => (
+          <div key={i} style={{
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            padding: '16px', backgroundColor: '#f9fafb', borderRadius: '12px'
+          }}>
+            <div>
+              <span style={{ fontWeight: '600', fontSize: '15px' }}>{item.label}</span>
+              <span style={{ fontSize: '13px', color: '#6b7280', marginLeft: '8px' }}>({item.count}件)</span>
+            </div>
+            <button onClick={item.fn} style={{
+              padding: '10px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+              backgroundColor: '#22c55e', color: '#fff', fontWeight: '600', fontSize: '14px'
+            }}>📥 CSV出力</button>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
