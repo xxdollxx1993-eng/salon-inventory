@@ -3964,26 +3964,26 @@ function LeaveManagement({ staff, leaveGrants, setLeaveGrants, leaveRequests, se
 
   // フルタイムの有給日数（法定）
   const getPaidLeaveDaysFull = (tenureMonths) => {
-    if (tenureMonths < 6) return 0
-    if (tenureMonths < 18) return 10
-    if (tenureMonths < 30) return 11
-    if (tenureMonths < 42) return 12
-    if (tenureMonths < 54) return 14
-    if (tenureMonths < 66) return 16
-    if (tenureMonths < 78) return 18
-    return 20
+    if (tenureMonths < 12) return 0  // 1年未満は0
+    if (tenureMonths < 24) return 10 // 1年
+    if (tenureMonths < 36) return 11 // 2年
+    if (tenureMonths < 48) return 12 // 3年
+    if (tenureMonths < 60) return 14 // 4年
+    if (tenureMonths < 72) return 16 // 5年
+    if (tenureMonths < 84) return 18 // 6年
+    return 20 // 7年〜
   }
 
   // 週4日の有給日数（比例付与）
   const getPaidLeaveDaysPartTime = (tenureMonths) => {
-    if (tenureMonths < 6) return 0
-    if (tenureMonths < 18) return 7
-    if (tenureMonths < 30) return 8
-    if (tenureMonths < 42) return 9
-    if (tenureMonths < 54) return 10
-    if (tenureMonths < 66) return 12
-    if (tenureMonths < 78) return 13
-    return 15
+    if (tenureMonths < 12) return 0  // 1年未満は0
+    if (tenureMonths < 24) return 7  // 1年
+    if (tenureMonths < 36) return 8  // 2年
+    if (tenureMonths < 48) return 9  // 3年
+    if (tenureMonths < 60) return 10 // 4年
+    if (tenureMonths < 72) return 12 // 5年
+    if (tenureMonths < 84) return 13 // 6年
+    return 15 // 7年〜
   }
 
   // スタッフの有給日数を取得
@@ -4174,7 +4174,19 @@ function LeaveManagement({ staff, leaveGrants, setLeaveGrants, leaveRequests, se
 
   // 全スタッフに自動付与
   const autoGrantAll = async () => {
-    if (!confirm(`${fiscalYear}年度の有給・夏休みを全スタッフに付与しますか？`)) return
+    // 今年度すでに付与済みのスタッフを確認
+    const alreadyGranted = staff.filter(s => 
+      leaveGrants.some(g => g.staffId === s.id && g.fiscalYear === fiscalYear && g.leaveType === 'paid')
+    )
+    
+    if (alreadyGranted.length === staff.length) {
+      if (!confirm(`${fiscalYear}年度はすでに全員に付与済みです。\n上書きしますか？`)) return
+    } else if (alreadyGranted.length > 0) {
+      const names = alreadyGranted.map(s => s.name).join('、')
+      if (!confirm(`${fiscalYear}年度の有給・夏休みを全スタッフに付与しますか？\n\n※ ${names} は付与済み（上書きされます）`)) return
+    } else {
+      if (!confirm(`${fiscalYear}年度の有給・夏休みを全スタッフに付与しますか？`)) return
+    }
     
     for (const s of staff) {
       const paidDays = getGrantedDays(s)
@@ -4569,6 +4581,46 @@ function LeaveManagement({ staff, leaveGrants, setLeaveGrants, leaveRequests, se
       {mode === 'settings' && isAdmin && (
         <div className="card">
           <h3 className="text-lg font-bold mb-4">⚙️ {fiscalYear}年度 付与設定</h3>
+          
+          {/* 法定付与日数の一覧 */}
+          <div className="bg-blue-50 p-4 rounded mb-4">
+            <h4 className="font-bold text-sm mb-3">📋 法定付与日数の目安</h4>
+            <div className="grid-2 gap-4">
+              <div>
+                <p className="text-xs font-semibold text-gray-600 mb-2">週5日勤務</p>
+                <table style={{ width: '100%', fontSize: '12px', borderCollapse: 'collapse' }}>
+                  <tbody>
+                    {[
+                      ['1年', '10日'], ['2年', '11日'], ['3年', '12日'], ['4年', '14日'],
+                      ['5年', '16日'], ['6年', '18日'], ['7年〜', '20日']
+                    ].map(([year, days]) => (
+                      <tr key={year} style={{ borderBottom: '1px solid #dbeafe' }}>
+                        <td style={{ padding: '4px 8px', color: '#6b7280' }}>{year}</td>
+                        <td style={{ padding: '4px 8px', fontWeight: 'bold', color: '#2563eb' }}>{days}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-gray-600 mb-2">週4日勤務</p>
+                <table style={{ width: '100%', fontSize: '12px', borderCollapse: 'collapse' }}>
+                  <tbody>
+                    {[
+                      ['1年', '7日'], ['2年', '8日'], ['3年', '9日'], ['4年', '10日'],
+                      ['5年', '12日'], ['6年', '13日'], ['7年〜', '15日']
+                    ].map(([year, days]) => (
+                      <tr key={year} style={{ borderBottom: '1px solid #dbeafe' }}>
+                        <td style={{ padding: '4px 8px', color: '#6b7280' }}>{year}</td>
+                        <td style={{ padding: '4px 8px', fontWeight: 'bold', color: '#2563eb' }}>{days}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 mt-3">※ 試用期間（入社〜1年）を経て付与開始。繰越は前年残の範囲内で可能。</p>
+          </div>
           
           <button onClick={autoGrantAll} className="btn btn-blue w-full mb-4">
             🎁 全スタッフに自動付与（法定日数）
