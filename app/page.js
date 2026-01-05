@@ -115,7 +115,7 @@ function LoginScreen({ passwords, onLogin }) {
 
 // ==================== メインアプリ ====================
 function MainApp({ userRole, onLogout, passwords, setPasswords }) {
-  const [tab, setTab] = useState('usage')
+  const [tab, setTab] = useState('home')
   const [showHelp, setShowHelp] = useState(false)
   const [staff, setStaff] = useState([])
   const [products, setProducts] = useState([])
@@ -572,6 +572,7 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
   }
 
   const mainTabs = [
+    { key: 'home', label: '🏠 ホーム' },
     { key: 'usage', label: '使用入力' },
     { key: 'stockin', label: '入荷' },
     { key: 'timecard', label: '🕐 打刻' },
@@ -630,6 +631,7 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
         </div>
       </div>
 
+      {tab === 'home' && <HomeScreen staff={staff} leaveRequests={leaveRequests} practiceReservations={practiceReservations} contactWeekly={contactWeekly} isAdmin={isAdmin} />}
       {tab === 'usage' && (
         <>
           <MiniLeaveCalendar leaveRequests={leaveRequests} practiceReservations={practiceReservations} staff={staff} />
@@ -689,6 +691,215 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
               <button onClick={() => setShowHelp(false)} className="btn btn-blue w-full">閉じる</button>
             </div>
           </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ==================== ホーム画面 ====================
+function HomeScreen({ staff, leaveRequests, practiceReservations, contactWeekly, isAdmin }) {
+  const today = new Date()
+  const todayStr = today.toISOString().split('T')[0]
+  
+  // 曜日
+  const dayNames = ['日', '月', '火', '水', '木', '金', '土']
+  const todayDayName = dayNames[today.getDay()]
+  
+  // 定休日判定
+  const isHoliday = (date) => {
+    const d = new Date(date)
+    const dayOfWeek = d.getDay()
+    if (dayOfWeek === 1 || dayOfWeek === 2) return true // 月火
+    // 第三日曜
+    let sundayCount = 0
+    for (let i = 1; i <= d.getDate(); i++) {
+      if (new Date(d.getFullYear(), d.getMonth(), i).getDay() === 0) sundayCount++
+    }
+    if (dayOfWeek === 0 && sundayCount === 3) return true
+    return false
+  }
+  
+  const isTodayHoliday = isHoliday(today)
+  
+  // 今日休みの人
+  const todayLeave = leaveRequests.filter(r => r.leaveDate === todayStr && r.status === 'approved')
+  
+  // 今日出勤（休み以外のスタッフ）
+  const todayLeaveStaffIds = todayLeave.map(r => r.staffId)
+  const todayWorking = staff.filter(s => !todayLeaveStaffIds.includes(s.id))
+  
+  // 今日の練習予約
+  const todayPractice = practiceReservations.filter(p => p.date === todayStr).sort((a, b) => (a.time || '').localeCompare(b.time || ''))
+  
+  // 今週の月曜日を取得
+  const getWeekStart = () => {
+    const d = new Date(today)
+    const day = d.getDay()
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1)
+    return new Date(d.setDate(diff))
+  }
+  
+  // 1週間分の日付を取得
+  const getWeekDates = () => {
+    const dates = []
+    const d = new Date(today)
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(d)
+      date.setDate(d.getDate() + i)
+      dates.push(date)
+    }
+    return dates
+  }
+  
+  const weekDates = getWeekDates()
+  
+  // 今週の予定（今日以降）
+  const weekSchedule = weekDates.slice(1).map(date => {
+    const dateStr = date.toISOString().split('T')[0]
+    const dayLeave = leaveRequests.filter(r => r.leaveDate === dateStr && r.status === 'approved')
+    const dayPractice = practiceReservations.filter(p => p.date === dateStr)
+    const holiday = isHoliday(date)
+    return { date, dateStr, dayLeave, dayPractice, holiday }
+  }).filter(d => d.dayLeave.length > 0 || d.dayPractice.length > 0 || d.holiday)
+  
+  // 今週の連絡帳（管理者のみ）
+  const weekStart = getWeekStart().toISOString().split('T')[0]
+  const contactStaff = staff.filter(s => s.contactEnabled)
+  const thisWeekSubmitted = contactWeekly.filter(w => w.weekStart === weekStart && w.submittedAt)
+  const notSubmitted = contactStaff.filter(s => !thisWeekSubmitted.some(w => w.staffId === s.id))
+  
+  // 日付フォーマット
+  const formatDate = (date) => {
+    const d = new Date(date)
+    return `${d.getMonth() + 1}/${d.getDate()}(${dayNames[d.getDay()]})`
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* 今日の日付 */}
+      <div className="card" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
+        <div style={{ fontSize: '14px', opacity: 0.9 }}>{today.getFullYear()}年</div>
+        <div style={{ fontSize: '28px', fontWeight: 'bold' }}>
+          {today.getMonth() + 1}月{today.getDate()}日（{todayDayName}）
+        </div>
+        {isTodayHoliday && (
+          <div style={{ marginTop: '8px', backgroundColor: 'rgba(255,255,255,0.2)', display: 'inline-block', padding: '4px 12px', borderRadius: '20px', fontSize: '14px' }}>
+            🏠 今日は定休日
+          </div>
+        )}
+      </div>
+
+      {/* 今日の出勤 */}
+      {!isTodayHoliday && (
+        <div className="card">
+          <h3 style={{ fontWeight: 'bold', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '20px' }}>👥</span> 今日の出勤
+          </h3>
+          {todayWorking.length > 0 ? (
+            <div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
+                {todayWorking.map(s => (
+                  <span key={s.id} style={{ backgroundColor: '#e0f2fe', color: '#0369a1', padding: '4px 12px', borderRadius: '20px', fontSize: '14px' }}>
+                    {s.name}
+                  </span>
+                ))}
+              </div>
+              <div style={{ fontSize: '13px', color: '#6b7280' }}>{todayWorking.length}名</div>
+            </div>
+          ) : (
+            <p style={{ color: '#9ca3af' }}>出勤者なし</p>
+          )}
+        </div>
+      )}
+
+      {/* 今日お休み */}
+      {todayLeave.length > 0 && (
+        <div className="card">
+          <h3 style={{ fontWeight: 'bold', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '20px' }}>🏖️</span> 今日お休み
+          </h3>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            {todayLeave.map(r => (
+              <span key={r.id} style={{ backgroundColor: '#fef3c7', color: '#92400e', padding: '4px 12px', borderRadius: '20px', fontSize: '14px' }}>
+                {r.staffName}
+                {r.dayType !== 'full' && <span style={{ fontSize: '12px', marginLeft: '4px' }}>({r.dayType === 'am' ? '午前' : '午後'})</span>}
+                <span style={{ fontSize: '12px', marginLeft: '4px', opacity: 0.7 }}>
+                  ({r.leaveType === 'paid' ? '有給' : '夏休み'})
+                </span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 今日の練習予約 */}
+      {todayPractice.length > 0 && (
+        <div className="card">
+          <h3 style={{ fontWeight: 'bold', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '20px' }}>🎨</span> 今日の練習予約
+          </h3>
+          <div className="space-y-2">
+            {todayPractice.map(p => (
+              <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 12px', backgroundColor: '#f3f4f6', borderRadius: '8px' }}>
+                <span style={{ fontWeight: 'bold', color: '#4f46e5' }}>{p.time?.slice(0, 5) || '--:--'}</span>
+                <span>{p.staffName}</span>
+                <span style={{ backgroundColor: '#e0e7ff', color: '#4338ca', padding: '2px 8px', borderRadius: '4px', fontSize: '12px' }}>{p.menu}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 今週の予定 */}
+      {weekSchedule.length > 0 && (
+        <div className="card">
+          <h3 style={{ fontWeight: 'bold', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '20px' }}>📅</span> 今週の予定
+          </h3>
+          <div className="space-y-2">
+            {weekSchedule.map(({ date, dateStr, dayLeave, dayPractice, holiday }) => (
+              <div key={dateStr} style={{ padding: '8px 12px', backgroundColor: holiday ? '#f3f4f6' : '#fafafa', borderRadius: '8px', borderLeft: `3px solid ${holiday ? '#9ca3af' : '#3b82f6'}` }}>
+                <div style={{ fontWeight: 'bold', marginBottom: '4px', color: holiday ? '#9ca3af' : '#374151' }}>
+                  {formatDate(date)} {holiday && <span style={{ fontSize: '12px' }}>定休日</span>}
+                </div>
+                {!holiday && (
+                  <div style={{ fontSize: '13px', color: '#6b7280' }}>
+                    {dayLeave.length > 0 && (
+                      <div>🏖️ {dayLeave.map(r => r.staffName).join('、')}</div>
+                    )}
+                    {dayPractice.length > 0 && (
+                      <div>🎨 練習予約 {dayPractice.length}件</div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 連絡帳（管理者のみ） */}
+      {isAdmin && contactStaff.length > 0 && (
+        <div className="card">
+          <h3 style={{ fontWeight: 'bold', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '20px' }}>📓</span> 連絡帳（今週）
+          </h3>
+          <div style={{ display: 'flex', gap: '16px', marginBottom: '8px' }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#22c55e' }}>{thisWeekSubmitted.length}</div>
+              <div style={{ fontSize: '12px', color: '#6b7280' }}>提出済</div>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: notSubmitted.length > 0 ? '#f59e0b' : '#9ca3af' }}>{notSubmitted.length}</div>
+              <div style={{ fontSize: '12px', color: '#6b7280' }}>未提出</div>
+            </div>
+          </div>
+          {notSubmitted.length > 0 && (
+            <div style={{ backgroundColor: '#fef3c7', padding: '8px 12px', borderRadius: '8px', fontSize: '13px' }}>
+              <span style={{ color: '#92400e' }}>未提出：{notSubmitted.map(s => s.name).join('、')}</span>
+            </div>
+          )}
         </div>
       )}
     </div>
