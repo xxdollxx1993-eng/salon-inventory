@@ -5485,32 +5485,34 @@ function MonthlyReport({ monthlyReports, setMonthlyReports, stockIn, products, s
     <div className="space-y-4">
       {/* グラフ */}
       <div className="card">
-        <h3 className="text-lg font-bold mb-4">📊 推移グラフ</h3>
+        <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span>📊</span> 推移グラフ
+        </h3>
         
         {/* 切り替えボタン */}
-        <div className="flex gap-2 mb-4">
-          <button 
-            onClick={() => setChartType('material')} 
-            className={`btn flex-1 ${chartType === 'material' ? 'btn-blue' : 'btn-gray'}`}
-          >
-            材料費率
-          </button>
-          <button 
-            onClick={() => setChartType('retail')} 
-            className={`btn flex-1 ${chartType === 'retail' ? 'btn-green' : 'btn-gray'}`}
-          >
-            店販比率
-          </button>
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+          <button onClick={() => setChartType('material')} style={{
+            flex: 1, padding: '10px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+            fontWeight: '600', fontSize: '14px',
+            backgroundColor: chartType === 'material' ? '#3b82f6' : '#f3f4f6',
+            color: chartType === 'material' ? '#fff' : '#374151'
+          }}>材料費率</button>
+          <button onClick={() => setChartType('retail')} style={{
+            flex: 1, padding: '10px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+            fontWeight: '600', fontSize: '14px',
+            backgroundColor: chartType === 'retail' ? '#22c55e' : '#f3f4f6',
+            color: chartType === 'retail' ? '#fff' : '#374151'
+          }}>店販比率</button>
         </div>
         
         {/* グラフ表示 */}
-        <div className="flex justify-center">
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
           {renderChart()}
         </div>
         
         {chartType === 'material' && (
-          <div className="text-center text-sm text-gray-500 mt-2">
-            <span className="inline-block w-3 h-0.5 bg-red-500 mr-1"></span>
+          <div style={{ textAlign: 'center', fontSize: '13px', color: '#6b7280', marginTop: '8px' }}>
+            <span style={{ display: 'inline-block', width: '20px', height: '2px', backgroundColor: '#ef4444', marginRight: '6px', verticalAlign: 'middle' }}></span>
             目標ライン（{BASE_RATE}%）
           </div>
         )}
@@ -5519,17 +5521,19 @@ function MonthlyReport({ monthlyReports, setMonthlyReports, stockIn, products, s
       {/* 月次データ入力（管理者のみ） */}
       {isAdmin && (
         <div className="card">
-          <h3 className="text-lg font-bold mb-4">✏️ 月次データ入力</h3>
+          <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>✏️</span> 月次データ入力
+          </h3>
           
-          <div className="grid-2 mb-4">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
             <div>
-              <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>年</label>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>年</label>
               <select value={selectedYear} onChange={e => setSelectedYear(parseInt(e.target.value))} className="select">
                 {[2024, 2025, 2026, 2027].map(y => <option key={y} value={y}>{y}年</option>)}
               </select>
             </div>
             <div>
-              <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>月</label>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>月</label>
               <select value={selectedMonth} onChange={e => setSelectedMonth(parseInt(e.target.value))} className="select">
                 {[1,2,3,4,5,6,7,8,9,10,11,12].map(m => <option key={m} value={m}>{m}月</option>)}
               </select>
@@ -5537,68 +5541,68 @@ function MonthlyReport({ monthlyReports, setMonthlyReports, stockIn, products, s
           </div>
           
           {existingReport && (
-            <div className="bg-blue-50 p-3 rounded mb-4 text-sm">
-              <p className="font-semibold text-blue-700">📝 {selectedYear}年{selectedMonth}月のデータが登録済み</p>
+            <div style={{ backgroundColor: '#eff6ff', padding: '12px', borderRadius: '10px', marginBottom: '16px', fontSize: '14px' }}>
+              <p style={{ fontWeight: '600', color: '#1e40af' }}>📝 {selectedYear}年{selectedMonth}月のデータが登録済み</p>
             </div>
           )}
           
-          <div className="grid-2 mb-4">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
             <div>
-              <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>値引き後総売上</label>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>値引き後総売上</label>
               <input type="number" value={totalSales} onChange={e => setTotalSales(e.target.value)} placeholder="例: 7500000" className="input" />
             </div>
             <div>
-              <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>店販売上</label>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>店販売上</label>
               <input type="number" value={retailSales} onChange={e => setRetailSales(e.target.value)} placeholder="例: 800000" className="input" />
             </div>
           </div>
           
-          <div className="bg-gray-50 p-3 rounded mb-4 text-sm">
-            <p className="font-semibold mb-1">材料費（自動計算）</p>
+          <div style={{ backgroundColor: '#f9fafb', padding: '12px', borderRadius: '10px', marginBottom: '16px', fontSize: '14px' }}>
+            <p style={{ fontWeight: '600', marginBottom: '8px' }}>材料費（自動計算）</p>
             <p>入荷: ¥{calcMonthlyStockIn(selectedYear, selectedMonth).toLocaleString()}</p>
             <p>スタッフ購入: -¥{calcMonthlyStaffPurchases(selectedYear, selectedMonth).toLocaleString()}</p>
-            <p className="font-bold">= ¥{autoMaterial.toLocaleString()}</p>
+            <p style={{ fontWeight: 'bold', marginTop: '4px' }}>= ¥{autoMaterial.toLocaleString()}</p>
           </div>
           
-          <div className="mb-4">
-            <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>−）プロラボ分</label>
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>−）プロラボ分</label>
             <input type="number" value={prolaboPurchase} onChange={e => setProlaboPurchase(e.target.value)} placeholder="例: 80000" className="input" />
           </div>
           
           {totalSales && (
-            <div className="bg-green-50 p-3 rounded mb-4">
-              <div className="grid-2 gap-4">
-                <div className="text-center">
-                  <div className="text-sm text-gray-600">材料費率</div>
-                  <div className={`text-2xl font-bold ${((autoMaterial - (parseInt(prolaboPurchase) || 0)) / parseInt(totalSales) * 100) <= BASE_RATE ? 'text-green-600' : 'text-red-600'}`}>
-                    {((autoMaterial - (parseInt(prolaboPurchase) || 0)) / parseInt(totalSales) * 100).toFixed(1)}%
-                  </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+              <div style={{ backgroundColor: ((autoMaterial - (parseInt(prolaboPurchase) || 0)) / parseInt(totalSales) * 100) <= BASE_RATE ? '#f0fdf4' : '#fef2f2', padding: '16px', borderRadius: '12px', textAlign: 'center' }}>
+                <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>材料費率</div>
+                <div style={{ fontSize: '28px', fontWeight: 'bold', color: ((autoMaterial - (parseInt(prolaboPurchase) || 0)) / parseInt(totalSales) * 100) <= BASE_RATE ? '#16a34a' : '#dc2626' }}>
+                  {((autoMaterial - (parseInt(prolaboPurchase) || 0)) / parseInt(totalSales) * 100).toFixed(1)}%
                 </div>
-                <div className="text-center">
-                  <div className="text-sm text-gray-600">店販比率</div>
-                  <div className="text-2xl font-bold text-green-600">
-                    {((parseInt(retailSales) || 0) / parseInt(totalSales) * 100).toFixed(1)}%
-                  </div>
+              </div>
+              <div style={{ backgroundColor: '#f0fdf4', padding: '16px', borderRadius: '12px', textAlign: 'center' }}>
+                <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>店販比率</div>
+                <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#16a34a' }}>
+                  {((parseInt(retailSales) || 0) / parseInt(totalSales) * 100).toFixed(1)}%
                 </div>
               </div>
             </div>
           )}
           
-          <button onClick={saveReport} className="btn btn-blue w-full">
-            {existingReport ? '更新する' : '保存する'}
-          </button>
+          <button onClick={saveReport} style={{
+            width: '100%', padding: '14px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+            backgroundColor: '#3b82f6', color: '#fff', fontWeight: '600', fontSize: '15px'
+          }}>{existingReport ? '✓ 更新する' : '✓ 保存する'}</button>
         </div>
       )}
 
       {/* 月次データ一覧 */}
       <div className="card">
-        <h4 className="font-bold mb-4">📋 月次データ一覧</h4>
+        <h4 style={{ fontWeight: 'bold', marginBottom: '16px', fontSize: '16px' }}>📋 月次データ一覧</h4>
         {monthlyReports.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <p>データがありません</p>
+          <div style={{ textAlign: 'center', padding: '32px 16px', color: '#9ca3af' }}>
+            <div style={{ fontSize: '32px', marginBottom: '8px' }}>📭</div>
+            <p style={{ fontWeight: '600' }}>データがありません</p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {[...monthlyReports].sort((a, b) => b.year - a.year || b.month - a.month).map(report => {
               const materialRate = calcMaterialRate(report)
               const retailRate = calcRetailRate(report)
@@ -5606,30 +5610,30 @@ function MonthlyReport({ monthlyReports, setMonthlyReports, stockIn, products, s
               const isGood = materialRate <= BASE_RATE
               
               return (
-                <div key={report.id} className="border rounded p-3">
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="font-bold">{report.year}年{report.month}月</div>
+                <div key={report.id} style={{ border: '1px solid #e5e7eb', borderRadius: '12px', padding: '16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                    <div style={{ fontWeight: 'bold', fontSize: '15px' }}>{report.year}年{report.month}月</div>
                     {isAdmin && (
-                      <button onClick={() => deleteReport(report.id)} className="text-red-500 text-sm">削除</button>
+                      <button onClick={() => deleteReport(report.id)} style={{ color: '#ef4444', fontSize: '13px', background: 'none', border: 'none', cursor: 'pointer' }}>削除</button>
                     )}
                   </div>
-                  <div className="grid-2 gap-2 text-sm">
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '13px' }}>
                     <div>
-                      <span className="text-gray-500">売上: </span>
-                      <span className="font-semibold">¥{report.totalSales?.toLocaleString()}</span>
+                      <span style={{ color: '#6b7280' }}>売上: </span>
+                      <span style={{ fontWeight: '600' }}>¥{report.totalSales?.toLocaleString()}</span>
                     </div>
                     <div>
-                      <span className="text-gray-500">店販: </span>
-                      <span className="font-semibold">¥{report.retailSales?.toLocaleString()}</span>
-                      <span className="text-green-600 text-xs ml-1">({retailRate.toFixed(1)}%)</span>
+                      <span style={{ color: '#6b7280' }}>店販: </span>
+                      <span style={{ fontWeight: '600' }}>¥{report.retailSales?.toLocaleString()}</span>
+                      <span style={{ color: '#16a34a', fontSize: '12px', marginLeft: '4px' }}>({retailRate.toFixed(1)}%)</span>
                     </div>
                     <div>
-                      <span className="text-gray-500">材料費: </span>
-                      <span className="font-semibold">¥{effectiveCost.toLocaleString()}</span>
+                      <span style={{ color: '#6b7280' }}>材料費: </span>
+                      <span style={{ fontWeight: '600' }}>¥{effectiveCost.toLocaleString()}</span>
                     </div>
                     <div>
-                      <span className="text-gray-500">材料費率: </span>
-                      <span className={`font-bold ${isGood ? 'text-green-600' : 'text-red-600'}`}>
+                      <span style={{ color: '#6b7280' }}>材料費率: </span>
+                      <span style={{ fontWeight: 'bold', color: isGood ? '#16a34a' : '#dc2626' }}>
                         {materialRate.toFixed(1)}% {isGood ? '✅' : '⚠️'}
                       </span>
                     </div>
@@ -5800,41 +5804,45 @@ function BonusManagement({ staff, bonusSettings, setBonusSettings, stockIn, prod
     return (
       <div className="space-y-4">
         <div className="card">
-          <h3 className="text-lg font-bold mb-4">🎯 材料費達成率</h3>
+          <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>🎯</span> 材料費達成率
+          </h3>
           {!latestSetting ? (
-            <div className="text-center py-8 text-gray-500">
-              <p>まだ期間が設定されていません</p>
+            <div style={{ textAlign: 'center', padding: '32px 16px', color: '#9ca3af' }}>
+              <div style={{ fontSize: '32px', marginBottom: '8px' }}>📭</div>
+              <p style={{ fontWeight: '600' }}>まだ期間が設定されていません</p>
             </div>
           ) : (
-            <div className="text-center py-6">
-              <div className="text-sm text-gray-500 mb-2">
+            <div style={{ textAlign: 'center', padding: '24px 0' }}>
+              <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '16px' }}>
                 {latestSetting.periodStart} 〜 {latestSetting.periodEnd}
               </div>
-              <div className="mb-4">
-                <div className="text-sm text-gray-600 mb-1">目標</div>
-                <div className="text-2xl font-bold">{BASE_RATE}%以内</div>
+              <div style={{ marginBottom: '16px' }}>
+                <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>目標</div>
+                <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{BASE_RATE}%以内</div>
               </div>
-              <div className="mb-4">
-                <div className="text-sm text-gray-600 mb-1">実績</div>
-                <div className={`text-4xl font-bold ${latestCalc.rate <= BASE_RATE ? 'text-green-600' : 'text-red-600'}`}>
+              <div style={{ marginBottom: '16px' }}>
+                <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>実績</div>
+                <div style={{ fontSize: '48px', fontWeight: 'bold', color: latestCalc.rate <= BASE_RATE ? '#16a34a' : '#dc2626' }}>
                   {latestCalc.rate.toFixed(1)}%
                 </div>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-4 mb-4">
-                <div 
-                  className={`h-4 rounded-full ${latestCalc.rate <= BASE_RATE ? 'bg-green-500' : 'bg-red-500'}`}
-                  style={{ width: `${Math.min(100, (latestCalc.rate / BASE_RATE) * 100)}%` }}
-                ></div>
+              <div style={{ width: '100%', backgroundColor: '#e5e7eb', borderRadius: '9999px', height: '16px', marginBottom: '16px' }}>
+                <div style={{
+                  height: '16px', borderRadius: '9999px',
+                  backgroundColor: latestCalc.rate <= BASE_RATE ? '#22c55e' : '#ef4444',
+                  width: `${Math.min(100, (latestCalc.rate / BASE_RATE) * 100)}%`
+                }}></div>
               </div>
               {latestCalc.diff > 0 ? (
-                <div className="bg-green-50 p-4 rounded">
-                  <p className="text-green-700 font-bold text-lg">🎉 {latestCalc.diff.toFixed(1)}%の削減達成！</p>
-                  <p className="text-green-600 text-sm mt-1">みんなの頑張りがボーナスに反映されます💪</p>
+                <div style={{ backgroundColor: '#f0fdf4', padding: '16px', borderRadius: '12px' }}>
+                  <p style={{ color: '#166534', fontWeight: 'bold', fontSize: '18px' }}>🎉 {latestCalc.diff.toFixed(1)}%の削減達成！</p>
+                  <p style={{ color: '#16a34a', fontSize: '13px', marginTop: '4px' }}>みんなの頑張りがボーナスに反映されます💪</p>
                 </div>
               ) : (
-                <div className="bg-yellow-50 p-4 rounded">
-                  <p className="text-yellow-700 font-bold">もう少しで目標達成！</p>
-                  <p className="text-yellow-600 text-sm mt-1">材料を大切に使っていこう✨</p>
+                <div style={{ backgroundColor: '#fef9c3', padding: '16px', borderRadius: '12px' }}>
+                  <p style={{ color: '#854d0e', fontWeight: 'bold' }}>もう少しで目標達成！</p>
+                  <p style={{ color: '#a16207', fontSize: '13px', marginTop: '4px' }}>材料を大切に使っていこう✨</p>
                 </div>
               )}
             </div>
@@ -5848,66 +5856,80 @@ function BonusManagement({ staff, bonusSettings, setBonusSettings, stockIn, prod
   return (
     <div className="space-y-4">
       <div className="card">
-        <h3 className="text-lg font-bold mb-4">💎 ボーナス原資管理</h3>
-        <div className="bg-blue-50 p-3 rounded mb-4 text-sm">
+        <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span>💎</span> ボーナス原資管理
+        </h3>
+        <div style={{ backgroundColor: '#eff6ff', padding: '12px', borderRadius: '10px', marginBottom: '16px', fontSize: '14px' }}>
           <p><strong>計算式：</strong></p>
           <p>原資 = 売上 × (20% − 材料費率) × 40%</p>
         </div>
-        <div className="grid-2 mb-4">
-          <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>期間開始</label><input type="date" value={periodStart} onChange={e => setPeriodStart(e.target.value)} className="input" /></div>
-          <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>期間終了</label><input type="date" value={periodEnd} onChange={e => setPeriodEnd(e.target.value)} className="input" /></div>
-        </div>
-        <div className="grid-2 mb-4">
+        
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
           <div>
-            <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>値引き後総売上</label>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>期間開始</label>
+            <input type="date" value={periodStart} onChange={e => setPeriodStart(e.target.value)} className="input" />
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>期間終了</label>
+            <input type="date" value={periodEnd} onChange={e => setPeriodEnd(e.target.value)} className="input" />
+          </div>
+        </div>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>値引き後総売上</label>
             <input type="number" value={totalSales} onChange={e => setTotalSales(e.target.value)} placeholder="例: 45000000" className="input" />
           </div>
           <div>
-            <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>店販売上</label>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>店販売上</label>
             <input type="number" value={retailSales} onChange={e => setRetailSales(e.target.value)} placeholder="例: 5000000" className="input" />
           </div>
         </div>
+        
         {totalSales && (
-          <div className="bg-gray-50 p-3 rounded mb-4 text-sm">
+          <div style={{ backgroundColor: '#f9fafb', padding: '12px', borderRadius: '10px', marginBottom: '16px', fontSize: '14px' }}>
             <p>施術売上（自動）：¥{((parseInt(totalSales) || 0) - (parseInt(retailSales) || 0)).toLocaleString()}</p>
           </div>
         )}
         
         {periodStart && periodEnd && (
-          <div className="bg-gray-100 p-4 rounded mb-4">
-            <p className="font-semibold mb-2">📊 材料費（自動計算・参考）</p>
-            <div className="text-sm text-gray-600 mb-2">
+          <div style={{ backgroundColor: '#f3f4f6', padding: '16px', borderRadius: '10px', marginBottom: '16px' }}>
+            <p style={{ fontWeight: '600', marginBottom: '8px' }}>📊 材料費（自動計算・参考）</p>
+            <div style={{ fontSize: '14px', color: '#4b5563' }}>
               <p>入荷: ¥{calcTotalStockIn(periodStart, periodEnd).toLocaleString()}</p>
               <p>スタッフ購入: -¥{calcStaffPurchases(periodStart, periodEnd).toLocaleString()}</p>
-              <p className="font-bold">= ¥{calcMaterialCost(periodStart, periodEnd).toLocaleString()}</p>
+              <p style={{ fontWeight: 'bold', marginTop: '4px' }}>= ¥{calcMaterialCost(periodStart, periodEnd).toLocaleString()}</p>
             </div>
           </div>
         )}
         
-        <div className="mb-4">
-          <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>✏️ 材料費（手入力・試算表の数字）</label>
+        <div style={{ marginBottom: '16px' }}>
+          <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>✏️ 材料費（手入力・試算表の数字）</label>
           <input type="number" value={manualMaterialCost} onChange={e => setManualMaterialCost(e.target.value)} placeholder="空欄なら自動計算を使用" className="input" />
         </div>
         
-        <div className="mb-4">
-          <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>−）プロラボ分（スタッフ購入用）</label>
+        <div style={{ marginBottom: '16px' }}>
+          <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>−）プロラボ分（スタッフ購入用）</label>
           <input type="number" value={dealerPurchase} onChange={e => setDealerPurchase(e.target.value)} placeholder="例: 500000" className="input" />
-          <p className="text-xs text-gray-500 mt-1">※材料費から引かれます</p>
+          <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>※材料費から引かれます</p>
         </div>
         
         {manualMaterialCost && (
-          <div className="bg-green-50 p-3 rounded mb-4 text-sm">
-            <p className="font-bold">材料費（実質）：¥{((parseInt(manualMaterialCost) || 0) - (parseInt(dealerPurchase) || 0)).toLocaleString()}</p>
+          <div style={{ backgroundColor: '#f0fdf4', padding: '12px', borderRadius: '10px', marginBottom: '16px', fontSize: '14px' }}>
+            <p style={{ fontWeight: 'bold' }}>材料費（実質）：¥{((parseInt(manualMaterialCost) || 0) - (parseInt(dealerPurchase) || 0)).toLocaleString()}</p>
           </div>
         )}
         
-        <button onClick={savePeriod} className="btn btn-blue">期間を追加</button>
+        <button onClick={savePeriod} style={{
+          padding: '12px 24px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+          backgroundColor: '#3b82f6', color: '#fff', fontWeight: '600', fontSize: '15px'
+        }}>＋ 期間を追加</button>
       </div>
 
       {bonusSettings.length > 0 && (
         <div className="card">
-          <h4 className="font-bold mb-4">登録済み期間</h4>
-          <div className="space-y-4">
+          <h4 style={{ fontWeight: 'bold', marginBottom: '16px', fontSize: '16px' }}>📋 登録済み期間</h4>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {[...bonusSettings].reverse().map(setting => {
               const effectiveMaterialCost = getEffectiveMaterialCost(setting)
               const { rate, diff, pool } = calcBonusPool(setting.targetSales, effectiveMaterialCost)
@@ -5919,136 +5941,144 @@ function BonusManagement({ staff, bonusSettings, setBonusSettings, stockIn, prod
               const baseMaterialCost = isManualCost ? setting.manualMaterialCost : setting.actualPurchase
               
               return (
-                <div key={setting.id} className="border rounded p-4">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <div className="font-bold text-lg">{setting.periodStart} 〜 {setting.periodEnd}</div>
-                    </div>
-                    <div className="flex gap-2">
+                <div key={setting.id} style={{ border: '1px solid #e5e7eb', borderRadius: '12px', padding: '16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                    <div style={{ fontWeight: 'bold', fontSize: '16px' }}>{setting.periodStart} 〜 {setting.periodEnd}</div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
                       {editingId !== setting.id && (
                         <>
-                          <button onClick={() => startEdit(setting)} className="text-blue-500 text-sm">編集</button>
-                          <button onClick={() => deletePeriod(setting.id)} className="text-red-500 text-sm">削除</button>
+                          <button onClick={() => startEdit(setting)} style={{ color: '#3b82f6', fontSize: '13px', background: 'none', border: 'none', cursor: 'pointer' }}>編集</button>
+                          <button onClick={() => deletePeriod(setting.id)} style={{ color: '#ef4444', fontSize: '13px', background: 'none', border: 'none', cursor: 'pointer' }}>削除</button>
                         </>
                       )}
                     </div>
                   </div>
 
                   {editingId === setting.id ? (
-                    <div className="bg-yellow-50 p-4 rounded mb-4">
-                      <div className="grid-2 mb-4">
+                    <div style={{ backgroundColor: '#fef9c3', padding: '16px', borderRadius: '10px', marginBottom: '16px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
                         <div>
-                          <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>値引き後総売上</label>
+                          <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px', color: '#374151' }}>値引き後総売上</label>
                           <input type="number" value={editData.totalSales} onChange={e => setEditData({...editData, totalSales: e.target.value})} className="input" />
                         </div>
                         <div>
-                          <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>店販売上</label>
+                          <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px', color: '#374151' }}>店販売上</label>
                           <input type="number" value={editData.retailSales} onChange={e => setEditData({...editData, retailSales: e.target.value})} className="input" />
                         </div>
                       </div>
-                      <div className="grid-2 mb-4">
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
                         <div>
-                          <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>材料費（試算表）</label>
+                          <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px', color: '#374151' }}>材料費（試算表）</label>
                           <input type="number" value={editData.manualMaterialCost} onChange={e => setEditData({...editData, manualMaterialCost: e.target.value})} placeholder="空欄なら自動計算" className="input" />
                         </div>
                         <div>
-                          <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>プロラボ分</label>
+                          <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '6px', color: '#374151' }}>プロラボ分</label>
                           <input type="number" value={editData.dealerPurchase} onChange={e => setEditData({...editData, dealerPurchase: e.target.value})} placeholder="0" className="input" />
                         </div>
                       </div>
-                      <div className="flex gap-2">
-                        <button onClick={() => saveEditedPeriod(setting.id)} className="btn btn-green">保存</button>
-                        <button onClick={() => setEditingId(null)} className="btn btn-gray">取消</button>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button onClick={() => saveEditedPeriod(setting.id)} style={{
+                          padding: '10px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+                          backgroundColor: '#22c55e', color: '#fff', fontWeight: '600', fontSize: '14px'
+                        }}>保存</button>
+                        <button onClick={() => setEditingId(null)} style={{
+                          padding: '10px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+                          backgroundColor: '#e5e7eb', color: '#374151', fontWeight: '600', fontSize: '14px'
+                        }}>取消</button>
                       </div>
                     </div>
                   ) : (
                     <>
-                      <div className="grid-3 gap-4 mb-4">
-                        <div className="bg-gray-50 p-3 rounded">
-                          <div className="text-sm text-gray-600">値引き後総売上</div>
-                          <div className="text-xl font-bold">¥{setting.targetSales?.toLocaleString()}</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+                        <div style={{ backgroundColor: '#f9fafb', padding: '12px', borderRadius: '10px', textAlign: 'center' }}>
+                          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>値引き後総売上</div>
+                          <div style={{ fontSize: '18px', fontWeight: 'bold' }}>¥{setting.targetSales?.toLocaleString()}</div>
                         </div>
-                        <div className="bg-gray-50 p-3 rounded">
-                          <div className="text-sm text-gray-600">店販売上</div>
-                          <div className="text-xl font-bold">¥{(setting.retailSales || 0).toLocaleString()}</div>
+                        <div style={{ backgroundColor: '#f9fafb', padding: '12px', borderRadius: '10px', textAlign: 'center' }}>
+                          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>店販売上</div>
+                          <div style={{ fontSize: '18px', fontWeight: 'bold' }}>¥{(setting.retailSales || 0).toLocaleString()}</div>
                         </div>
-                        <div className="bg-gray-50 p-3 rounded">
-                          <div className="text-sm text-gray-600">施術売上</div>
-                          <div className="text-xl font-bold">¥{serviceSales.toLocaleString()}</div>
+                        <div style={{ backgroundColor: '#f9fafb', padding: '12px', borderRadius: '10px', textAlign: 'center' }}>
+                          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>施術売上</div>
+                          <div style={{ fontSize: '18px', fontWeight: 'bold' }}>¥{serviceSales.toLocaleString()}</div>
                         </div>
                       </div>
                       
-                      <div className={`p-3 rounded mb-4 ${isManualCost ? 'bg-yellow-50 border border-yellow-300' : 'bg-gray-50'}`}>
-                        <div className="text-sm text-gray-600 mb-1">
-                          材料費 {isManualCost && <span className="text-yellow-600">（試算表）</span>}
+                      <div style={{
+                        padding: '12px', borderRadius: '10px', marginBottom: '16px',
+                        backgroundColor: isManualCost ? '#fef9c3' : '#f9fafb',
+                        border: isManualCost ? '1px solid #fcd34d' : 'none'
+                      }}>
+                        <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>
+                          材料費 {isManualCost && <span style={{ color: '#d97706' }}>（試算表）</span>}
                         </div>
-                        <div className="text-sm">
-                          <span className="text-lg font-bold">¥{baseMaterialCost?.toLocaleString()}</span>
+                        <div style={{ fontSize: '14px' }}>
+                          <span style={{ fontSize: '18px', fontWeight: 'bold' }}>¥{baseMaterialCost?.toLocaleString()}</span>
                           {setting.dealerPurchase > 0 && (
                             <>
-                              <span className="text-gray-500 mx-2">−</span>
-                              <span className="text-red-600">¥{setting.dealerPurchase.toLocaleString()}</span>
-                              <span className="text-gray-500 text-xs ml-1">(プロラボ分)</span>
+                              <span style={{ color: '#6b7280', margin: '0 8px' }}>−</span>
+                              <span style={{ color: '#ef4444' }}>¥{setting.dealerPurchase.toLocaleString()}</span>
+                              <span style={{ color: '#6b7280', fontSize: '11px', marginLeft: '4px' }}>(プロラボ分)</span>
                             </>
                           )}
                         </div>
-                        <div className="text-xl font-bold text-blue-600 mt-1">
+                        <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#2563eb', marginTop: '4px' }}>
                           = ¥{effectiveMaterialCost.toLocaleString()}
                         </div>
                       </div>
                       
-                      <div className="grid-3 gap-4 mb-4">
-                        <div className={`p-3 rounded text-center ${rate <= BASE_RATE ? 'bg-green-50' : 'bg-red-50'}`}>
-                          <div className="text-sm text-gray-600">材料費率</div>
-                          <div className={`text-2xl font-bold ${rate <= BASE_RATE ? 'text-green-600' : 'text-red-600'}`}>{rate.toFixed(1)}%</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+                        <div style={{ padding: '12px', borderRadius: '10px', textAlign: 'center', backgroundColor: rate <= BASE_RATE ? '#f0fdf4' : '#fef2f2' }}>
+                          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>材料費率</div>
+                          <div style={{ fontSize: '24px', fontWeight: 'bold', color: rate <= BASE_RATE ? '#16a34a' : '#dc2626' }}>{rate.toFixed(1)}%</div>
                         </div>
-                        <div className={`p-3 rounded text-center ${diff > 0 ? 'bg-green-50' : 'bg-gray-50'}`}>
-                          <div className="text-sm text-gray-600">基準との差</div>
-                          <div className={`text-2xl font-bold ${diff > 0 ? 'text-green-600' : 'text-gray-400'}`}>{diff > 0 ? `-${diff.toFixed(1)}%` : `+${Math.abs(diff).toFixed(1)}%`}</div>
+                        <div style={{ padding: '12px', borderRadius: '10px', textAlign: 'center', backgroundColor: diff > 0 ? '#f0fdf4' : '#f9fafb' }}>
+                          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>基準との差</div>
+                          <div style={{ fontSize: '24px', fontWeight: 'bold', color: diff > 0 ? '#16a34a' : '#9ca3af' }}>{diff > 0 ? `-${diff.toFixed(1)}%` : `+${Math.abs(diff).toFixed(1)}%`}</div>
                         </div>
-                        <div className={`p-3 rounded text-center ${pool > 0 ? 'bg-blue-50' : 'bg-gray-50'}`}>
-                          <div className="text-sm text-gray-600">ボーナス原資</div>
-                          <div className={`text-2xl font-bold ${pool > 0 ? 'text-blue-600' : 'text-gray-400'}`}>¥{pool.toLocaleString()}</div>
+                        <div style={{ padding: '12px', borderRadius: '10px', textAlign: 'center', backgroundColor: pool > 0 ? '#eff6ff' : '#f9fafb' }}>
+                          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>ボーナス原資</div>
+                          <div style={{ fontSize: '24px', fontWeight: 'bold', color: pool > 0 ? '#2563eb' : '#9ca3af' }}>¥{pool.toLocaleString()}</div>
                         </div>
                       </div>
 
                       {pool > 0 && (
                         <>
-                          <div className="grid-2 gap-4 mb-4">
-                            <div className="bg-green-50 p-3 rounded text-center">
-                              <div className="text-sm text-gray-600">スタッフへ</div>
-                              <div className="text-xl font-bold text-green-600">¥{staffBonus.toLocaleString()}</div>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+                            <div style={{ backgroundColor: '#f0fdf4', padding: '12px', borderRadius: '10px', textAlign: 'center' }}>
+                              <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>スタッフへ</div>
+                              <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#16a34a' }}>¥{staffBonus.toLocaleString()}</div>
                             </div>
-                            <div className="bg-blue-50 p-3 rounded text-center">
-                              <div className="text-sm text-gray-600">🏠 お店の成長へ</div>
-                              <div className="text-xl font-bold text-blue-600">¥{internalReserve.toLocaleString()}</div>
+                            <div style={{ backgroundColor: '#eff6ff', padding: '12px', borderRadius: '10px', textAlign: 'center' }}>
+                              <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>🏠 お店の成長へ</div>
+                              <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#2563eb' }}>¥{internalReserve.toLocaleString()}</div>
                             </div>
                           </div>
 
                           <details>
-                            <summary className="cursor-pointer text-blue-500 font-semibold">📊 配分シミュレーション</summary>
-                            <div className="mt-4 overflow-x-auto">
-                              <table className="text-sm">
+                            <summary style={{ cursor: 'pointer', color: '#3b82f6', fontWeight: '600', fontSize: '14px' }}>📊 配分シミュレーション</summary>
+                            <div style={{ marginTop: '16px', overflowX: 'auto' }}>
+                              <table style={{ width: '100%', fontSize: '13px', borderCollapse: 'collapse' }}>
                                 <thead>
-                                  <tr>
-                                    <th>スタッフ</th>
-                                    <th className="text-center">係数</th>
-                                    <th className="text-right">配分</th>
+                                  <tr style={{ backgroundColor: '#f9fafb' }}>
+                                    <th style={{ padding: '10px 8px', textAlign: 'left', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>スタッフ</th>
+                                    <th style={{ padding: '10px 8px', textAlign: 'center', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>係数</th>
+                                    <th style={{ padding: '10px 8px', textAlign: 'right', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>配分</th>
                                   </tr>
                                 </thead>
                                 <tbody>
                                   {distribution.map(s => (
-                                    <tr key={s.id} className={s.isManagement ? 'bg-blue-50' : ''}>
-                                      <td className="font-semibold">
+                                    <tr key={s.id} style={{ borderBottom: '1px solid #f3f4f6', backgroundColor: s.isManagement ? '#eff6ff' : '#fff' }}>
+                                      <td style={{ padding: '10px 8px', fontWeight: '600' }}>
                                         {s.name}
-                                        {s.isManagement && <span className="ml-2 text-blue-600 text-xs">👑</span>}
+                                        {s.isManagement && <span style={{ marginLeft: '8px', color: '#2563eb', fontSize: '11px' }}>👑</span>}
                                       </td>
-                                      <td className="text-center">{(s.coef * 100).toFixed(0)}%</td>
-                                      <td className="text-right font-bold">
+                                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{(s.coef * 100).toFixed(0)}%</td>
+                                      <td style={{ padding: '10px 8px', textAlign: 'right', fontWeight: 'bold' }}>
                                         {s.isManagement ? (
-                                          <span className="text-blue-600">→ お店の成長へ</span>
+                                          <span style={{ color: '#2563eb' }}>→ お店の成長へ</span>
                                         ) : (
-                                          <span className="text-green-600">¥{s.share.toLocaleString()}</span>
+                                          <span style={{ color: '#16a34a' }}>¥{s.share.toLocaleString()}</span>
                                         )}
                                       </td>
                                     </tr>
@@ -6102,17 +6132,24 @@ function LossInput({ lossRecords, setLossRecords, lossPrices, isAdmin }) {
   return (
     <div className="space-y-4">
       <div className="card">
-        <h3 className="text-lg font-bold mb-4">📉 ロス入力</h3>
+        <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span>📉</span> ロス入力
+        </h3>
         {lossPrices.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <p className="mb-2">単価設定がありません</p>
-            <p className="text-sm">{isAdmin ? '下の「単価設定」でカテゴリを追加してください' : '管理者に単価設定を依頼してください'}</p>
+          <div style={{ textAlign: 'center', padding: '32px 16px', color: '#9ca3af' }}>
+            <div style={{ fontSize: '32px', marginBottom: '8px' }}>⚙️</div>
+            <p style={{ marginBottom: '8px', fontWeight: '600' }}>単価設定がありません</p>
+            <p style={{ fontSize: '13px' }}>{isAdmin ? '下の「単価設定」でカテゴリを追加してください' : '管理者に単価設定を依頼してください'}</p>
           </div>
         ) : (
           <>
-            <div className="grid-2 mb-4">
-              <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>記録日</label><input type="date" value={date} onChange={e => setDate(e.target.value)} className="input" /></div>
-              <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>カテゴリー</label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>記録日</label>
+                <input type="date" value={date} onChange={e => setDate(e.target.value)} className="input" />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>カテゴリー</label>
                 <select value={selectedCategory} onChange={e => setSelectedCategory(e.target.value)} className="select">
                   <option value="">選択してください</option>
                   {lossPrices.map(p => <option key={p.id} value={p.categoryName}>{p.categoryName}（¥{p.pricePerGram}/g）</option>)}
@@ -6121,19 +6158,25 @@ function LossInput({ lossRecords, setLossRecords, lossPrices, isAdmin }) {
             </div>
             {selectedCategory && (
               <>
-                <div className="bg-gray-50 p-3 rounded mb-4">
-                  <div className="text-sm text-gray-600">単価：<span className="font-bold">¥{pricePerGram}/g</span></div>
+                <div style={{ backgroundColor: '#f9fafb', padding: '12px', borderRadius: '10px', marginBottom: '16px' }}>
+                  <div style={{ fontSize: '14px', color: '#6b7280' }}>単価：<span style={{ fontWeight: 'bold' }}>¥{pricePerGram}/g</span></div>
                 </div>
-                <div className="mb-4">
-                  <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>ロスg数</label>
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>ロスg数</label>
                   <input type="number" value={lossGrams} onChange={e => setLossGrams(e.target.value)} placeholder="例: 500" className="input" step="0.1" />
                 </div>
-                <div className="bg-red-50 p-4 rounded mb-4 text-center">
-                  <div className="text-sm text-gray-600">ロス金額（自動計算）</div>
-                  <div className="text-2xl font-bold text-red-600">¥{lossAmount.toLocaleString()}</div>
+                <div style={{ backgroundColor: '#fef2f2', padding: '16px', borderRadius: '12px', marginBottom: '16px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>ロス金額（自動計算）</div>
+                  <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#dc2626' }}>¥{lossAmount.toLocaleString()}</div>
                 </div>
-                <div className="mb-4"><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>メモ（任意）</label><input type="text" value={memo} onChange={e => setMemo(e.target.value)} placeholder="備考" className="input" /></div>
-                <button onClick={recordLoss} className="btn btn-red w-full py-3">ロスを記録</button>
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>メモ（任意）</label>
+                  <input type="text" value={memo} onChange={e => setMemo(e.target.value)} placeholder="備考" className="input" />
+                </div>
+                <button onClick={recordLoss} style={{
+                  width: '100%', padding: '14px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+                  backgroundColor: '#ef4444', color: '#fff', fontWeight: '600', fontSize: '15px'
+                }}>📉 ロスを記録</button>
               </>
             )}
           </>
@@ -6141,19 +6184,42 @@ function LossInput({ lossRecords, setLossRecords, lossPrices, isAdmin }) {
       </div>
 
       <div className="card">
-        <div className="flex justify-between items-center mb-4">
-          <h4 className="font-bold">ロス履歴</h4>
-          <div className="text-red-600 font-bold">累計: ¥{totalLoss.toLocaleString()}</div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <h4 style={{ fontWeight: 'bold', fontSize: '16px' }}>📋 ロス履歴</h4>
+          <div style={{ color: '#dc2626', fontWeight: 'bold', fontSize: '15px' }}>累計: ¥{totalLoss.toLocaleString()}</div>
         </div>
-        {lossRecords.length === 0 ? (<p className="text-gray-500 text-center py-4">ロス記録はありません</p>) : (
-          <div className="overflow-x-auto">
-            <table className="text-sm">
-              <thead><tr><th>日付</th><th>カテゴリー</th><th className="text-right">単価/g</th><th className="text-right">ロスg</th><th className="text-right">金額</th><th>メモ</th>{isAdmin && <th className="text-center">操作</th>}</tr></thead>
+        {lossRecords.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '24px 16px', color: '#9ca3af' }}>
+            <p>ロス記録はありません</p>
+          </div>
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', fontSize: '13px', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ backgroundColor: '#f9fafb' }}>
+                  <th style={{ padding: '10px 8px', textAlign: 'left', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>日付</th>
+                  <th style={{ padding: '10px 8px', textAlign: 'left', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>カテゴリー</th>
+                  <th style={{ padding: '10px 8px', textAlign: 'right', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>単価/g</th>
+                  <th style={{ padding: '10px 8px', textAlign: 'right', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>ロスg</th>
+                  <th style={{ padding: '10px 8px', textAlign: 'right', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>金額</th>
+                  <th style={{ padding: '10px 8px', textAlign: 'left', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>メモ</th>
+                  {isAdmin && <th style={{ padding: '10px 8px', textAlign: 'center', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>操作</th>}
+                </tr>
+              </thead>
               <tbody>
                 {[...lossRecords].reverse().map(l => (
-                  <tr key={l.id}>
-                    <td>{l.date}</td><td>{l.categoryName}</td><td className="text-right">¥{l.pricePerGram}</td><td className="text-right">{l.lossGrams}g</td><td className="text-right text-red-600 font-semibold">¥{l.lossAmount.toLocaleString()}</td><td className="text-gray-500">{l.memo || '-'}</td>
-                    {isAdmin && <td className="text-center"><button onClick={() => deleteLoss(l.id)} className="text-red-500 text-sm">削除</button></td>}
+                  <tr key={l.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                    <td style={{ padding: '10px 8px' }}>{l.date}</td>
+                    <td style={{ padding: '10px 8px' }}>{l.categoryName}</td>
+                    <td style={{ padding: '10px 8px', textAlign: 'right' }}>¥{l.pricePerGram}</td>
+                    <td style={{ padding: '10px 8px', textAlign: 'right' }}>{l.lossGrams}g</td>
+                    <td style={{ padding: '10px 8px', textAlign: 'right', color: '#dc2626', fontWeight: '600' }}>¥{l.lossAmount.toLocaleString()}</td>
+                    <td style={{ padding: '10px 8px', color: '#6b7280' }}>{l.memo || '-'}</td>
+                    {isAdmin && (
+                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>
+                        <button onClick={() => deleteLoss(l.id)} style={{ color: '#ef4444', fontSize: '13px', background: 'none', border: 'none', cursor: 'pointer' }}>削除</button>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -6196,30 +6262,59 @@ function LossPriceSettings({ lossPrices, setLossPrices }) {
 
   return (
     <div className="card">
-      <h3 className="text-lg font-bold mb-4">⚙️ ロス単価設定</h3>
-      <div className="grid-2 mb-4">
-        <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>カテゴリー名</label><input type="text" value={newCategory} onChange={e => setNewCategory(e.target.value)} placeholder="例: カラー材" className="input" /></div>
-        <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>1gあたり金額（円）</label><input type="number" value={newPrice} onChange={e => setNewPrice(e.target.value)} placeholder="例: 10" className="input" step="0.1" /></div>
+      <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <span>⚙️</span> ロス単価設定
+      </h3>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+        <div>
+          <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>カテゴリー名</label>
+          <input type="text" value={newCategory} onChange={e => setNewCategory(e.target.value)} placeholder="例: カラー材" className="input" />
+        </div>
+        <div>
+          <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>1gあたり金額（円）</label>
+          <input type="number" value={newPrice} onChange={e => setNewPrice(e.target.value)} placeholder="例: 10" className="input" step="0.1" />
+        </div>
       </div>
-      <button onClick={addPrice} className="btn btn-blue mb-4"><Icons.Plus /> 単価を追加</button>
+      <button onClick={addPrice} style={{
+        padding: '12px 24px', borderRadius: '10px', border: 'none', cursor: 'pointer', marginBottom: '16px',
+        backgroundColor: '#3b82f6', color: '#fff', fontWeight: '600', fontSize: '15px'
+      }}>＋ 単価を追加</button>
 
-      {lossPrices.length === 0 ? (<p className="text-gray-500 text-center py-4">単価設定がありません</p>) : (
-        <div className="overflow-x-auto">
-          <table>
-            <thead><tr><th>カテゴリー</th><th className="text-right">単価/g</th><th className="text-center">操作</th></tr></thead>
+      {lossPrices.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '24px 16px', color: '#9ca3af' }}>
+          <p>単価設定がありません</p>
+        </div>
+      ) : (
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', fontSize: '13px', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ backgroundColor: '#f9fafb' }}>
+                <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>カテゴリー</th>
+                <th style={{ padding: '12px 8px', textAlign: 'right', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>単価/g</th>
+                <th style={{ padding: '12px 8px', textAlign: 'center', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>操作</th>
+              </tr>
+            </thead>
             <tbody>
               {lossPrices.map(p => (
                 editingId === p.id ? (
-                  <tr key={p.id} style={{ background: '#fef9c3' }}>
-                    <td className="font-semibold">{p.categoryName}</td>
-                    <td className="text-right"><input type="number" value={editPrice} onChange={e => setEditPrice(e.target.value)} className="input" style={{ width: '100px' }} step="0.1" /></td>
-                    <td className="text-center"><button onClick={() => saveEdit(p.id)} className="text-green-600 text-sm mr-2">保存</button><button onClick={() => setEditingId(null)} className="text-gray-500 text-sm">取消</button></td>
+                  <tr key={p.id} style={{ backgroundColor: '#fef9c3' }}>
+                    <td style={{ padding: '10px 8px', fontWeight: '600' }}>{p.categoryName}</td>
+                    <td style={{ padding: '10px 8px', textAlign: 'right' }}>
+                      <input type="number" value={editPrice} onChange={e => setEditPrice(e.target.value)} className="input" style={{ width: '100px' }} step="0.1" />
+                    </td>
+                    <td style={{ padding: '10px 8px', textAlign: 'center' }}>
+                      <button onClick={() => saveEdit(p.id)} style={{ color: '#16a34a', fontSize: '13px', marginRight: '8px', background: 'none', border: 'none', cursor: 'pointer' }}>保存</button>
+                      <button onClick={() => setEditingId(null)} style={{ color: '#6b7280', fontSize: '13px', background: 'none', border: 'none', cursor: 'pointer' }}>取消</button>
+                    </td>
                   </tr>
                 ) : (
-                  <tr key={p.id}>
-                    <td className="font-semibold">{p.categoryName}</td>
-                    <td className="text-right">¥{p.pricePerGram}</td>
-                    <td className="text-center"><button onClick={() => startEdit(p)} className="text-blue-500 text-sm mr-2">編集</button><button onClick={() => deletePrice(p.id)} className="text-red-500 text-sm">削除</button></td>
+                  <tr key={p.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                    <td style={{ padding: '10px 8px', fontWeight: '600' }}>{p.categoryName}</td>
+                    <td style={{ padding: '10px 8px', textAlign: 'right' }}>¥{p.pricePerGram}</td>
+                    <td style={{ padding: '10px 8px', textAlign: 'center' }}>
+                      <button onClick={() => startEdit(p)} style={{ color: '#3b82f6', fontSize: '13px', marginRight: '8px', background: 'none', border: 'none', cursor: 'pointer' }}>編集</button>
+                      <button onClick={() => deletePrice(p.id)} style={{ color: '#ef4444', fontSize: '13px', background: 'none', border: 'none', cursor: 'pointer' }}>削除</button>
+                    </td>
                   </tr>
                 )
               ))}
