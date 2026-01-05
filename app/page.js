@@ -1094,8 +1094,43 @@ function HomeScreen({ staff, leaveRequests, practiceReservations, contactWeekly,
     return `${d.getMonth() + 1}/${d.getDate()}(${dayNames[d.getDay()]})`
   }
 
+  // 今週の締切日を計算
+  const getDeadlineInfo = () => {
+    const weekStart = getWeekStart()
+    const weekEnd = new Date(weekStart)
+    weekEnd.setDate(weekEnd.getDate() + 6) // 日曜
+    
+    // 第三日曜かどうか
+    let sundayCount = 0
+    for (let i = 1; i <= weekEnd.getDate(); i++) {
+      if (new Date(weekEnd.getFullYear(), weekEnd.getMonth(), i).getDay() === 0) sundayCount++
+    }
+    const isThirdSundayWeek = sundayCount === 3
+    
+    const deadline = new Date(weekStart)
+    deadline.setDate(deadline.getDate() + (isThirdSundayWeek ? 5 : 6)) // 土曜 or 日曜
+    
+    return { deadline, isThirdSundayWeek }
+  }
+  
+  const { deadline: contactDeadline } = getDeadlineInfo()
+  const isContactOverdue = today > contactDeadline
+
   return (
     <div className="space-y-4">
+      {/* スタッフ向け：連絡帳の締切お知らせ */}
+      {!isAdmin && isContactOverdue && (
+        <div className="card" style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '20px' }}>⚠️</span>
+            <div>
+              <p style={{ fontWeight: 'bold', color: '#dc2626' }}>連絡帳が未提出です</p>
+              <p style={{ fontSize: '13px', color: '#991b1b' }}>📓連絡帳タブから提出してください</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 今日の日付 */}
       <div className="card" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
         <div style={{ fontSize: '14px', opacity: 0.9 }}>{today.getFullYear()}年</div>
@@ -2890,6 +2925,28 @@ function ContactBook({ staff, setStaff, contactGoals, setContactGoals, contactWe
           <h3 className="font-bold mb-3">📓 今週の連絡帳</h3>
           <p className="text-sm text-gray-500 mb-2">週: {currentWeekStart} 〜</p>
           
+          {/* 締切日表示 */}
+          {(() => {
+            const weekEnd = new Date(currentWeekStart)
+            weekEnd.setDate(weekEnd.getDate() + 6) // 日曜
+            const isThirdSundayWeek = isThirdSunday(weekEnd)
+            const deadlineDate = isThirdSundayWeek ? new Date(weekEnd.setDate(weekEnd.getDate() - 1)) : new Date(currentWeekStart)
+            deadlineDate.setDate(deadlineDate.getDate() + (isThirdSundayWeek ? 0 : 6))
+            const deadlineDateObj = new Date(currentWeekStart)
+            deadlineDateObj.setDate(deadlineDateObj.getDate() + (isThirdSundayWeek ? 5 : 6))
+            const deadlineStr = `${deadlineDateObj.getMonth() + 1}/${deadlineDateObj.getDate()}(${isThirdSundayWeek ? '土' : '日'})`
+            const isOverdue = today > deadlineDateObj && !contactWeekly.find(w => w.staffId === parseInt(selectedStaff) && w.weekStart === currentWeekStart)?.submittedAt
+            
+            return (
+              <div className={`p-3 rounded mb-4 ${isOverdue ? 'bg-red-50 border border-red-300' : 'bg-blue-50'}`}>
+                <span className={`text-sm ${isOverdue ? 'text-red-600' : 'text-blue-600'}`}>
+                  📅 今週の締切: <span className="font-bold">{deadlineStr}</span>
+                  {isOverdue && <span className="ml-2">⚠️ 締切を過ぎています</span>}
+                </span>
+              </div>
+            )
+          })()}
+          
           {currentGoal ? (
             <div className="bg-blue-50 p-3 rounded mb-4">
               <p className="text-sm"><span className="font-semibold">今月の目標:</span> {currentGoal.monthlyGoal}</p>
@@ -3007,50 +3064,79 @@ function ContactBook({ staff, setStaff, contactGoals, setContactGoals, contactWe
       {/* ===== 管理者：ダッシュボード ===== */}
       {mode === 'admin' && isAdmin && (
         <div className="space-y-4">
-          {redFlagStaff.length > 0 && (
-            <div className="card bg-red-50 border-red-300">
-              <h3 className="font-bold text-red-600 mb-2">⚠️ 赤信号</h3>
-              <div className="space-y-1">
-                {redFlagStaff.map(s => (
-                  <div key={s.id} className="text-sm"><span className="font-semibold">{s.name}</span> - 2週連続0日 or 未提出</div>
-                ))}
-              </div>
-            </div>
-          )}
-          
           <div className="card">
             <h3 className="font-bold mb-3">📊 今週（{currentWeekStart}〜）</h3>
-            <div className="grid-2 gap-4 mb-4">
-              <div className="bg-blue-50 p-3 rounded text-center">
-                <div className="text-2xl font-bold text-blue-600">{thisWeekSubmissions.filter(w => contactStaff.some(s => s.id === w.staffId)).length}/{contactStaff.length}</div>
-                <div className="text-sm text-gray-500">提出</div>
+            
+            {/* 提出済み */}
+            <div className="bg-green-50 p-3 rounded mb-3">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-green-600 font-bold">✅ 提出済</span>
+                <span className="text-green-600 font-bold">{thisWeekSubmissions.filter(w => contactStaff.some(s => s.id === w.staffId)).length}人</span>
               </div>
-              <div className="bg-green-50 p-3 rounded text-center">
-                <div className="text-2xl font-bold text-green-600">
-                  {thisWeekSubmissions.length > 0 ? (thisWeekSubmissions.reduce((sum, w) => sum + countChecks(w.checks), 0) / thisWeekSubmissions.length).toFixed(1) : 0}日
+              {thisWeekSubmissions.filter(w => contactStaff.some(s => s.id === w.staffId)).length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {thisWeekSubmissions.filter(w => contactStaff.some(s => s.id === w.staffId)).map(w => (
+                    <span key={w.id} className="text-sm bg-white px-2 py-1 rounded">{w.staffName}</span>
+                  ))}
                 </div>
-                <div className="text-sm text-gray-500">平均達成</div>
-              </div>
+              ) : (
+                <p className="text-sm text-gray-500">まだいません</p>
+              )}
             </div>
             
-            <div className="space-y-2">
+            {/* 未提出 */}
+            {(() => {
+              const notSubmitted = contactStaff.filter(s => !thisWeekSubmissions.some(w => w.staffId === s.id))
+              return notSubmitted.length > 0 && (
+                <div className="bg-yellow-50 p-3 rounded mb-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-yellow-600 font-bold">⏳ 未提出</span>
+                    <span className="text-yellow-600 font-bold">{notSubmitted.length}人</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {notSubmitted.map(s => (
+                      <span key={s.id} className="text-sm bg-white px-2 py-1 rounded">{s.name}</span>
+                    ))}
+                  </div>
+                </div>
+              )
+            })()}
+            
+            {/* 赤信号 */}
+            {redFlagStaff.length > 0 && (
+              <div className="bg-red-50 p-3 rounded mb-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-red-600 font-bold">⚠️ 赤信号</span>
+                  <span className="text-red-600 font-bold">{redFlagStaff.length}人</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {redFlagStaff.map(s => (
+                    <span key={s.id} className="text-sm bg-white px-2 py-1 rounded">{s.name}</span>
+                  ))}
+                </div>
+                <p className="text-xs text-red-400 mt-2">2週連続0日 or 未提出</p>
+              </div>
+            )}
+            
+            {/* 個別状況（0日の人への返信用） */}
+            <div className="space-y-2 mt-4">
+              <p className="text-sm font-semibold text-gray-600">詳細（0日の人に返信可能）</p>
               {contactStaff.map(s => {
                 const weekly = contactWeekly.find(w => w.staffId === s.id && w.weekStart === currentWeekStart)
                 const hasReply = weekly && contactReplies.some(r => r.weeklyId === weekly.id)
                 const checkCount = weekly ? countChecks(weekly.checks) : null
                 
+                if (!weekly?.submittedAt || checkCount !== 0) return null
+                
                 return (
-                  <div key={s.id} className={`flex justify-between items-center p-2 rounded ${weekly?.submittedAt ? 'bg-gray-50' : 'bg-yellow-50'}`}>
+                  <div key={s.id} className="flex justify-between items-center p-2 rounded bg-red-50">
                     <div>
                       <span className="font-semibold">{s.name}</span>
-                      {weekly?.submittedAt ? (
-                        <span className={`ml-2 ${checkCount === 0 ? 'text-red-500' : 'text-green-600'}`}>{checkCount}日</span>
-                      ) : (
-                        <span className="ml-2 text-gray-400">未提出</span>
-                      )}
+                      <span className="ml-2 text-red-500">0日</span>
+                      {weekly.zeroReason && <span className="ml-2 text-xs text-gray-500">({weekly.zeroReason})</span>}
                     </div>
                     <div className="flex items-center gap-2">
-                      {weekly?.submittedAt && checkCount === 0 && !hasReply && (
+                      {!hasReply && (
                         <button onClick={() => { setReplyingTo(weekly.id); setReplyText('') }} className="text-purple-500 text-xs">返信する</button>
                       )}
                       {hasReply && <span className="text-xs text-purple-500">返信済</span>}
