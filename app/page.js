@@ -4379,6 +4379,48 @@ function LeaveManagement({ staff, leaveGrants, setLeaveGrants, leaveRequests, se
         <div className="card">
           <h3 className="text-lg font-bold mb-4">📊 {fiscalYear}年度 有給残日数</h3>
           
+          {/* 法定付与日数の一覧（折りたたみ） */}
+          <details className="mb-4">
+            <summary style={{ cursor: 'pointer', fontSize: '14px', color: '#3b82f6', marginBottom: '8px' }}>📋 法定付与日数を確認する</summary>
+            <div className="bg-blue-50 p-4 rounded mt-2">
+              <div className="grid-2 gap-4">
+                <div>
+                  <p className="text-xs font-semibold text-gray-600 mb-2">週5日勤務</p>
+                  <table style={{ width: '100%', fontSize: '12px', borderCollapse: 'collapse' }}>
+                    <tbody>
+                      {[
+                        ['1年', '10日'], ['2年', '11日'], ['3年', '12日'], ['4年', '14日'],
+                        ['5年', '16日'], ['6年', '18日'], ['7年〜', '20日']
+                      ].map(([year, days]) => (
+                        <tr key={year} style={{ borderBottom: '1px solid #dbeafe' }}>
+                          <td style={{ padding: '4px 8px', color: '#6b7280' }}>{year}</td>
+                          <td style={{ padding: '4px 8px', fontWeight: 'bold', color: '#2563eb' }}>{days}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-gray-600 mb-2">週4日勤務</p>
+                  <table style={{ width: '100%', fontSize: '12px', borderCollapse: 'collapse' }}>
+                    <tbody>
+                      {[
+                        ['1年', '7日'], ['2年', '8日'], ['3年', '9日'], ['4年', '10日'],
+                        ['5年', '12日'], ['6年', '13日'], ['7年〜', '15日']
+                      ].map(([year, days]) => (
+                        <tr key={year} style={{ borderBottom: '1px solid #dbeafe' }}>
+                          <td style={{ padding: '4px 8px', color: '#6b7280' }}>{year}</td>
+                          <td style={{ padding: '4px 8px', fontWeight: 'bold', color: '#2563eb' }}>{days}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 mt-3">※ 試用期間（入社〜1年）を経て付与開始</p>
+            </div>
+          </details>
+          
           {!selectedStaff ? (
             <div className="space-y-3">
               {staff.map(s => {
