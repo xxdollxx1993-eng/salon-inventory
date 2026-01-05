@@ -22,6 +22,233 @@ const Icons = {
   Logout: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>,
 }
 
+// ==================== 共通スタイル ====================
+const colors = {
+  primary: '#3b82f6',      // 青
+  primaryHover: '#2563eb',
+  success: '#22c55e',      // 緑
+  successHover: '#16a34a',
+  danger: '#ef4444',       // 赤
+  dangerHover: '#dc2626',
+  warning: '#f59e0b',      // オレンジ
+  warningHover: '#d97706',
+  purple: '#8b5cf6',       // 紫
+  purpleHover: '#7c3aed',
+  gray: '#6b7280',
+  grayLight: '#f3f4f6',
+  grayBorder: '#d1d5db',
+  text: '#374151',
+  textLight: '#6b7280',
+  white: '#ffffff',
+}
+
+const styles = {
+  // ボタン共通
+  btnBase: {
+    padding: '10px 16px',
+    borderRadius: '8px',
+    fontWeight: '600',
+    fontSize: '14px',
+    cursor: 'pointer',
+    border: 'none',
+    transition: 'all 0.2s',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '6px',
+  },
+  btnPrimary: {
+    backgroundColor: colors.primary,
+    color: colors.white,
+  },
+  btnSuccess: {
+    backgroundColor: colors.success,
+    color: colors.white,
+  },
+  btnDanger: {
+    backgroundColor: colors.danger,
+    color: colors.white,
+  },
+  btnWarning: {
+    backgroundColor: colors.warning,
+    color: colors.white,
+  },
+  btnPurple: {
+    backgroundColor: colors.purple,
+    color: colors.white,
+  },
+  btnGray: {
+    backgroundColor: colors.grayLight,
+    color: colors.text,
+    border: `1px solid ${colors.grayBorder}`,
+  },
+  btnOutline: {
+    backgroundColor: 'transparent',
+    color: colors.primary,
+    border: `1px solid ${colors.primary}`,
+  },
+  btnSmall: {
+    padding: '6px 12px',
+    fontSize: '13px',
+  },
+  btnLarge: {
+    padding: '14px 24px',
+    fontSize: '16px',
+  },
+  btnFull: {
+    width: '100%',
+  },
+  
+  // カード
+  card: {
+    backgroundColor: colors.white,
+    borderRadius: '12px',
+    padding: '20px',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    marginBottom: '16px',
+  },
+  cardHeader: {
+    fontWeight: 'bold',
+    fontSize: '16px',
+    marginBottom: '16px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+  },
+  
+  // フォーム
+  input: {
+    width: '100%',
+    padding: '10px 12px',
+    borderRadius: '8px',
+    border: `1px solid ${colors.grayBorder}`,
+    fontSize: '14px',
+    outline: 'none',
+    transition: 'border-color 0.2s',
+  },
+  select: {
+    padding: '10px 12px',
+    borderRadius: '8px',
+    border: `1px solid ${colors.grayBorder}`,
+    fontSize: '14px',
+    backgroundColor: colors.white,
+    cursor: 'pointer',
+  },
+  label: {
+    display: 'block',
+    fontSize: '14px',
+    fontWeight: '600',
+    marginBottom: '6px',
+    color: colors.text,
+  },
+  
+  // バッジ
+  badge: {
+    display: 'inline-block',
+    padding: '4px 10px',
+    borderRadius: '20px',
+    fontSize: '12px',
+    fontWeight: '600',
+  },
+  badgeBlue: {
+    backgroundColor: '#dbeafe',
+    color: '#1d4ed8',
+  },
+  badgeGreen: {
+    backgroundColor: '#dcfce7',
+    color: '#15803d',
+  },
+  badgeYellow: {
+    backgroundColor: '#fef3c7',
+    color: '#92400e',
+  },
+  badgeRed: {
+    backgroundColor: '#fee2e2',
+    color: '#b91c1c',
+  },
+  badgePurple: {
+    backgroundColor: '#f3e8ff',
+    color: '#7c3aed',
+  },
+  badgeGray: {
+    backgroundColor: colors.grayLight,
+    color: colors.gray,
+  },
+  
+  // リスト項目
+  listItem: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '12px 16px',
+    backgroundColor: colors.grayLight,
+    borderRadius: '8px',
+    marginBottom: '8px',
+  },
+  
+  // セクション
+  section: {
+    marginBottom: '24px',
+  },
+  sectionTitle: {
+    fontSize: '14px',
+    fontWeight: '600',
+    color: colors.textLight,
+    marginBottom: '12px',
+  },
+  
+  // グリッド
+  grid2: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, 1fr)',
+    gap: '12px',
+  },
+  grid3: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(3, 1fr)',
+    gap: '12px',
+  },
+  
+  // フレックス
+  flexBetween: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  flexCenter: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  flexGap: {
+    display: 'flex',
+    gap: '8px',
+    flexWrap: 'wrap',
+  },
+  
+  // テキスト
+  textSmall: {
+    fontSize: '13px',
+    color: colors.textLight,
+  },
+  textBold: {
+    fontWeight: '600',
+  },
+  textCenter: {
+    textAlign: 'center',
+  },
+  
+  // 空状態
+  empty: {
+    textAlign: 'center',
+    padding: '40px 20px',
+    color: colors.textLight,
+  },
+}
+
+// スタイル結合ヘルパー
+const sx = (...styleObjects) => Object.assign({}, ...styleObjects)
+
 export default function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [userRole, setUserRole] = useState(null)
@@ -86,27 +313,31 @@ function LoginScreen({ passwords, onLogin }) {
   }
 
   return (
-    <div className="container" style={{ paddingTop: '4rem' }}>
-      <div className="card" style={{ maxWidth: '400px', margin: '0 auto' }}>
-        <div className="text-center mb-6">
-          <Icons.Lock />
-          <h1 className="text-2xl font-bold mt-2">美容室在庫管理</h1>
-          <p className="text-sm text-gray-500 mt-1">ログインしてください</p>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', backgroundColor: '#f8fafc' }}>
+      <div style={{ ...styles.card, maxWidth: '400px', width: '100%', textAlign: 'center' }}>
+        <div style={{ marginBottom: '24px' }}>
+          <div style={{ width: '60px', height: '60px', backgroundColor: colors.primary, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', color: 'white' }}>
+            <Icons.Lock />
+          </div>
+          <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: colors.text }}>美容室在庫管理</h1>
+          <p style={{ ...styles.textSmall, marginTop: '8px' }}>パスワードを入力してログイン</p>
         </div>
         <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>パスワード</label>
+          <div style={{ marginBottom: '16px', textAlign: 'left' }}>
+            <label style={styles.label}>パスワード</label>
             <input
               type="password"
               value={inputPassword}
               onChange={e => { setInputPassword(e.target.value); setError('') }}
-              className="input w-full"
+              style={styles.input}
               placeholder="パスワードを入力"
               autoFocus
             />
           </div>
-          {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-          <button type="submit" className="btn btn-blue w-full py-3">ログイン</button>
+          {error && <p style={{ color: colors.danger, fontSize: '14px', marginBottom: '16px' }}>{error}</p>}
+          <button type="submit" style={sx(styles.btnBase, styles.btnPrimary, styles.btnFull, styles.btnLarge)}>
+            ログイン
+          </button>
         </form>
       </div>
     </div>
@@ -633,75 +864,86 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
   if (loading) return <div className="container" style={{ paddingTop: '4rem', textAlign: 'center' }}><p>読み込み中...</p></div>
 
   return (
-    <div className="container">
-      <div className="card">
-        <div className="flex justify-between items-center mb-4">
-          <h1 className="text-2xl font-bold">美容室在庫管理</h1>
-          <div className="flex items-center gap-2">
-            <button onClick={() => setShowHelp(true)} className="btn btn-gray" style={{ padding: '0.25rem 0.5rem', fontSize: '16px' }}>❓</button>
-            <span className={`badge ${isAdmin ? 'badge-red' : 'badge-blue'}`}>{isAdmin ? '管理者' : 'スタッフ'}</span>
-            <button onClick={onLogout} className="btn btn-gray" style={{ padding: '0.25rem 0.5rem' }}><Icons.Logout /></button>
+    <div style={{ maxWidth: '800px', margin: '0 auto', padding: '16px' }}>
+      {/* ヘッダー */}
+      <div style={{ ...styles.card, marginBottom: '16px' }}>
+        <div style={{ ...styles.flexBetween, marginBottom: '16px' }}>
+          <h1 style={{ fontSize: '20px', fontWeight: 'bold', color: colors.text }}>美容室在庫管理</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button onClick={() => setShowHelp(true)} style={sx(styles.btnBase, styles.btnGray, { padding: '6px 10px' })}>❓</button>
+            <span style={sx(styles.badge, isAdmin ? styles.badgeRed : styles.badgeBlue)}>{isAdmin ? '管理者' : 'スタッフ'}</span>
+            <button onClick={onLogout} style={sx(styles.btnBase, styles.btnGray, { padding: '6px 10px' })}><Icons.Logout /></button>
           </div>
         </div>
-        <div className="flex gap-2 flex-wrap">
-          {/* スタッフ用：メイン + その他 */}
+        
+        {/* タブナビゲーション */}
+        <div style={styles.flexGap}>
+          {/* スタッフ用 */}
           {!isAdmin && (
             <>
               {staffMainTabs.map(t => (
-                <button key={t.key} className={`tab ${tab === t.key ? 'active' : ''}`} onClick={() => setTab(t.key)}>{t.label}</button>
+                <button 
+                  key={t.key} 
+                  onClick={() => setTab(t.key)}
+                  style={sx(
+                    styles.btnBase,
+                    tab === t.key ? styles.btnPrimary : styles.btnGray,
+                    { padding: '8px 12px', fontSize: '13px' }
+                  )}
+                >
+                  {t.label}
+                </button>
               ))}
               <select
                 value={isStaffOtherTab ? tab : ''}
                 onChange={e => e.target.value && setTab(e.target.value)}
-                className={`select ${isStaffOtherTab ? 'bg-blue-100 border-blue-500' : ''}`}
-                style={{ minWidth: '100px', padding: '0.5rem' }}
+                style={sx(styles.select, isStaffOtherTab && { backgroundColor: '#dbeafe', borderColor: colors.primary })}
               >
                 <option value="">その他 ▼</option>
-                {staffOtherTabs.map(t => (
-                  <option key={t.key} value={t.key}>{t.label}</option>
-                ))}
+                {staffOtherTabs.map(t => <option key={t.key} value={t.key}>{t.label}</option>)}
               </select>
             </>
           )}
           
-          {/* 管理者用：グループ分けタブ */}
+          {/* 管理者用 */}
           {isAdmin && (
             <>
               {adminMainTabs.map(t => (
-                <button key={t.key} className={`tab ${tab === t.key ? 'active' : ''}`} onClick={() => setTab(t.key)}>{t.label}</button>
+                <button 
+                  key={t.key} 
+                  onClick={() => setTab(t.key)}
+                  style={sx(
+                    styles.btnBase,
+                    tab === t.key ? styles.btnPrimary : styles.btnGray,
+                    { padding: '8px 12px', fontSize: '13px' }
+                  )}
+                >
+                  {t.label}
+                </button>
               ))}
               <select
                 value={isManageTab ? tab : ''}
                 onChange={e => e.target.value && setTab(e.target.value)}
-                className={`select ${isManageTab ? 'bg-blue-100 border-blue-500' : ''}`}
-                style={{ minWidth: '90px', padding: '0.5rem' }}
+                style={sx(styles.select, isManageTab && { backgroundColor: '#dbeafe', borderColor: colors.primary })}
               >
                 <option value="">管理 ▼</option>
-                {adminManageTabs.map(t => (
-                  <option key={t.key} value={t.key}>{t.label}</option>
-                ))}
+                {adminManageTabs.map(t => <option key={t.key} value={t.key}>{t.label}</option>)}
               </select>
               <select
                 value={isBusinessTab ? tab : ''}
                 onChange={e => e.target.value && setTab(e.target.value)}
-                className={`select ${isBusinessTab ? 'bg-green-100 border-green-500' : ''}`}
-                style={{ minWidth: '90px', padding: '0.5rem' }}
+                style={sx(styles.select, isBusinessTab && { backgroundColor: '#dcfce7', borderColor: colors.success })}
               >
                 <option value="">経営 ▼</option>
-                {adminBusinessTabs.map(t => (
-                  <option key={t.key} value={t.key}>{t.label}</option>
-                ))}
+                {adminBusinessTabs.map(t => <option key={t.key} value={t.key}>{t.label}</option>)}
               </select>
               <select
                 value={isSettingsTab ? tab : ''}
                 onChange={e => e.target.value && setTab(e.target.value)}
-                className={`select ${isSettingsTab ? 'bg-gray-200 border-gray-500' : ''}`}
-                style={{ minWidth: '90px', padding: '0.5rem' }}
+                style={sx(styles.select, isSettingsTab && { backgroundColor: colors.grayLight, borderColor: colors.gray })}
               >
                 <option value="">設定 ▼</option>
-                {adminSettingsTabs.map(t => (
-                  <option key={t.key} value={t.key}>{t.label}</option>
-                ))}
+                {adminSettingsTabs.map(t => <option key={t.key} value={t.key}>{t.label}</option>)}
               </select>
             </>
           )}
