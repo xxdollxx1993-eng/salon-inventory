@@ -1233,6 +1233,98 @@ function HomeScreen({ staff, leaveRequests, practiceReservations, contactWeekly,
         </div>
       )}
 
+      {/* 今月のカレンダー */}
+      <div className="card">
+        <h3 style={{ fontWeight: 'bold', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '20px' }}>📅</span> {today.getMonth() + 1}月のカレンダー
+        </h3>
+        {(() => {
+          const year = today.getFullYear()
+          const month = today.getMonth()
+          const firstDay = new Date(year, month, 1).getDay()
+          const lastDate = new Date(year, month + 1, 0).getDate()
+          
+          // 第三日曜日を計算
+          let sundayCount = 0
+          let thirdSunday = null
+          for (let d = 1; d <= lastDate; d++) {
+            if (new Date(year, month, d).getDay() === 0) {
+              sundayCount++
+              if (sundayCount === 3) { thirdSunday = d; break }
+            }
+          }
+          
+          // 日付配列を作成
+          const days = []
+          for (let i = 0; i < firstDay; i++) days.push(null)
+          for (let d = 1; d <= lastDate; d++) days.push(d)
+          
+          const dayNames = ['日', '月', '火', '水', '木', '金', '土']
+          
+          return (
+            <div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px', marginBottom: '4px' }}>
+                {dayNames.map((name, i) => (
+                  <div key={name} style={{ 
+                    textAlign: 'center', 
+                    fontSize: '12px', 
+                    fontWeight: 'bold',
+                    color: i === 0 ? '#ef4444' : i === 6 ? '#3b82f6' : '#6b7280',
+                    padding: '4px 0'
+                  }}>{name}</div>
+                ))}
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px' }}>
+                {days.map((day, i) => {
+                  if (day === null) return <div key={`empty-${i}`} />
+                  
+                  const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+                  const dayOfWeek = new Date(year, month, day).getDay()
+                  const isMonTue = dayOfWeek === 1 || dayOfWeek === 2
+                  const isThirdSun = day === thirdSunday
+                  const isHolidayDay = isMonTue || isThirdSun
+                  const isToday = day === today.getDate()
+                  
+                  const dayLeave = leaveRequests.filter(r => r.leaveDate === dateStr && r.status === 'approved')
+                  const dayPractice = practiceReservations.filter(p => p.date === dateStr)
+                  
+                  return (
+                    <div key={day} style={{
+                      minHeight: '48px',
+                      padding: '4px',
+                      backgroundColor: isToday ? '#dbeafe' : isHolidayDay ? '#f3f4f6' : '#fafafa',
+                      borderRadius: '4px',
+                      border: isToday ? '2px solid #3b82f6' : '1px solid #e5e7eb',
+                      textAlign: 'center'
+                    }}>
+                      <div style={{ 
+                        fontSize: '12px', 
+                        fontWeight: isToday ? 'bold' : 'normal',
+                        color: isHolidayDay ? '#9ca3af' : dayOfWeek === 0 ? '#ef4444' : dayOfWeek === 6 ? '#3b82f6' : '#374151'
+                      }}>
+                        {day}
+                      </div>
+                      {isThirdSun && <div style={{ fontSize: '10px', color: '#9ca3af' }}>休</div>}
+                      {!isHolidayDay && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '1px', marginTop: '2px' }}>
+                          {dayLeave.length > 0 && <span style={{ fontSize: '10px' }}>🏖️</span>}
+                          {dayPractice.length > 0 && <span style={{ fontSize: '10px' }}>🎨</span>}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+              <div style={{ display: 'flex', gap: '12px', marginTop: '8px', fontSize: '11px', color: '#6b7280' }}>
+                <span>🏖️ 有給</span>
+                <span>🎨 練習</span>
+                <span style={{ color: '#9ca3af' }}>グレー = 定休日</span>
+              </div>
+            </div>
+          )
+        })()}
+      </div>
+
       {/* 連絡帳（管理者のみ） */}
       {isAdmin && contactStaff.length > 0 && (
         <div className="card">
