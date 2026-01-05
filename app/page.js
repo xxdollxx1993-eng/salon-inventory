@@ -2250,31 +2250,87 @@ function OrderLinks({ categories, setCategories }) {
 
   return (
     <div className="space-y-4">
-      <div className="card"><h3 className="text-lg font-bold mb-4">📦 発注リンク</h3><p className="text-sm text-gray-600 mb-4">ディーラーの発注ページにワンタップでアクセス</p></div>
-      {categories.large.length === 0 ? (<div className="card text-center text-gray-500"><p>ディーラーが登録されていません</p><p className="text-sm">商品管理タブでディーラーを追加してください</p></div>) : (
+      <div className="card">
+        <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span>📦</span> 発注リンク
+        </h3>
+        <p style={{ fontSize: '14px', color: '#6b7280' }}>ディーラーの発注ページにワンタップでアクセス</p>
+      </div>
+      {categories.large.length === 0 ? (
+        <div className="card" style={{ textAlign: 'center', padding: '32px 16px' }}>
+          <div style={{ fontSize: '32px', marginBottom: '8px' }}>📦</div>
+          <p style={{ color: '#6b7280', marginBottom: '4px' }}>ディーラーが登録されていません</p>
+          <p style={{ fontSize: '13px', color: '#9ca3af' }}>商品管理タブでディーラーを追加してください</p>
+        </div>
+      ) : (
         categories.large.map(dealer => (
           <div key={dealer.name} className="card">
             {editingDealer === dealer.name ? (
-              <div className="space-y-4">
-                <h4 className="text-lg font-bold text-blue-600">{dealer.name}</h4>
-                <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>注文方法</label><select value={editData.orderMethod} onChange={e => setEditData({...editData, orderMethod: e.target.value})} className="select">{orderMethods.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}</select></div>
-                <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>{editData.orderMethod === 'line' ? 'LINEトークURL' : 'URL'}</label><input type="url" value={editData.url} onChange={e => setEditData({...editData, url: e.target.value})} placeholder={editData.orderMethod === 'line' ? 'line://ti/p/xxxxx' : 'https://...'} className="input" /></div>
-                {editData.orderMethod === 'web' && (<><div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>ログインID</label><input type="text" value={editData.loginId} onChange={e => setEditData({...editData, loginId: e.target.value})} className="input" /></div><div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>パスワード</label><input type="text" value={editData.loginPassword} onChange={e => setEditData({...editData, loginPassword: e.target.value})} className="input" /></div></>)}
-                <div className="flex gap-2"><button onClick={() => saveEdit(dealer.name)} className="btn btn-green">保存</button><button onClick={() => setEditingDealer(null)} className="btn btn-gray">取消</button></div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <h4 style={{ fontSize: '18px', fontWeight: 'bold', color: '#2563eb' }}>{dealer.name}</h4>
+                <div>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>注文方法</label>
+                  <select value={editData.orderMethod} onChange={e => setEditData({...editData, orderMethod: e.target.value})} className="select">
+                    {orderMethods.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>{editData.orderMethod === 'line' ? 'LINEトークURL' : 'URL'}</label>
+                  <input type="url" value={editData.url} onChange={e => setEditData({...editData, url: e.target.value})} placeholder={editData.orderMethod === 'line' ? 'line://ti/p/xxxxx' : 'https://...'} className="input" />
+                </div>
+                {editData.orderMethod === 'web' && (
+                  <>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>ログインID</label>
+                      <input type="text" value={editData.loginId} onChange={e => setEditData({...editData, loginId: e.target.value})} className="input" />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>パスワード</label>
+                      <input type="text" value={editData.loginPassword} onChange={e => setEditData({...editData, loginPassword: e.target.value})} className="input" />
+                    </div>
+                  </>
+                )}
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button onClick={() => saveEdit(dealer.name)} style={{
+                    padding: '10px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+                    backgroundColor: '#22c55e', color: '#fff', fontWeight: '600', fontSize: '14px'
+                  }}>保存</button>
+                  <button onClick={() => setEditingDealer(null)} style={{
+                    padding: '10px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+                    backgroundColor: '#e5e7eb', color: '#374151', fontWeight: '600', fontSize: '14px'
+                  }}>取消</button>
+                </div>
               </div>
             ) : (
               <>
-                <div className="flex justify-between items-start mb-3">
-                  <div><h4 className="text-xl font-bold text-blue-600">{dealer.name}</h4><span className="badge badge-gray">{getMethodLabel(dealer.orderMethod)}</span></div>
-                  {dealer.url && (<a href={dealer.url} target="_blank" rel="noopener noreferrer" className="btn btn-blue">{dealer.orderMethod === 'line' ? 'LINEを開く' : '発注ページを開く'} →</a>)}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                  <div>
+                    <h4 style={{ fontSize: '20px', fontWeight: 'bold', color: '#2563eb', marginBottom: '4px' }}>{dealer.name}</h4>
+                    <span style={{ display: 'inline-block', padding: '4px 10px', backgroundColor: '#f3f4f6', borderRadius: '6px', fontSize: '12px', color: '#6b7280' }}>{getMethodLabel(dealer.orderMethod)}</span>
+                  </div>
+                  {dealer.url && (
+                    <a href={dealer.url} target="_blank" rel="noopener noreferrer" style={{
+                      padding: '10px 16px', borderRadius: '8px', textDecoration: 'none',
+                      backgroundColor: '#3b82f6', color: '#fff', fontWeight: '600', fontSize: '14px'
+                    }}>{dealer.orderMethod === 'line' ? 'LINEを開く' : '発注ページを開く'} →</a>
+                  )}
                 </div>
                 {dealer.orderMethod === 'web' && dealer.loginId && (
-                  <div className="bg-gray-50 p-3 rounded mb-3 space-y-2">
-                    <div className="flex justify-between items-center"><span className="text-sm text-gray-600">ID:</span><span className="font-mono">{dealer.loginId}</span></div>
-                    <div className="flex justify-between items-center"><span className="text-sm text-gray-600">パスワード:</span><div className="flex items-center gap-2"><span className="font-mono">{showPasswords[dealer.name] ? dealer.loginPassword : '••••••••'}</span><button onClick={() => togglePassword(dealer.name)} className="text-blue-500">{showPasswords[dealer.name] ? <Icons.EyeOff /> : <Icons.Eye />}</button></div></div>
+                  <div style={{ backgroundColor: '#f9fafb', padding: '12px', borderRadius: '10px', marginBottom: '12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <span style={{ fontSize: '14px', color: '#6b7280' }}>ID:</span>
+                      <span style={{ fontFamily: 'monospace' }}>{dealer.loginId}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '14px', color: '#6b7280' }}>パスワード:</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontFamily: 'monospace' }}>{showPasswords[dealer.name] ? dealer.loginPassword : '••••••••'}</span>
+                        <button onClick={() => togglePassword(dealer.name)} style={{ color: '#3b82f6', background: 'none', border: 'none', cursor: 'pointer' }}>{showPasswords[dealer.name] ? <Icons.EyeOff /> : <Icons.Eye />}</button>
+                      </div>
+                    </div>
                   </div>
                 )}
-                <button onClick={() => startEdit(dealer)} className="text-blue-500 text-sm">編集</button>
+                <button onClick={() => startEdit(dealer)} style={{ color: '#3b82f6', fontSize: '13px', background: 'none', border: 'none', cursor: 'pointer' }}>編集</button>
               </>
             )}
           </div>
@@ -2496,30 +2552,41 @@ function StaffPurchase({ products, staff, staffPurchases, setStaffPurchases }) {
   return (
     <div className="space-y-4">
       <div className="card">
-        <h3 className="text-lg font-bold mb-4">🛒 スタッフ購入記録</h3>
-        <div className="grid-2 mb-4">
-          <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>スタッフ</label><select value={selectedStaff} onChange={e => setSelectedStaff(e.target.value)} className="select"><option value="">選択</option>{staff.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}</select></div>
-          <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>購入日</label><input type="date" value={date} onChange={e => setDate(e.target.value)} className="input" /></div>
+        <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span>🛒</span> スタッフ購入記録
+        </h3>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>スタッフ</label>
+            <select value={selectedStaff} onChange={e => setSelectedStaff(e.target.value)} className="select">
+              <option value="">選択</option>
+              {staff.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>購入日</label>
+            <input type="date" value={date} onChange={e => setDate(e.target.value)} className="input" />
+          </div>
         </div>
-        <div className="mb-4">
-          <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>ディーラー</label>
+        <div style={{ marginBottom: '16px' }}>
+          <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>ディーラー</label>
           <select value={filterDealer} onChange={e => { setFilterDealer(e.target.value); setSelectedProduct('') }} className="select">
             <option value="">すべて</option>
             {dealers.map(d => <option key={d} value={d}>{d}</option>)}
           </select>
         </div>
-        <div className="mb-4">
-          <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>商品 {filterDealer && `（${filteredProducts.length}件）`}</label>
+        <div style={{ marginBottom: '16px' }}>
+          <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>商品 {filterDealer && `（${filteredProducts.length}件）`}</label>
           <select value={selectedProduct} onChange={e => handleProductChange(e.target.value)} className="select">
             <option value="">選択</option>
             {filteredProducts.map(p => <option key={p.id} value={p.id}>{p.name}（通常¥{p.purchasePrice.toLocaleString()}）</option>)}
           </select>
         </div>
         {selectedProductData && (
-          <div className="bg-gray-50 p-3 rounded mb-4">
-            <div className="grid-2 gap-4 mb-3">
+          <div style={{ backgroundColor: '#f9fafb', padding: '16px', borderRadius: '12px', marginBottom: '16px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
               <div>
-                <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>単価</label>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>単価</label>
                 <input 
                   type="number" 
                   value={customPrice} 
@@ -2528,17 +2595,17 @@ function StaffPurchase({ products, staff, staffPurchases, setStaffPurchases }) {
                   placeholder={selectedProductData.purchasePrice.toString()}
                 />
                 {parseInt(customPrice) !== selectedProductData.purchasePrice && customPrice && (
-                  <p className="text-xs text-red-500 mt-1">通常価格: ¥{selectedProductData.purchasePrice.toLocaleString()}</p>
+                  <p style={{ fontSize: '12px', color: '#ef4444', marginTop: '4px' }}>通常価格: ¥{selectedProductData.purchasePrice.toLocaleString()}</p>
                 )}
               </div>
               <div>
-                <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>数量</label>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>数量</label>
                 <input type="number" value={quantity} onChange={e => setQuantity(parseInt(e.target.value) || 1)} min="1" className="input" />
               </div>
             </div>
             {parseInt(customPrice) !== selectedProductData.purchasePrice && customPrice && (
-              <div className="mb-3">
-                <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>タグ（任意）</label>
+              <div style={{ marginBottom: '12px' }}>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>タグ（任意）</label>
                 <input 
                   type="text" 
                   value={saleTag} 
@@ -2548,60 +2615,96 @@ function StaffPurchase({ products, staff, staffPurchases, setStaffPurchases }) {
                 />
               </div>
             )}
-            <div className="bg-white p-2 rounded text-center mb-3">
-              <span className="text-gray-500">小計: </span>
-              <span className="text-xl font-bold text-blue-600">¥{((parseInt(customPrice) || selectedProductData.purchasePrice) * quantity).toLocaleString()}</span>
+            <div style={{ backgroundColor: '#fff', padding: '12px', borderRadius: '10px', textAlign: 'center', marginBottom: '12px' }}>
+              <span style={{ color: '#6b7280' }}>小計: </span>
+              <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#2563eb' }}>¥{((parseInt(customPrice) || selectedProductData.purchasePrice) * quantity).toLocaleString()}</span>
               {parseInt(customPrice) !== selectedProductData.purchasePrice && customPrice && (
-                <span className="ml-2 text-xs bg-red-100 text-red-600 px-2 py-1 rounded">{saleTag || 'セール'}</span>
+                <span style={{ marginLeft: '8px', fontSize: '12px', backgroundColor: '#fee2e2', color: '#dc2626', padding: '4px 8px', borderRadius: '6px' }}>{saleTag || 'セール'}</span>
               )}
             </div>
-            <div className="grid-2 gap-2">
-              <button onClick={addToCart} className="btn btn-green py-2">🛒 カートに追加</button>
-              <button onClick={recordSingle} className="btn btn-blue py-2">⚡ 直接登録</button>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+              <button onClick={addToCart} style={{
+                padding: '12px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+                backgroundColor: '#22c55e', color: '#fff', fontWeight: '600', fontSize: '14px'
+              }}>🛒 カートに追加</button>
+              <button onClick={recordSingle} style={{
+                padding: '12px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+                backgroundColor: '#3b82f6', color: '#fff', fontWeight: '600', fontSize: '14px'
+              }}>⚡ 直接登録</button>
             </div>
           </div>
         )}
         
         {/* カート表示 */}
         {cart.length > 0 && (
-          <div className="bg-yellow-50 border-2 border-yellow-300 rounded p-3 mt-4">
-            <h4 className="font-bold mb-2">🛒 カート（{cart.length}件）</h4>
-            <div className="space-y-2 mb-3">
+          <div style={{ backgroundColor: '#fef9c3', border: '2px solid #fcd34d', borderRadius: '12px', padding: '16px', marginTop: '16px' }}>
+            <h4 style={{ fontWeight: 'bold', marginBottom: '12px' }}>🛒 カート（{cart.length}件）</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px' }}>
               {cart.map(item => (
-                <div key={item.tempId} className="flex justify-between items-center bg-white p-2 rounded text-sm">
-                  <div className="flex-1">
-                    <span className="font-semibold">{item.productName}</span>
-                    {item.saleTag && <span className="ml-1 text-xs bg-red-100 text-red-600 px-1 rounded">{item.saleTag}</span>}
-                    <span className="text-gray-500 ml-2">×{item.quantity}</span>
+                <div key={item.tempId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fff', padding: '10px 12px', borderRadius: '8px', fontSize: '14px' }}>
+                  <div style={{ flex: 1 }}>
+                    <span style={{ fontWeight: '600' }}>{item.productName}</span>
+                    {item.saleTag && <span style={{ marginLeft: '4px', fontSize: '11px', backgroundColor: '#fee2e2', color: '#dc2626', padding: '2px 6px', borderRadius: '4px' }}>{item.saleTag}</span>}
+                    <span style={{ color: '#6b7280', marginLeft: '8px' }}>×{item.quantity}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold">¥{(item.purchasePrice * item.quantity).toLocaleString()}</span>
-                    <button onClick={() => removeFromCart(item.tempId)} className="text-red-500 text-xs">✕</button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontWeight: 'bold' }}>¥{(item.purchasePrice * item.quantity).toLocaleString()}</span>
+                    <button onClick={() => removeFromCart(item.tempId)} style={{ color: '#ef4444', fontSize: '12px', background: 'none', border: 'none', cursor: 'pointer' }}>✕</button>
                   </div>
                 </div>
               ))}
             </div>
-            <div className="bg-white p-3 rounded mb-3 text-center">
-              <span className="text-gray-500">合計: </span>
-              <span className="text-2xl font-bold text-green-600">¥{cartTotal.toLocaleString()}</span>
+            <div style={{ backgroundColor: '#fff', padding: '12px', borderRadius: '10px', textAlign: 'center', marginBottom: '12px' }}>
+              <span style={{ color: '#6b7280' }}>合計: </span>
+              <span style={{ fontSize: '28px', fontWeight: 'bold', color: '#16a34a' }}>¥{cartTotal.toLocaleString()}</span>
             </div>
-            <button onClick={submitCart} className="btn btn-green w-full py-3 text-lg">✓ まとめて登録（{cart.length}件）</button>
+            <button onClick={submitCart} style={{
+              width: '100%', padding: '14px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+              backgroundColor: '#22c55e', color: '#fff', fontWeight: 'bold', fontSize: '16px'
+            }}>✓ まとめて登録（{cart.length}件）</button>
           </div>
         )}
       </div>
       <div className="card">
-        <div className="flex justify-between items-center mb-4 flex-wrap gap-2"><h3 className="text-lg font-bold">📊 月次集計</h3><input type="month" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="input" style={{ width: 'auto' }} /></div>
-        <div className="bg-blue-50 p-4 rounded mb-4 grid-2">
-          <div className="summary-card"><div className="label">購入件数</div><div className="value text-blue-600">{monthlyPurchases.length}件</div></div>
-          <div className="summary-card"><div className="label">合計金額</div><div className="value text-blue-600">¥{grandTotal.toLocaleString()}</div></div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
+          <h3 style={{ fontSize: '18px', fontWeight: 'bold' }}>📊 月次集計</h3>
+          <input type="month" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="input" style={{ width: 'auto' }} />
         </div>
-        <button onClick={printMonthlyReport} className="btn btn-blue mb-4">PDF出力（印刷）</button>
-        {Object.keys(staffSummary).length === 0 ? (<p className="text-gray-500 text-center py-4">この月の購入記録はありません</p>) : (
+        <div style={{ backgroundColor: '#eff6ff', padding: '16px', borderRadius: '12px', marginBottom: '16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>購入件数</div>
+            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#2563eb' }}>{monthlyPurchases.length}件</div>
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>合計金額</div>
+            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#2563eb' }}>¥{grandTotal.toLocaleString()}</div>
+          </div>
+        </div>
+        <button onClick={printMonthlyReport} style={{
+          padding: '10px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer', marginBottom: '16px',
+          backgroundColor: '#3b82f6', color: '#fff', fontWeight: '600', fontSize: '14px'
+        }}>PDF出力（印刷）</button>
+        {Object.keys(staffSummary).length === 0 ? (
+          <p style={{ color: '#6b7280', textAlign: 'center', padding: '24px' }}>この月の購入記録はありません</p>
+        ) : (
           Object.entries(staffSummary).map(([staffName, data]) => (
-            <div key={staffName} className="mb-4 border rounded-lg overflow-hidden">
-              <div className="bg-gray-100 p-3 flex justify-between items-center"><span className="font-bold">{staffName}</span><span className="text-green-600 font-bold">¥{data.total.toLocaleString()}</span></div>
-              <div className="overflow-x-auto">
-                <table className="text-sm"><thead><tr><th>日付</th><th>商品</th><th className="text-right">単価</th><th className="text-center">数量</th><th className="text-right">金額</th><th className="text-center">操作</th></tr></thead>
+            <div key={staffName} style={{ marginBottom: '16px', border: '1px solid #e5e7eb', borderRadius: '12px', overflow: 'hidden' }}>
+              <div style={{ backgroundColor: '#f3f4f6', padding: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontWeight: 'bold' }}>{staffName}</span>
+                <span style={{ color: '#16a34a', fontWeight: 'bold' }}>¥{data.total.toLocaleString()}</span>
+              </div>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', fontSize: '13px', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ backgroundColor: '#f9fafb' }}>
+                      <th style={{ padding: '10px 8px', textAlign: 'left', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>日付</th>
+                      <th style={{ padding: '10px 8px', textAlign: 'left', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>商品</th>
+                      <th style={{ padding: '10px 8px', textAlign: 'right', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>単価</th>
+                      <th style={{ padding: '10px 8px', textAlign: 'center', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>数量</th>
+                      <th style={{ padding: '10px 8px', textAlign: 'right', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>金額</th>
+                      <th style={{ padding: '10px 8px', textAlign: 'center', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>操作</th>
+                    </tr>
+                  </thead>
                   <tbody>
                     {data.items.map(item => {
                       const product = products.find(p => p.id === item.productId)
@@ -2609,33 +2712,33 @@ function StaffPurchase({ products, staff, staffPurchases, setStaffPurchases }) {
                       const isSale = item.purchasePrice !== originalPrice || item.saleTag
                       
                       return editingId === item.id ? (
-                        <tr key={item.id} style={{ background: '#fef9c3' }}>
-                          <td><input type="date" value={editData.date} onChange={e => setEditData({...editData, date: e.target.value})} className="input" style={{ width: '110px', fontSize: '12px' }} /></td>
-                          <td style={{ fontSize: '12px' }}>
+                        <tr key={item.id} style={{ backgroundColor: '#fef9c3' }}>
+                          <td style={{ padding: '8px' }}><input type="date" value={editData.date} onChange={e => setEditData({...editData, date: e.target.value})} className="input" style={{ width: '110px', fontSize: '12px' }} /></td>
+                          <td style={{ padding: '8px', fontSize: '12px' }}>
                             {item.productName}
                             <input type="text" value={editData.saleTag} onChange={e => setEditData({...editData, saleTag: e.target.value})} className="input" style={{ width: '100%', fontSize: '11px', marginTop: '4px' }} placeholder="タグ（例: セール）" />
                           </td>
-                          <td><input type="number" value={editData.price} onChange={e => setEditData({...editData, price: e.target.value})} className="input" style={{ width: '70px', fontSize: '12px' }} /></td>
-                          <td className="text-center"><input type="number" value={editData.quantity} onChange={e => setEditData({...editData, quantity: e.target.value})} className="input" style={{ width: '50px', fontSize: '12px' }} min="1" /></td>
-                          <td className="text-right" style={{ fontSize: '12px' }}>¥{((parseInt(editData.price) || 0) * (parseInt(editData.quantity) || 1)).toLocaleString()}</td>
-                          <td className="text-center">
-                            <button onClick={() => saveEdit(item.id)} className="text-green-600 text-xs mr-1">保存</button>
-                            <button onClick={() => setEditingId(null)} className="text-gray-500 text-xs">取消</button>
+                          <td style={{ padding: '8px' }}><input type="number" value={editData.price} onChange={e => setEditData({...editData, price: e.target.value})} className="input" style={{ width: '70px', fontSize: '12px' }} /></td>
+                          <td style={{ padding: '8px', textAlign: 'center' }}><input type="number" value={editData.quantity} onChange={e => setEditData({...editData, quantity: e.target.value})} className="input" style={{ width: '50px', fontSize: '12px' }} min="1" /></td>
+                          <td style={{ padding: '8px', textAlign: 'right', fontSize: '12px' }}>¥{((parseInt(editData.price) || 0) * (parseInt(editData.quantity) || 1)).toLocaleString()}</td>
+                          <td style={{ padding: '8px', textAlign: 'center' }}>
+                            <button onClick={() => saveEdit(item.id)} style={{ color: '#16a34a', fontSize: '12px', marginRight: '4px', background: 'none', border: 'none', cursor: 'pointer' }}>保存</button>
+                            <button onClick={() => setEditingId(null)} style={{ color: '#6b7280', fontSize: '12px', background: 'none', border: 'none', cursor: 'pointer' }}>取消</button>
                           </td>
                         </tr>
                       ) : (
-                        <tr key={item.id}>
-                          <td>{item.date}</td>
-                          <td>
+                        <tr key={item.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                          <td style={{ padding: '10px 8px' }}>{item.date}</td>
+                          <td style={{ padding: '10px 8px' }}>
                             {item.productName}
-                            {isSale && <span className="ml-1 text-xs bg-red-100 text-red-600 px-1 rounded">{item.saleTag || 'セール'}</span>}
+                            {isSale && <span style={{ marginLeft: '4px', fontSize: '11px', backgroundColor: '#fee2e2', color: '#dc2626', padding: '2px 6px', borderRadius: '4px' }}>{item.saleTag || 'セール'}</span>}
                           </td>
-                          <td className="text-right">¥{item.purchasePrice.toLocaleString()}</td>
-                          <td className="text-center">{item.quantity}</td>
-                          <td className="text-right">¥{(item.purchasePrice * item.quantity).toLocaleString()}</td>
-                          <td className="text-center">
-                            <button onClick={() => startEdit(item)} className="text-blue-500 text-xs mr-1">編集</button>
-                            <button onClick={() => deletePurchase(item.id)} className="text-red-500 text-xs">削除</button>
+                          <td style={{ padding: '10px 8px', textAlign: 'right' }}>¥{item.purchasePrice.toLocaleString()}</td>
+                          <td style={{ padding: '10px 8px', textAlign: 'center' }}>{item.quantity}</td>
+                          <td style={{ padding: '10px 8px', textAlign: 'right' }}>¥{(item.purchasePrice * item.quantity).toLocaleString()}</td>
+                          <td style={{ padding: '10px 8px', textAlign: 'center' }}>
+                            <button onClick={() => startEdit(item)} style={{ color: '#3b82f6', fontSize: '12px', marginRight: '4px', background: 'none', border: 'none', cursor: 'pointer' }}>編集</button>
+                            <button onClick={() => deletePurchase(item.id)} style={{ color: '#ef4444', fontSize: '12px', background: 'none', border: 'none', cursor: 'pointer' }}>削除</button>
                           </td>
                         </tr>
                       )
