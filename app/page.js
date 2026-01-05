@@ -1518,27 +1518,46 @@ function UsageInput({ products, usage, setUsage, favorites, setFavorites }) {
       <div className="card">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-bold">📦 使用入力</h3>
-          <button onClick={() => setShowHistory(!showHistory)} className={`btn ${showHistory ? 'btn-blue' : 'btn-gray'}`}><Icons.History /> {showHistory ? '入力に戻る' : '履歴'}</button>
+          <button onClick={() => setShowHistory(!showHistory)} className={`btn ${showHistory ? 'btn-blue' : 'btn-gray'}`}>
+            {showHistory ? '← 入力に戻る' : '📋 履歴'}
+          </button>
         </div>
         {!showHistory ? (
           <>
+            {/* 日付選択 */}
             <div className="mb-4">
-              <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>使用日</label>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>使用日</label>
               <input type="date" value={date} onChange={e => setDate(e.target.value)} className="input" style={{ width: 'auto' }} />
             </div>
-            <div className="bg-blue-50 p-4 rounded mb-4 grid-2">
-              <div className="summary-card"><div className="label">入力数</div><div className="value text-blue-600">{totalCount}個</div></div>
-              <div className="summary-card"><div className="label">合計金額</div><div className="value text-blue-600">¥{totalAmount.toLocaleString()}</div></div>
+            
+            {/* サマリー */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+              <div style={{ backgroundColor: '#eff6ff', padding: '16px', borderRadius: '12px', textAlign: 'center' }}>
+                <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>入力数</div>
+                <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#2563eb' }}>{totalCount}<span style={{ fontSize: '14px', marginLeft: '4px' }}>個</span></div>
+              </div>
+              <div style={{ backgroundColor: '#f0fdf4', padding: '16px', borderRadius: '12px', textAlign: 'center' }}>
+                <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>合計金額</div>
+                <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#16a34a' }}>¥{totalAmount.toLocaleString()}</div>
+              </div>
             </div>
             
             {/* モード切替 */}
-            <div className="flex gap-2 mb-4">
-              <button onClick={() => setViewMode('favorites')} className={`btn flex-1 ${viewMode === 'favorites' ? 'btn-blue' : 'btn-gray'}`}>⭐ お気に入り</button>
-              <button onClick={() => setViewMode('search')} className={`btn flex-1 ${viewMode === 'search' ? 'btn-blue' : 'btn-gray'}`}>🔍 検索</button>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+              <button onClick={() => setViewMode('favorites')} style={{
+                flex: 1, padding: '10px', borderRadius: '8px', fontWeight: '600', fontSize: '14px', cursor: 'pointer', border: 'none',
+                backgroundColor: viewMode === 'favorites' ? '#3b82f6' : '#f3f4f6',
+                color: viewMode === 'favorites' ? '#fff' : '#374151'
+              }}>⭐ お気に入り</button>
+              <button onClick={() => setViewMode('search')} style={{
+                flex: 1, padding: '10px', borderRadius: '8px', fontWeight: '600', fontSize: '14px', cursor: 'pointer', border: 'none',
+                backgroundColor: viewMode === 'search' ? '#3b82f6' : '#f3f4f6',
+                color: viewMode === 'search' ? '#fff' : '#374151'
+              }}>🔍 検索</button>
             </div>
 
             {viewMode === 'search' && (
-              <div className="grid-2 gap-2 mb-4">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '16px' }}>
                 <select value={filterDealer} onChange={e => setFilterDealer(e.target.value)} className="select">
                   <option value="">全ディーラー</option>
                   {dealers.map((d, i) => <option key={i} value={d}>{d}</option>)}
@@ -1551,57 +1570,96 @@ function UsageInput({ products, usage, setUsage, favorites, setFavorites }) {
             )}
 
             {viewMode === 'favorites' && favoriteProducts.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <p className="mb-2">⭐ お気に入り商品がありません</p>
-                <p className="text-sm">「検索」モードから商品を選んでお気に入り登録してください</p>
+              <div style={{ textAlign: 'center', padding: '32px 16px', color: '#9ca3af' }}>
+                <div style={{ fontSize: '32px', marginBottom: '8px' }}>⭐</div>
+                <p style={{ marginBottom: '8px', fontWeight: '600' }}>お気に入り商品がありません</p>
+                <p style={{ fontSize: '13px' }}>「検索」モードから商品を選んでお気に入り登録してください</p>
               </div>
             ) : viewMode === 'search' && !filterDealer && !filterCategory ? (
-              <div className="text-center py-8 text-gray-500">
-                <p className="mb-2">🔍 ディーラーまたはカテゴリを選択</p>
-                <p className="text-sm">絞り込むと商品が表示されます</p>
+              <div style={{ textAlign: 'center', padding: '32px 16px', color: '#9ca3af' }}>
+                <div style={{ fontSize: '32px', marginBottom: '8px' }}>🔍</div>
+                <p style={{ marginBottom: '8px', fontWeight: '600' }}>ディーラーまたはカテゴリを選択</p>
+                <p style={{ fontSize: '13px' }}>絞り込むと商品が表示されます</p>
               </div>
             ) : (
-              <div className="space-y-2 mb-4">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
                 {displayProducts.map(p => (
-                  <div key={p.id} className={`flex justify-between items-center p-3 rounded border ${entries[p.id] > 0 ? 'bg-blue-50 border-blue-300' : 'bg-white border-gray-200'}`}>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <button onClick={() => toggleFavorite(p.id)} className={`favorite-btn ${favorites.includes(p.id) ? 'active' : ''}`}><Icons.Star filled={favorites.includes(p.id)} /></button>
+                  <div key={p.id} style={{
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', borderRadius: '10px',
+                    backgroundColor: entries[p.id] > 0 ? '#eff6ff' : '#fafafa',
+                    border: entries[p.id] > 0 ? '2px solid #3b82f6' : '1px solid #e5e7eb'
+                  }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <button onClick={() => toggleFavorite(p.id)} style={{
+                          background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', padding: '4px'
+                        }}>{favorites.includes(p.id) ? '⭐' : '☆'}</button>
                         <div>
-                          <div className="font-semibold">{p.name}</div>
-                          <div className="text-sm text-gray-500">{p.largeCategory} / {p.mediumCategory}</div>
+                          <div style={{ fontWeight: '600', fontSize: '14px' }}>{p.name}</div>
+                          <div style={{ fontSize: '12px', color: '#6b7280' }}>{p.largeCategory} / {p.mediumCategory}</div>
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <button onClick={() => setEntries({...entries, [p.id]: Math.max(0, (entries[p.id] || 0) - 1)})} className="btn btn-gray" style={{ width: '36px', height: '36px', padding: 0 }}>-</button>
-                      <input type="number" value={entries[p.id] || 0} onChange={e => setEntries({...entries, [p.id]: parseInt(e.target.value) || 0})} className="input text-center" style={{ width: '60px' }} min="0" />
-                      <button onClick={() => setEntries({...entries, [p.id]: (entries[p.id] || 0) + 1})} className="btn btn-blue" style={{ width: '36px', height: '36px', padding: 0 }}>+</button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <button onClick={() => setEntries({...entries, [p.id]: Math.max(0, (entries[p.id] || 0) - 1)})} style={{
+                        width: '40px', height: '40px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+                        backgroundColor: '#e5e7eb', fontSize: '20px', fontWeight: 'bold', color: '#374151'
+                      }}>−</button>
+                      <input type="number" value={entries[p.id] || 0} onChange={e => setEntries({...entries, [p.id]: parseInt(e.target.value) || 0})} style={{
+                        width: '56px', height: '40px', textAlign: 'center', borderRadius: '8px', border: '1px solid #d1d5db',
+                        fontSize: '16px', fontWeight: '600'
+                      }} min="0" />
+                      <button onClick={() => setEntries({...entries, [p.id]: (entries[p.id] || 0) + 1})} style={{
+                        width: '40px', height: '40px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+                        backgroundColor: '#3b82f6', fontSize: '20px', fontWeight: 'bold', color: '#fff'
+                      }}>+</button>
                     </div>
                   </div>
                 ))}
               </div>
             )}
-            <button onClick={recordUsage} className="btn btn-green w-full py-3" style={{ fontSize: '1.1rem' }}><Icons.Save /> まとめて登録（{totalCount}件）</button>
+            
+            {/* 登録ボタン */}
+            <button onClick={recordUsage} disabled={totalCount === 0} style={{
+              width: '100%', padding: '16px', borderRadius: '12px', border: 'none', cursor: totalCount > 0 ? 'pointer' : 'not-allowed',
+              backgroundColor: totalCount > 0 ? '#22c55e' : '#d1d5db', color: '#fff', fontSize: '16px', fontWeight: 'bold'
+            }}>✓ まとめて登録（{totalCount}件）</button>
           </>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="text-sm">
-              <thead><tr><th>日付</th><th>商品</th><th className="text-center">数量</th><th className="text-right">金額</th><th className="text-center">操作</th></tr></thead>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', fontSize: '13px', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ backgroundColor: '#f9fafb' }}>
+                  <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>日付</th>
+                  <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>商品</th>
+                  <th style={{ padding: '12px 8px', textAlign: 'center', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>数量</th>
+                  <th style={{ padding: '12px 8px', textAlign: 'right', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>金額</th>
+                  <th style={{ padding: '12px 8px', textAlign: 'center', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>操作</th>
+                </tr>
+              </thead>
               <tbody>
                 {recentUsage.map(u => (
                   editingId === u.id ? (
-                    <tr key={u.id} style={{ background: '#fef9c3' }}>
-                      <td><input type="date" value={editData.date} onChange={e => setEditData({...editData, date: e.target.value})} className="input" style={{ width: '130px' }} /></td>
-                      <td>{u.productName}</td>
-                      <td className="text-center"><input type="number" value={editData.quantity} onChange={e => setEditData({...editData, quantity: e.target.value})} className="input" style={{ width: '60px' }} min="1" /></td>
-                      <td className="text-right">¥{(u.purchasePrice * (parseInt(editData.quantity) || 1)).toLocaleString()}</td>
-                      <td className="text-center"><button onClick={() => saveEdit(u.id)} className="text-green-600 text-sm mr-2">保存</button><button onClick={() => setEditingId(null)} className="text-gray-500 text-sm">取消</button></td>
+                    <tr key={u.id} style={{ backgroundColor: '#fef9c3' }}>
+                      <td style={{ padding: '8px' }}><input type="date" value={editData.date} onChange={e => setEditData({...editData, date: e.target.value})} className="input" style={{ width: '130px' }} /></td>
+                      <td style={{ padding: '8px' }}>{u.productName}</td>
+                      <td style={{ padding: '8px', textAlign: 'center' }}><input type="number" value={editData.quantity} onChange={e => setEditData({...editData, quantity: e.target.value})} className="input" style={{ width: '60px' }} min="1" /></td>
+                      <td style={{ padding: '8px', textAlign: 'right' }}>¥{(u.purchasePrice * (parseInt(editData.quantity) || 1)).toLocaleString()}</td>
+                      <td style={{ padding: '8px', textAlign: 'center' }}>
+                        <button onClick={() => saveEdit(u.id)} style={{ color: '#16a34a', fontSize: '13px', marginRight: '8px', background: 'none', border: 'none', cursor: 'pointer' }}>保存</button>
+                        <button onClick={() => setEditingId(null)} style={{ color: '#6b7280', fontSize: '13px', background: 'none', border: 'none', cursor: 'pointer' }}>取消</button>
+                      </td>
                     </tr>
                   ) : (
-                    <tr key={u.id}>
-                      <td>{u.date}</td><td>{u.productName}</td><td className="text-center">{u.quantity}</td><td className="text-right">¥{(u.purchasePrice * u.quantity).toLocaleString()}</td>
-                      <td className="text-center"><button onClick={() => startEdit(u)} className="text-blue-500 text-sm mr-2">編集</button><button onClick={() => deleteUsage(u.id)} className="text-red-500 text-sm">削除</button></td>
+                    <tr key={u.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                      <td style={{ padding: '10px 8px' }}>{u.date}</td>
+                      <td style={{ padding: '10px 8px' }}>{u.productName}</td>
+                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{u.quantity}</td>
+                      <td style={{ padding: '10px 8px', textAlign: 'right' }}>¥{(u.purchasePrice * u.quantity).toLocaleString()}</td>
+                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>
+                        <button onClick={() => startEdit(u)} style={{ color: '#3b82f6', fontSize: '13px', marginRight: '8px', background: 'none', border: 'none', cursor: 'pointer' }}>編集</button>
+                        <button onClick={() => deleteUsage(u.id)} style={{ color: '#ef4444', fontSize: '13px', background: 'none', border: 'none', cursor: 'pointer' }}>削除</button>
+                      </td>
                     </tr>
                   )
                 ))}
@@ -1670,57 +1728,127 @@ function StockInInput({ products, stockIn, setStockIn, categories }) {
       <div className="card">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-bold">📥 入荷入力</h3>
-          <button onClick={() => setShowHistory(!showHistory)} className={`btn ${showHistory ? 'btn-purple' : 'btn-gray'}`}><Icons.History /> {showHistory ? '入力に戻る' : '履歴'}</button>
+          <button onClick={() => setShowHistory(!showHistory)} style={{
+            padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: '600', fontSize: '14px',
+            backgroundColor: showHistory ? '#8b5cf6' : '#f3f4f6', color: showHistory ? '#fff' : '#374151'
+          }}>
+            {showHistory ? '← 入力に戻る' : '📋 履歴'}
+          </button>
         </div>
         {!showHistory ? (
           <>
-            <div className="grid-2 mb-4">
-              <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>入荷日</label><input type="date" value={date} onChange={e => setDate(e.target.value)} className="input" /></div>
-              <div><label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>ディーラー</label><select value={selectedDealer} onChange={e => setSelectedDealer(e.target.value)} className="select"><option value="">選択してください</option>{dealers.map((d, i) => <option key={i} value={d}>{d}</option>)}</select></div>
+            {/* 日付・ディーラー選択 */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>入荷日</label>
+                <input type="date" value={date} onChange={e => setDate(e.target.value)} className="input" />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>ディーラー</label>
+                <select value={selectedDealer} onChange={e => setSelectedDealer(e.target.value)} className="select">
+                  <option value="">選択してください</option>
+                  {dealers.map((d, i) => <option key={i} value={d}>{d}</option>)}
+                </select>
+              </div>
             </div>
-            {selectedDealer && (
+            
+            {!selectedDealer ? (
+              <div style={{ textAlign: 'center', padding: '32px 16px', color: '#9ca3af' }}>
+                <div style={{ fontSize: '32px', marginBottom: '8px' }}>📦</div>
+                <p style={{ fontWeight: '600' }}>ディーラーを選択してください</p>
+              </div>
+            ) : (
               <>
-                <div className="bg-purple-50 p-4 rounded mb-4 grid-2">
-                  <div className="summary-card"><div className="label">入荷数</div><div className="value text-purple-600">{totalCount}個</div></div>
-                  <div className="summary-card"><div className="label">入荷金額</div><div className="value text-purple-600">¥{totalAmount.toLocaleString()}</div></div>
+                {/* サマリー */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+                  <div style={{ backgroundColor: '#f5f3ff', padding: '16px', borderRadius: '12px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>入荷数</div>
+                    <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#7c3aed' }}>{totalCount}<span style={{ fontSize: '14px', marginLeft: '4px' }}>個</span></div>
+                  </div>
+                  <div style={{ backgroundColor: '#fdf4ff', padding: '16px', borderRadius: '12px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>入荷金額</div>
+                    <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#a855f7' }}>¥{totalAmount.toLocaleString()}</div>
+                  </div>
                 </div>
+                
+                {/* カテゴリごとの商品リスト */}
                 {Object.entries(groupedProducts).map(([category, prods]) => (
-                  <div key={category} className="mb-4">
-                    <h4 className="font-semibold text-gray-700 mb-2">{category}</h4>
-                    <div className="space-y-2">
+                  <div key={category} style={{ marginBottom: '16px' }}>
+                    <h4 style={{ fontWeight: '600', color: '#6b7280', marginBottom: '8px', fontSize: '14px', borderBottom: '1px solid #e5e7eb', paddingBottom: '4px' }}>{category}</h4>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       {prods.map(p => (
-                        <div key={p.id} className={`flex justify-between items-center p-3 rounded border ${entries[p.id] > 0 ? 'bg-purple-50 border-purple-300' : 'bg-white border-gray-200'}`}>
-                          <div><div className="font-semibold">{p.name}</div><div className="text-sm text-gray-500">¥{p.purchasePrice.toLocaleString()}</div></div>
-                          <div className="flex items-center gap-2">
-                            <button onClick={() => setEntries({...entries, [p.id]: Math.max(0, (entries[p.id] || 0) - 1)})} className="btn btn-gray" style={{ width: '36px', height: '36px', padding: 0 }}>-</button>
-                            <input type="number" value={entries[p.id] || 0} onChange={e => setEntries({...entries, [p.id]: parseInt(e.target.value) || 0})} className="input text-center" style={{ width: '60px' }} min="0" />
-                            <button onClick={() => setEntries({...entries, [p.id]: (entries[p.id] || 0) + 1})} className="btn btn-purple" style={{ width: '36px', height: '36px', padding: 0 }}>+</button>
+                        <div key={p.id} style={{
+                          display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', borderRadius: '10px',
+                          backgroundColor: entries[p.id] > 0 ? '#f5f3ff' : '#fafafa',
+                          border: entries[p.id] > 0 ? '2px solid #8b5cf6' : '1px solid #e5e7eb'
+                        }}>
+                          <div>
+                            <div style={{ fontWeight: '600', fontSize: '14px' }}>{p.name}</div>
+                            <div style={{ fontSize: '12px', color: '#6b7280' }}>¥{p.purchasePrice.toLocaleString()}</div>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <button onClick={() => setEntries({...entries, [p.id]: Math.max(0, (entries[p.id] || 0) - 1)})} style={{
+                              width: '40px', height: '40px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+                              backgroundColor: '#e5e7eb', fontSize: '20px', fontWeight: 'bold', color: '#374151'
+                            }}>−</button>
+                            <input type="number" value={entries[p.id] || 0} onChange={e => setEntries({...entries, [p.id]: parseInt(e.target.value) || 0})} style={{
+                              width: '56px', height: '40px', textAlign: 'center', borderRadius: '8px', border: '1px solid #d1d5db',
+                              fontSize: '16px', fontWeight: '600'
+                            }} min="0" />
+                            <button onClick={() => setEntries({...entries, [p.id]: (entries[p.id] || 0) + 1})} style={{
+                              width: '40px', height: '40px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+                              backgroundColor: '#8b5cf6', fontSize: '20px', fontWeight: 'bold', color: '#fff'
+                            }}>+</button>
                           </div>
                         </div>
                       ))}
                     </div>
                   </div>
                 ))}
-                <button onClick={recordStockIn} className="btn btn-purple w-full py-3" style={{ fontSize: '1.1rem' }}><Icons.TrendingUp /> まとめて入荷登録（{totalCount}件）</button>
+                
+                {/* 登録ボタン */}
+                <button onClick={recordStockIn} disabled={totalCount === 0} style={{
+                  width: '100%', padding: '16px', borderRadius: '12px', border: 'none', cursor: totalCount > 0 ? 'pointer' : 'not-allowed',
+                  backgroundColor: totalCount > 0 ? '#8b5cf6' : '#d1d5db', color: '#fff', fontSize: '16px', fontWeight: 'bold'
+                }}>✓ まとめて入荷登録（{totalCount}件）</button>
               </>
             )}
           </>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="text-sm">
-              <thead><tr><th>日付</th><th>ディーラー</th><th>商品</th><th className="text-center">数量</th><th className="text-center">操作</th></tr></thead>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', fontSize: '13px', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ backgroundColor: '#f9fafb' }}>
+                  <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>日付</th>
+                  <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>ディーラー</th>
+                  <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>商品</th>
+                  <th style={{ padding: '12px 8px', textAlign: 'center', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>数量</th>
+                  <th style={{ padding: '12px 8px', textAlign: 'center', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>操作</th>
+                </tr>
+              </thead>
               <tbody>
                 {recentStockIn.map(s => (
                   editingId === s.id ? (
-                    <tr key={s.id} style={{ background: '#fef9c3' }}>
-                      <td><input type="date" value={editData.date} onChange={e => setEditData({...editData, date: e.target.value})} className="input" style={{ width: '130px' }} /></td>
-                      <td>{s.largeCategory}</td><td>{s.productName}</td>
-                      <td className="text-center"><input type="number" value={editData.quantity} onChange={e => setEditData({...editData, quantity: e.target.value})} className="input" style={{ width: '60px' }} min="1" /></td>
-                      <td className="text-center"><button onClick={() => saveEdit(s.id)} className="text-green-600 text-sm mr-2">保存</button><button onClick={() => setEditingId(null)} className="text-gray-500 text-sm">取消</button></td>
+                    <tr key={s.id} style={{ backgroundColor: '#fef9c3' }}>
+                      <td style={{ padding: '8px' }}><input type="date" value={editData.date} onChange={e => setEditData({...editData, date: e.target.value})} className="input" style={{ width: '130px' }} /></td>
+                      <td style={{ padding: '8px' }}>{s.largeCategory}</td>
+                      <td style={{ padding: '8px' }}>{s.productName}</td>
+                      <td style={{ padding: '8px', textAlign: 'center' }}><input type="number" value={editData.quantity} onChange={e => setEditData({...editData, quantity: e.target.value})} className="input" style={{ width: '60px' }} min="1" /></td>
+                      <td style={{ padding: '8px', textAlign: 'center' }}>
+                        <button onClick={() => saveEdit(s.id)} style={{ color: '#16a34a', fontSize: '13px', marginRight: '8px', background: 'none', border: 'none', cursor: 'pointer' }}>保存</button>
+                        <button onClick={() => setEditingId(null)} style={{ color: '#6b7280', fontSize: '13px', background: 'none', border: 'none', cursor: 'pointer' }}>取消</button>
+                      </td>
                     </tr>
                   ) : (
-                    <tr key={s.id}><td>{s.date}</td><td>{s.largeCategory}</td><td>{s.productName}</td><td className="text-center">{s.quantity}</td>
-                      <td className="text-center"><button onClick={() => startEdit(s)} className="text-blue-500 text-sm mr-2">編集</button><button onClick={() => deleteStockIn(s.id)} className="text-red-500 text-sm">削除</button></td>
+                    <tr key={s.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                      <td style={{ padding: '10px 8px' }}>{s.date}</td>
+                      <td style={{ padding: '10px 8px' }}>{s.largeCategory}</td>
+                      <td style={{ padding: '10px 8px' }}>{s.productName}</td>
+                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>{s.quantity}</td>
+                      <td style={{ padding: '10px 8px', textAlign: 'center' }}>
+                        <button onClick={() => startEdit(s)} style={{ color: '#3b82f6', fontSize: '13px', marginRight: '8px', background: 'none', border: 'none', cursor: 'pointer' }}>編集</button>
+                        <button onClick={() => deleteStockIn(s.id)} style={{ color: '#ef4444', fontSize: '13px', background: 'none', border: 'none', cursor: 'pointer' }}>削除</button>
+                      </td>
                     </tr>
                   )
                 ))}
