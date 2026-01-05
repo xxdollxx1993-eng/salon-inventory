@@ -1249,6 +1249,22 @@ function HomeScreen({ staff, leaveRequests, practiceReservations, contactWeekly,
             }
           }
           
+          // スタッフ色
+          const staffColors = [
+            { bg: '#dbeafe', text: '#1d4ed8' }, // blue
+            { bg: '#fef3c7', text: '#92400e' }, // amber
+            { bg: '#fce7f3', text: '#9d174d' }, // pink
+            { bg: '#d1fae5', text: '#065f46' }, // emerald
+            { bg: '#fee2e2', text: '#991b1b' }, // red
+            { bg: '#e0f2fe', text: '#075985' }, // sky
+            { bg: '#f3e8ff', text: '#6b21a8' }, // purple
+            { bg: '#fef9c3', text: '#854d0e' }, // yellow
+          ]
+          const getStaffColor = (staffId) => {
+            const index = staff.findIndex(s => s.id === staffId)
+            return staffColors[index % staffColors.length]
+          }
+          
           // 日付配列を作成
           const days = []
           for (let i = 0; i < firstDay; i++) days.push(null)
@@ -1278,32 +1294,66 @@ function HomeScreen({ staff, leaveRequests, practiceReservations, contactWeekly,
                   const isMonTue = dayOfWeek === 1 || dayOfWeek === 2
                   const isThirdSun = day === thirdSunday
                   const isHolidayDay = isMonTue || isThirdSun
-                  const isToday = day === today.getDate()
+                  const isToday = day === today.getDate() && month === today.getMonth()
                   
                   const dayLeave = leaveRequests.filter(r => r.leaveDate === dateStr && r.status === 'approved')
                   const dayPractice = practiceReservations.filter(p => p.date === dateStr)
                   
                   return (
                     <div key={day} style={{
-                      minHeight: '48px',
-                      padding: '4px',
+                      minHeight: '56px',
+                      padding: '3px',
                       backgroundColor: isToday ? '#dbeafe' : isHolidayDay ? '#f3f4f6' : '#fafafa',
                       borderRadius: '4px',
                       border: isToday ? '2px solid #3b82f6' : '1px solid #e5e7eb',
-                      textAlign: 'center'
                     }}>
                       <div style={{ 
-                        fontSize: '12px', 
+                        fontSize: '11px', 
                         fontWeight: isToday ? 'bold' : 'normal',
-                        color: isHolidayDay ? '#9ca3af' : dayOfWeek === 0 ? '#ef4444' : dayOfWeek === 6 ? '#3b82f6' : '#374151'
+                        color: isHolidayDay ? '#9ca3af' : dayOfWeek === 0 ? '#ef4444' : dayOfWeek === 6 ? '#3b82f6' : '#374151',
+                        textAlign: 'center',
+                        marginBottom: '2px'
                       }}>
                         {day}
                       </div>
-                      {isThirdSun && <div style={{ fontSize: '10px', color: '#9ca3af' }}>休</div>}
+                      {isThirdSun && <div style={{ fontSize: '9px', color: '#9ca3af', textAlign: 'center' }}>休</div>}
                       {!isHolidayDay && (
-                        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '1px', marginTop: '2px' }}>
-                          {dayLeave.length > 0 && <span style={{ fontSize: '10px' }}>🏖️</span>}
-                          {dayPractice.length > 0 && <span style={{ fontSize: '10px' }}>🎨</span>}
+                        <div style={{ fontSize: '9px', lineHeight: '1.3' }}>
+                          {dayLeave.slice(0, 2).map(r => (
+                            <div key={r.id} style={{ 
+                              backgroundColor: '#dbeafe',
+                              color: '#1d4ed8',
+                              borderRadius: '2px',
+                              padding: '1px 2px',
+                              marginBottom: '1px',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap'
+                            }}>
+                              🏖️{r.staffName?.slice(0, 3)}
+                            </div>
+                          ))}
+                          {dayLeave.length > 2 && <div style={{ color: '#6b7280', textAlign: 'center' }}>+{dayLeave.length - 2}</div>}
+                          {dayPractice.slice(0, 2 - Math.min(dayLeave.length, 2)).map(p => {
+                            const color = getStaffColor(p.staffId)
+                            return (
+                              <div key={p.id} style={{ 
+                                backgroundColor: color.bg,
+                                color: color.text,
+                                borderRadius: '2px',
+                                padding: '1px 2px',
+                                marginBottom: '1px',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap'
+                              }}>
+                                🎨{p.staffName?.slice(0, 3)}
+                              </div>
+                            )
+                          })}
+                          {dayPractice.length > (2 - Math.min(dayLeave.length, 2)) && dayPractice.length > 0 && (
+                            <div style={{ color: '#6b7280', textAlign: 'center' }}>+{dayPractice.length - (2 - Math.min(dayLeave.length, 2))}</div>
+                          )}
                         </div>
                       )}
                     </div>
