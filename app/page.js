@@ -954,7 +954,7 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
       {tab === 'usage' && <UsageInput products={products} usage={usage} setUsage={setUsage} favorites={favorites} setFavorites={setFavorites} />}
       {tab === 'stockin' && <StockInInput products={products} stockIn={stockIn} setStockIn={setStockIn} categories={categories} />}
       {tab === 'timecard' && <TimeCard staff={staff} timeRecords={timeRecords} setTimeRecords={setTimeRecords} isAdmin={isAdmin} />}
-      {tab === 'practice' && <PracticeReservation staff={staff} practiceReservations={practiceReservations} setPracticeReservations={setPracticeReservations} modelRules={modelRules} setModelRules={setModelRules} isAdmin={isAdmin} />}
+      {tab === 'practice' && <PracticeReservation staff={staff} practiceReservations={practiceReservations} setPracticeReservations={setPracticeReservations} leaveRequests={leaveRequests} modelRules={modelRules} setModelRules={setModelRules} isAdmin={isAdmin} />}
       {tab === 'contact' && <ContactBook staff={staff} setStaff={setStaff} contactGoals={contactGoals} setContactGoals={setContactGoals} contactWeekly={contactWeekly} setContactWeekly={setContactWeekly} contactReplies={contactReplies} setContactReplies={setContactReplies} contactMonthly={contactMonthly} setContactMonthly={setContactMonthly} notifications={notifications} setNotifications={setNotifications} isAdmin={isAdmin} />}
       {tab === 'order' && <OrderLinks categories={categories} setCategories={setCategories} />}
       {tab === 'inventory' && <InventoryInput products={products} staff={staff} usage={usage} stockIn={stockIn} inventoryHistory={inventoryHistory} setInventoryHistory={setInventoryHistory} />}
@@ -964,7 +964,7 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
       {tab === 'staff' && <StaffManagement staff={staff} setStaff={setStaff} categories={categories} isAdmin={isAdmin} />}
       {tab === 'export' && <DataExport products={products} staff={staff} usage={usage} stockIn={stockIn} inventoryHistory={inventoryHistory} />}
       {tab === 'bonus' && <BonusManagement staff={staff} bonusSettings={bonusSettings} setBonusSettings={setBonusSettings} stockIn={stockIn} products={products} staffPurchases={staffPurchases} isAdmin={isAdmin} />}
-      {tab === 'leave' && <LeaveManagement staff={staff} leaveGrants={leaveGrants} setLeaveGrants={setLeaveGrants} leaveRequests={leaveRequests} setLeaveRequests={setLeaveRequests} notifications={notifications} setNotifications={setNotifications} isAdmin={isAdmin} userRole={userRole} />}
+      {tab === 'leave' && <LeaveManagement staff={staff} leaveGrants={leaveGrants} setLeaveGrants={setLeaveGrants} leaveRequests={leaveRequests} setLeaveRequests={setLeaveRequests} practiceReservations={practiceReservations} notifications={notifications} setNotifications={setNotifications} isAdmin={isAdmin} userRole={userRole} />}
       {tab === 'monthly' && <MonthlyReport monthlyReports={monthlyReports} setMonthlyReports={setMonthlyReports} stockIn={stockIn} products={products} staffPurchases={staffPurchases} isAdmin={isAdmin} />}
       {tab === 'loss' && <LossInput lossRecords={lossRecords} setLossRecords={setLossRecords} lossPrices={lossPrices} isAdmin={isAdmin} />}
       {tab === 'lossprice' && isAdmin && <LossPriceSettings lossPrices={lossPrices} setLossPrices={setLossPrices} />}
@@ -1233,141 +1233,14 @@ function HomeScreen({ staff, leaveRequests, practiceReservations, contactWeekly,
         <h3 style={{ fontWeight: 'bold', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span style={{ fontSize: '20px' }}>📅</span> {today.getMonth() + 1}月のカレンダー
         </h3>
-        {(() => {
-          const year = today.getFullYear()
-          const month = today.getMonth()
-          const firstDay = new Date(year, month, 1).getDay()
-          const lastDate = new Date(year, month + 1, 0).getDate()
-          
-          // 第三日曜日を計算
-          let sundayCount = 0
-          let thirdSunday = null
-          for (let d = 1; d <= lastDate; d++) {
-            if (new Date(year, month, d).getDay() === 0) {
-              sundayCount++
-              if (sundayCount === 3) { thirdSunday = d; break }
-            }
-          }
-          
-          // スタッフ色
-          const staffColors = [
-            { bg: '#dbeafe', text: '#1d4ed8' }, // blue
-            { bg: '#fef3c7', text: '#92400e' }, // amber
-            { bg: '#fce7f3', text: '#9d174d' }, // pink
-            { bg: '#d1fae5', text: '#065f46' }, // emerald
-            { bg: '#fee2e2', text: '#991b1b' }, // red
-            { bg: '#e0f2fe', text: '#075985' }, // sky
-            { bg: '#f3e8ff', text: '#6b21a8' }, // purple
-            { bg: '#fef9c3', text: '#854d0e' }, // yellow
-          ]
-          const getStaffColor = (staffId) => {
-            const index = staff.findIndex(s => s.id === staffId)
-            return staffColors[index % staffColors.length]
-          }
-          
-          // 日付配列を作成
-          const days = []
-          for (let i = 0; i < firstDay; i++) days.push(null)
-          for (let d = 1; d <= lastDate; d++) days.push(d)
-          
-          const dayNames = ['日', '月', '火', '水', '木', '金', '土']
-          
-          return (
-            <div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px', marginBottom: '4px' }}>
-                {dayNames.map((name, i) => (
-                  <div key={name} style={{ 
-                    textAlign: 'center', 
-                    fontSize: '12px', 
-                    fontWeight: 'bold',
-                    color: i === 0 ? '#ef4444' : i === 6 ? '#3b82f6' : '#6b7280',
-                    padding: '4px 0'
-                  }}>{name}</div>
-                ))}
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px' }}>
-                {days.map((day, i) => {
-                  if (day === null) return <div key={`empty-${i}`} />
-                  
-                  const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-                  const dayOfWeek = new Date(year, month, day).getDay()
-                  const isMonTue = dayOfWeek === 1 || dayOfWeek === 2
-                  const isThirdSun = day === thirdSunday
-                  const isHolidayDay = isMonTue || isThirdSun
-                  const isToday = day === today.getDate() && month === today.getMonth()
-                  
-                  const dayLeave = leaveRequests.filter(r => r.leaveDate === dateStr && r.status === 'approved')
-                  const dayPractice = practiceReservations.filter(p => p.date === dateStr)
-                  
-                  return (
-                    <div key={day} style={{
-                      minHeight: '56px',
-                      padding: '3px',
-                      backgroundColor: isToday ? '#dbeafe' : isHolidayDay ? '#f3f4f6' : '#fafafa',
-                      borderRadius: '4px',
-                      border: isToday ? '2px solid #3b82f6' : '1px solid #e5e7eb',
-                    }}>
-                      <div style={{ 
-                        fontSize: '11px', 
-                        fontWeight: isToday ? 'bold' : 'normal',
-                        color: isHolidayDay ? '#9ca3af' : dayOfWeek === 0 ? '#ef4444' : dayOfWeek === 6 ? '#3b82f6' : '#374151',
-                        textAlign: 'center',
-                        marginBottom: '2px'
-                      }}>
-                        {day}
-                      </div>
-                      {isThirdSun && <div style={{ fontSize: '9px', color: '#9ca3af', textAlign: 'center' }}>休</div>}
-                      {!isHolidayDay && (
-                        <div style={{ fontSize: '9px', lineHeight: '1.3' }}>
-                          {dayLeave.slice(0, 2).map(r => (
-                            <div key={r.id} style={{ 
-                              backgroundColor: '#dbeafe',
-                              color: '#1d4ed8',
-                              borderRadius: '2px',
-                              padding: '1px 2px',
-                              marginBottom: '1px',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap'
-                            }}>
-                              🏖️{r.staffName?.slice(0, 3)}
-                            </div>
-                          ))}
-                          {dayLeave.length > 2 && <div style={{ color: '#6b7280', textAlign: 'center' }}>+{dayLeave.length - 2}</div>}
-                          {dayPractice.slice(0, 2 - Math.min(dayLeave.length, 2)).map(p => {
-                            const color = getStaffColor(p.staffId)
-                            return (
-                              <div key={p.id} style={{ 
-                                backgroundColor: color.bg,
-                                color: color.text,
-                                borderRadius: '2px',
-                                padding: '1px 2px',
-                                marginBottom: '1px',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap'
-                              }}>
-                                🎨{p.staffName?.slice(0, 3)}
-                              </div>
-                            )
-                          })}
-                          {dayPractice.length > (2 - Math.min(dayLeave.length, 2)) && dayPractice.length > 0 && (
-                            <div style={{ color: '#6b7280', textAlign: 'center' }}>+{dayPractice.length - (2 - Math.min(dayLeave.length, 2))}</div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-              <div style={{ display: 'flex', gap: '12px', marginTop: '8px', fontSize: '11px', color: '#6b7280' }}>
-                <span>🏖️ 有給</span>
-                <span>🎨 練習</span>
-                <span style={{ color: '#9ca3af' }}>グレー = 定休日</span>
-              </div>
-            </div>
-          )
-        })()}
+        <SharedCalendar 
+          year={today.getFullYear()}
+          month={today.getMonth()}
+          leaveRequests={leaveRequests}
+          practiceReservations={practiceReservations}
+          staff={staff}
+          showNavigation={false}
+        />
       </div>
 
       {/* 連絡帳（管理者のみ） */}
@@ -1393,6 +1266,179 @@ function HomeScreen({ staff, leaveRequests, practiceReservations, contactWeekly,
           )}
         </div>
       )}
+    </div>
+  )
+}
+
+// ==================== 共通カレンダー ====================
+function SharedCalendar({ year, month, leaveRequests, practiceReservations, staff, showNavigation, onMonthChange, onDateClick }) {
+  const today = new Date()
+  const todayStr = today.toISOString().split('T')[0]
+  
+  const firstDay = new Date(year, month, 1).getDay()
+  const lastDate = new Date(year, month + 1, 0).getDate()
+  
+  // 第三日曜日を計算
+  let sundayCount = 0
+  let thirdSunday = null
+  for (let d = 1; d <= lastDate; d++) {
+    if (new Date(year, month, d).getDay() === 0) {
+      sundayCount++
+      if (sundayCount === 3) { thirdSunday = d; break }
+    }
+  }
+  
+  // スタッフ色
+  const staffColors = [
+    { bg: '#dbeafe', text: '#1d4ed8', border: '#3b82f6' }, // blue
+    { bg: '#fef3c7', text: '#92400e', border: '#f59e0b' }, // amber
+    { bg: '#fce7f3', text: '#9d174d', border: '#ec4899' }, // pink
+    { bg: '#d1fae5', text: '#065f46', border: '#10b981' }, // emerald
+    { bg: '#fee2e2', text: '#991b1b', border: '#ef4444' }, // red
+    { bg: '#e0f2fe', text: '#075985', border: '#0ea5e9' }, // sky
+    { bg: '#f3e8ff', text: '#6b21a8', border: '#a855f7' }, // purple
+    { bg: '#fef9c3', text: '#854d0e', border: '#eab308' }, // yellow
+  ]
+  const getStaffColor = (staffId) => {
+    const index = staff.findIndex(s => s.id === staffId)
+    return staffColors[index % staffColors.length]
+  }
+  
+  // 日付配列を作成
+  const days = []
+  for (let i = 0; i < firstDay; i++) days.push(null)
+  for (let d = 1; d <= lastDate; d++) days.push(d)
+  
+  const dayNames = ['日', '月', '火', '水', '木', '金', '土']
+  
+  return (
+    <div>
+      {/* 月切り替え */}
+      {showNavigation && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <button onClick={() => onMonthChange(-1)} style={{ padding: '8px 16px', backgroundColor: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: '8px', cursor: 'pointer' }}>◀</button>
+          <h3 style={{ fontSize: '18px', fontWeight: 'bold' }}>{year}年{month + 1}月</h3>
+          <button onClick={() => onMonthChange(1)} style={{ padding: '8px 16px', backgroundColor: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: '8px', cursor: 'pointer' }}>▶</button>
+        </div>
+      )}
+      
+      {/* 凡例 */}
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', flexWrap: 'wrap', fontSize: '11px' }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <span style={{ width: '12px', height: '12px', backgroundColor: '#dbeafe', borderRadius: '2px' }}></span>
+          🏖️有給
+        </span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <span style={{ width: '12px', height: '12px', backgroundColor: '#fef3c7', borderRadius: '2px' }}></span>
+          🎨練習
+        </span>
+        <span style={{ color: '#9ca3af' }}>グレー=定休日</span>
+      </div>
+      
+      {/* 曜日ヘッダー */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px', marginBottom: '2px' }}>
+        {dayNames.map((name, i) => (
+          <div key={name} style={{ 
+            textAlign: 'center', 
+            fontSize: '12px', 
+            fontWeight: 'bold',
+            padding: '6px 0',
+            backgroundColor: (i === 1 || i === 2) ? '#e5e7eb' : '#f9fafb',
+            color: i === 0 ? '#ef4444' : i === 6 ? '#3b82f6' : (i === 1 || i === 2) ? '#9ca3af' : '#6b7280',
+          }}>{name}</div>
+        ))}
+      </div>
+      
+      {/* カレンダー本体 */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px' }}>
+        {days.map((day, i) => {
+          if (day === null) return <div key={`empty-${i}`} style={{ minHeight: '70px', backgroundColor: '#f9fafb' }} />
+          
+          const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+          const dayOfWeek = new Date(year, month, day).getDay()
+          const isMonTue = dayOfWeek === 1 || dayOfWeek === 2
+          const isThirdSun = day === thirdSunday
+          const isHolidayDay = isMonTue || isThirdSun
+          const isToday = dateStr === todayStr
+          
+          const dayLeave = leaveRequests.filter(r => r.leaveDate === dateStr && r.status === 'approved')
+          const dayPractice = practiceReservations.filter(p => p.date === dateStr)
+          
+          let bgColor = '#ffffff'
+          if (isHolidayDay) bgColor = '#e5e7eb'
+          else if (dayOfWeek === 0) bgColor = '#fef2f2'
+          else if (dayOfWeek === 6) bgColor = '#eff6ff'
+          
+          return (
+            <div 
+              key={day} 
+              onClick={() => onDateClick && !isHolidayDay && onDateClick(dateStr)}
+              style={{
+                minHeight: '70px',
+                padding: '3px',
+                backgroundColor: isToday ? '#dbeafe' : bgColor,
+                borderRadius: '4px',
+                border: isToday ? '2px solid #3b82f6' : '1px solid #e5e7eb',
+                cursor: onDateClick && !isHolidayDay ? 'pointer' : 'default'
+              }}
+            >
+              <div style={{ 
+                fontSize: '12px', 
+                fontWeight: isToday ? 'bold' : 'normal',
+                color: isHolidayDay ? '#9ca3af' : dayOfWeek === 0 ? '#ef4444' : dayOfWeek === 6 ? '#3b82f6' : '#374151',
+                textAlign: 'center',
+                marginBottom: '2px'
+              }}>
+                {day}
+              </div>
+              {isThirdSun && <div style={{ fontSize: '9px', color: '#9ca3af', textAlign: 'center' }}>休</div>}
+              {!isHolidayDay && (
+                <div style={{ fontSize: '9px', lineHeight: '1.3' }}>
+                  {/* 有給 */}
+                  {dayLeave.slice(0, 2).map(r => (
+                    <div key={r.id} style={{ 
+                      backgroundColor: '#dbeafe',
+                      color: '#1d4ed8',
+                      borderRadius: '2px',
+                      padding: '1px 3px',
+                      marginBottom: '1px',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
+                    }}>
+                      🏖️{r.staffName?.slice(0, 3)}
+                    </div>
+                  ))}
+                  {dayLeave.length > 2 && <div style={{ color: '#6b7280', textAlign: 'center', fontSize: '8px' }}>+{dayLeave.length - 2}休</div>}
+                  
+                  {/* 練習 */}
+                  {dayPractice.slice(0, Math.max(0, 2 - dayLeave.length)).map(p => {
+                    const color = getStaffColor(p.staffId)
+                    return (
+                      <div key={p.id} style={{ 
+                        backgroundColor: color.bg,
+                        color: color.text,
+                        borderRadius: '2px',
+                        padding: '1px 3px',
+                        marginBottom: '1px',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        borderLeft: `2px solid ${color.border}`
+                      }}>
+                        {p.time?.slice(0,5)} {p.staffName?.slice(0, 2)}
+                      </div>
+                    )
+                  })}
+                  {dayPractice.length > Math.max(0, 2 - dayLeave.length) && (
+                    <div style={{ color: '#6b7280', textAlign: 'center', fontSize: '8px' }}>+{dayPractice.length - Math.max(0, 2 - dayLeave.length)}件</div>
+                  )}
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -3251,7 +3297,7 @@ function ContactBook({ staff, setStaff, contactGoals, setContactGoals, contactWe
 
 
 // ==================== 練習予約 ====================
-function PracticeReservation({ staff, practiceReservations, setPracticeReservations, modelRules, setModelRules, isAdmin }) {
+function PracticeReservation({ staff, practiceReservations, setPracticeReservations, leaveRequests, modelRules, setModelRules, isAdmin }) {
   const [selectedStaff, setSelectedStaff] = useState('')
   const [calendarMonth, setCalendarMonth] = useState(new Date())
   const [showRules, setShowRules] = useState(false)
@@ -3423,105 +3469,16 @@ function PracticeReservation({ staff, practiceReservations, setPracticeReservati
 
       {/* カレンダー */}
       <div className="card">
-        <div className="flex justify-between items-center mb-4">
-          <button onClick={() => setCalendarMonth(new Date(year, month - 1))} className="btn btn-gray" style={{ padding: '0.5rem 1rem' }}>◀</button>
-          <h3 className="text-xl font-bold">{year}年{month + 1}月</h3>
-          <button onClick={() => setCalendarMonth(new Date(year, month + 1))} className="btn btn-gray" style={{ padding: '0.5rem 1rem' }}>▶</button>
-        </div>
-
-        {/* 凡例（スタッフの色） */}
-        <div className="flex gap-2 mb-3 flex-wrap text-xs">
-          {staff.slice(0, 8).map(s => {
-            const color = getStaffColor(s.id)
-            return (
-              <span key={s.id} style={{ backgroundColor: color.bg, color: color.text, padding: '2px 6px', borderRadius: '4px' }}>
-                {s.name}
-              </span>
-            )
-          })}
-        </div>
-
-        {/* カレンダー本体 */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px' }}>
-          {/* 曜日ヘッダー */}
-          {['日', '月', '火', '水', '木', '金', '土'].map((d, i) => (
-            <div key={d} style={{ 
-              textAlign: 'center', 
-              padding: '8px 0', 
-              fontWeight: 'bold',
-              backgroundColor: i === 1 || i === 2 ? '#e5e7eb' : '#f9fafb',
-              color: i === 0 ? '#ef4444' : i === 6 ? '#3b82f6' : i === 1 || i === 2 ? '#9ca3af' : '#374151',
-              fontSize: '12px'
-            }}>{d}</div>
-          ))}
-          
-          {/* 空白セル */}
-          {[...Array(firstDay)].map((_, i) => (
-            <div key={`empty-${i}`} style={{ minHeight: '80px', backgroundColor: '#f9fafb' }}></div>
-          ))}
-          
-          {/* 日付セル */}
-          {[...Array(lastDate)].map((_, i) => {
-            const date = i + 1
-            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`
-            const dayOfWeek = new Date(year, month, date).getDay()
-            const isHoliday = dayOfWeek === 1 || dayOfWeek === 2 || date === thirdSunday
-            const isToday = dateStr === today
-            const dayReservations = practiceReservations.filter(p => p.date === dateStr)
-            
-            let bgColor = '#ffffff'
-            if (isHoliday) bgColor = '#d1d5db'
-            else if (dayOfWeek === 0) bgColor = '#fef2f2'
-            else if (dayOfWeek === 6) bgColor = '#eff6ff'
-            
-            return (
-              <div key={date} style={{ 
-                minHeight: '80px', 
-                backgroundColor: bgColor,
-                border: isToday ? '2px solid #3b82f6' : '1px solid #e5e7eb',
-                padding: '2px',
-                overflow: 'hidden'
-              }}>
-                <div style={{ 
-                  fontWeight: 'bold', 
-                  fontSize: '12px',
-                  color: isHoliday ? '#9ca3af' : dayOfWeek === 0 ? '#ef4444' : dayOfWeek === 6 ? '#3b82f6' : '#374151',
-                  marginBottom: '2px'
-                }}>
-                  {date}
-                </div>
-                {!isHoliday && dayReservations.length > 0 && (
-                  <div style={{ fontSize: '10px', lineHeight: '1.4' }}>
-                    {dayReservations.slice(0, 3).map(r => {
-                      const color = getStaffColor(r.staffId)
-                      return (
-                        <div key={r.id} style={{ 
-                          backgroundColor: color.bg,
-                          color: color.text,
-                          padding: '1px 2px',
-                          borderRadius: '2px',
-                          marginBottom: '1px',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                          borderLeft: `2px solid ${color.border}`
-                        }}>
-                          {r.time?.slice(0,5)} {r.staffName?.slice(0,2)}
-                        </div>
-                      )
-                    })}
-                    {dayReservations.length > 3 && (
-                      <div style={{ color: '#6b7280', fontSize: '9px' }}>+{dayReservations.length - 3}件</div>
-                    )}
-                  </div>
-                )}
-                {isHoliday && (
-                  <div style={{ fontSize: '9px', color: '#9ca3af' }}>定休</div>
-                )}
-              </div>
-            )
-          })}
-        </div>
+        <SharedCalendar 
+          year={year}
+          month={month}
+          leaveRequests={leaveRequests}
+          practiceReservations={practiceReservations}
+          staff={staff}
+          showNavigation={true}
+          onMonthChange={(delta) => setCalendarMonth(new Date(year, month + delta))}
+          onDateClick={(dateStr) => setPracticeDate(dateStr)}
+        />
       </div>
 
       {/* 予約登録 */}
@@ -3988,7 +3945,7 @@ function TimeCard({ staff, timeRecords, setTimeRecords, isAdmin }) {
 }
 
 // ==================== 有給管理 ====================
-function LeaveManagement({ staff, leaveGrants, setLeaveGrants, leaveRequests, setLeaveRequests, notifications, setNotifications, isAdmin, userRole }) {
+function LeaveManagement({ staff, leaveGrants, setLeaveGrants, leaveRequests, setLeaveRequests, practiceReservations, notifications, setNotifications, isAdmin, userRole }) {
   const [selectedStaff, setSelectedStaff] = useState('')
   const [mode, setMode] = useState('calendar') // 'calendar', 'status', 'request', 'approve', 'settings'
   const [requestDate, setRequestDate] = useState('')
@@ -4314,117 +4271,15 @@ function LeaveManagement({ staff, leaveGrants, setLeaveGrants, leaveRequests, se
       {/* カレンダー表示 */}
       {mode === 'calendar' && (
         <div className="card">
-          <div className="flex justify-between items-center mb-4">
-            <button onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1))} className="btn btn-gray" style={{ padding: '0.5rem 1rem' }}>◀</button>
-            <h3 className="text-xl font-bold">{calendarMonth.getFullYear()}年{calendarMonth.getMonth() + 1}月</h3>
-            <button onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1))} className="btn btn-gray" style={{ padding: '0.5rem 1rem' }}>▶</button>
-          </div>
-          
-          {/* 凡例 */}
-          <div className="flex gap-3 mb-3 text-xs justify-center flex-wrap">
-            <span><span className="inline-block w-3 h-3 bg-gray-300 rounded mr-1"></span>定休日</span>
-            <span><span className="inline-block w-3 h-3 bg-blue-100 rounded mr-1"></span>有給</span>
-            <span><span className="inline-block w-3 h-3 bg-green-100 rounded mr-1"></span>夏休み</span>
-          </div>
-          
-          {/* 曜日ヘッダー */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px', marginBottom: '2px' }}>
-            {['日', '月', '火', '水', '木', '金', '土'].map((d, i) => (
-              <div key={d} style={{ 
-                textAlign: 'center', 
-                padding: '8px 0', 
-                fontWeight: 'bold',
-                backgroundColor: i === 1 || i === 2 ? '#e5e7eb' : '#f9fafb',
-                color: i === 0 ? '#ef4444' : i === 6 ? '#3b82f6' : i === 1 || i === 2 ? '#9ca3af' : '#374151'
-              }}>{d}</div>
-            ))}
-          </div>
-          
-          {/* カレンダー本体 */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px' }}>
-            {(() => {
-              const year = calendarMonth.getFullYear()
-              const month = calendarMonth.getMonth()
-              const firstDay = new Date(year, month, 1).getDay()
-              const lastDate = new Date(year, month + 1, 0).getDate()
-              const cells = []
-              
-              // 第三日曜日を計算
-              let sundayCount = 0
-              let thirdSunday = null
-              for (let d = 1; d <= lastDate; d++) {
-                if (new Date(year, month, d).getDay() === 0) {
-                  sundayCount++
-                  if (sundayCount === 3) { thirdSunday = d; break }
-                }
-              }
-              
-              // 空白セル
-              for (let i = 0; i < firstDay; i++) {
-                cells.push(<div key={`empty-${i}`} style={{ minHeight: '70px', backgroundColor: '#f9fafb' }}></div>)
-              }
-              
-              // 日付セル
-              for (let date = 1; date <= lastDate; date++) {
-                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`
-                const dayRequests = leaveRequests.filter(r => r.leaveDate === dateStr && r.status === 'approved')
-                const dayOfWeek = new Date(year, month, date).getDay()
-                const isHoliday = dayOfWeek === 1 || dayOfWeek === 2 || date === thirdSunday
-                const isToday = dateStr === new Date().toISOString().split('T')[0]
-                
-                let bgColor = '#ffffff'
-                if (isHoliday) bgColor = '#d1d5db'
-                else if (dayOfWeek === 0) bgColor = '#fef2f2'
-                else if (dayOfWeek === 6) bgColor = '#eff6ff'
-                
-                cells.push(
-                  <div key={date} style={{ 
-                    minHeight: '70px', 
-                    backgroundColor: bgColor,
-                    border: isToday ? '2px solid #3b82f6' : '1px solid #e5e7eb',
-                    padding: '4px',
-                    position: 'relative'
-                  }}>
-                    <div style={{ 
-                      fontWeight: 'bold', 
-                      fontSize: '14px',
-                      color: isHoliday ? '#9ca3af' : dayOfWeek === 0 ? '#ef4444' : dayOfWeek === 6 ? '#3b82f6' : '#374151',
-                      marginBottom: '2px'
-                    }}>
-                      {date}
-                      {isToday && <span style={{ marginLeft: '4px', fontSize: '10px', color: '#3b82f6' }}>今日</span>}
-                    </div>
-                    {!isHoliday && dayRequests.length > 0 && (
-                      <div style={{ fontSize: '11px', lineHeight: '1.3' }}>
-                        {dayRequests.slice(0, 3).map(r => (
-                          <div key={r.id} style={{ 
-                            backgroundColor: r.leaveType === 'paid' ? '#dbeafe' : '#dcfce7',
-                            color: r.leaveType === 'paid' ? '#1d4ed8' : '#166534',
-                            padding: '1px 3px',
-                            borderRadius: '2px',
-                            marginBottom: '1px',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap'
-                          }}>
-                            {r.staffName}{r.dayType === 'am' ? '(午前)' : r.dayType === 'pm' ? '(午後)' : ''}
-                          </div>
-                        ))}
-                        {dayRequests.length > 3 && (
-                          <div style={{ color: '#6b7280', fontSize: '10px' }}>+{dayRequests.length - 3}人</div>
-                        )}
-                      </div>
-                    )}
-                    {isHoliday && (
-                      <div style={{ fontSize: '10px', color: '#9ca3af' }}>定休日</div>
-                    )}
-                  </div>
-                )
-              }
-              
-              return cells
-            })()}
-          </div>
+          <SharedCalendar 
+            year={calendarMonth.getFullYear()}
+            month={calendarMonth.getMonth()}
+            leaveRequests={leaveRequests}
+            practiceReservations={practiceReservations}
+            staff={staff}
+            showNavigation={true}
+            onMonthChange={(delta) => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + delta))}
+          />
         </div>
       )}
 
