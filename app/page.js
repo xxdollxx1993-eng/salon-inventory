@@ -3433,7 +3433,7 @@ function ContactBook({ staff, setStaff, contactGoals, setContactGoals, contactWe
       {/* スタッフモード：スタッフ選択 */}
       {!isAdmin && (
         <div className="card">
-          <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>スタッフ</label>
+          <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>スタッフ</label>
           <select value={selectedStaff} onChange={e => {
             setSelectedStaff(e.target.value)
             const weekly = contactWeekly.find(w => w.staffId === parseInt(e.target.value) && w.weekStart === currentWeekStart)
@@ -3447,19 +3447,49 @@ function ContactBook({ staff, setStaff, contactGoals, setContactGoals, contactWe
       )}
 
       {/* モード切替 */}
-      <div className="flex gap-2 flex-wrap">
+      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
         {!isAdmin && (
           <>
-            <button onClick={() => setMode('weekly')} className={`btn flex-1 ${mode === 'weekly' ? 'btn-blue' : 'btn-gray'}`}>週次</button>
-            <button onClick={() => setMode('monthly')} className={`btn flex-1 ${mode === 'monthly' ? 'btn-blue' : 'btn-gray'}`}>月次</button>
+            <button onClick={() => setMode('weekly')} style={{
+              flex: 1, padding: '12px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+              fontWeight: '600', fontSize: '14px',
+              backgroundColor: mode === 'weekly' ? '#3b82f6' : '#f3f4f6',
+              color: mode === 'weekly' ? '#fff' : '#374151'
+            }}>📓 週次</button>
+            <button onClick={() => setMode('monthly')} style={{
+              flex: 1, padding: '12px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+              fontWeight: '600', fontSize: '14px',
+              backgroundColor: mode === 'monthly' ? '#3b82f6' : '#f3f4f6',
+              color: mode === 'monthly' ? '#fff' : '#374151'
+            }}>📝 月次</button>
           </>
         )}
         {isAdmin && (
           <>
-            <button onClick={() => setMode('admin')} className={`btn ${mode === 'admin' ? 'btn-blue' : 'btn-gray'}`}>📊 管理</button>
-            <button onClick={() => setMode('goals')} className={`btn ${mode === 'goals' ? 'btn-blue' : 'btn-gray'}`}>🎯 目標</button>
-            <button onClick={() => setMode('members')} className={`btn ${mode === 'members' ? 'btn-blue' : 'btn-gray'}`}>👥 対象者</button>
-            <button onClick={() => setMode('detail')} className={`btn ${mode === 'detail' ? 'btn-blue' : 'btn-gray'}`}>👤 詳細</button>
+            <button onClick={() => setMode('admin')} style={{
+              padding: '10px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+              fontWeight: '600', fontSize: '13px',
+              backgroundColor: mode === 'admin' ? '#3b82f6' : '#f3f4f6',
+              color: mode === 'admin' ? '#fff' : '#374151'
+            }}>📊 管理</button>
+            <button onClick={() => setMode('goals')} style={{
+              padding: '10px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+              fontWeight: '600', fontSize: '13px',
+              backgroundColor: mode === 'goals' ? '#3b82f6' : '#f3f4f6',
+              color: mode === 'goals' ? '#fff' : '#374151'
+            }}>🎯 目標</button>
+            <button onClick={() => setMode('members')} style={{
+              padding: '10px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+              fontWeight: '600', fontSize: '13px',
+              backgroundColor: mode === 'members' ? '#3b82f6' : '#f3f4f6',
+              color: mode === 'members' ? '#fff' : '#374151'
+            }}>👥 対象者</button>
+            <button onClick={() => setMode('detail')} style={{
+              padding: '10px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+              fontWeight: '600', fontSize: '13px',
+              backgroundColor: mode === 'detail' ? '#3b82f6' : '#f3f4f6',
+              color: mode === 'detail' ? '#fff' : '#374151'
+            }}>👤 詳細</button>
           </>
         )}
       </div>
@@ -3467,8 +3497,10 @@ function ContactBook({ staff, setStaff, contactGoals, setContactGoals, contactWe
       {/* ===== スタッフ：週次 ===== */}
       {mode === 'weekly' && !isAdmin && selectedStaff && (
         <div className="card">
-          <h3 className="font-bold mb-3">📓 今週の連絡帳</h3>
-          <p className="text-sm text-gray-500 mb-2">週: {currentWeekStart} 〜</p>
+          <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>📓</span> 今週の連絡帳
+          </h3>
+          <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '8px' }}>週: {currentWeekStart} 〜</p>
           
           {/* 締切日表示 */}
           {(() => {
@@ -3483,26 +3515,30 @@ function ContactBook({ staff, setStaff, contactGoals, setContactGoals, contactWe
             const isOverdue = today > deadlineDateObj && !contactWeekly.find(w => w.staffId === parseInt(selectedStaff) && w.weekStart === currentWeekStart)?.submittedAt
             
             return (
-              <div className={`p-3 rounded mb-4 ${isOverdue ? 'bg-red-50 border border-red-300' : 'bg-blue-50'}`}>
-                <span className={`text-sm ${isOverdue ? 'text-red-600' : 'text-blue-600'}`}>
-                  📅 今週の締切: <span className="font-bold">{deadlineStr}</span>
-                  {isOverdue && <span className="ml-2">⚠️ 締切を過ぎています</span>}
+              <div style={{
+                padding: '12px', borderRadius: '10px', marginBottom: '16px',
+                backgroundColor: isOverdue ? '#fef2f2' : '#eff6ff',
+                border: isOverdue ? '1px solid #fecaca' : 'none'
+              }}>
+                <span style={{ fontSize: '14px', color: isOverdue ? '#dc2626' : '#2563eb' }}>
+                  📅 今週の締切: <span style={{ fontWeight: 'bold' }}>{deadlineStr}</span>
+                  {isOverdue && <span style={{ marginLeft: '8px' }}>⚠️ 締切を過ぎています</span>}
                 </span>
               </div>
             )
           })()}
           
           {currentGoal ? (
-            <div className="bg-blue-50 p-3 rounded mb-4">
-              <p className="text-sm"><span className="font-semibold">今月の目標:</span> {currentGoal.monthlyGoal}</p>
-              <p className="text-sm"><span className="font-semibold">今週やること:</span> {currentGoal.weeklyTask}</p>
+            <div style={{ backgroundColor: '#eff6ff', padding: '12px', borderRadius: '10px', marginBottom: '16px' }}>
+              <p style={{ fontSize: '14px', marginBottom: '4px' }}><span style={{ fontWeight: '600' }}>今月の目標:</span> {currentGoal.monthlyGoal}</p>
+              <p style={{ fontSize: '14px' }}><span style={{ fontWeight: '600' }}>今週やること:</span> {currentGoal.weeklyTask}</p>
             </div>
           ) : (
-            <p className="text-gray-400 text-sm mb-4">目標が設定されていません</p>
+            <p style={{ color: '#9ca3af', fontSize: '14px', marginBottom: '16px' }}>目標が設定されていません</p>
           )}
           
-          <div className="mb-4">
-            <p className="text-sm font-semibold mb-3">できた日にチェック</p>
+          <div style={{ marginBottom: '16px' }}>
+            <p style={{ fontSize: '14px', fontWeight: '600', marginBottom: '12px' }}>できた日にチェック</p>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px' }}>
               {dayNames.map((day, i) => {
                 const dateObj = weekDates[i]
@@ -3540,43 +3576,56 @@ function ContactBook({ staff, setStaff, contactGoals, setContactGoals, contactWe
                 )
               })}
             </div>
-            <p className="text-center mt-3 font-bold text-lg">{countChecks(weeklyChecks, weekDates)}日 / {workingDays}日</p>
+            <p style={{ textAlign: 'center', marginTop: '12px', fontWeight: 'bold', fontSize: '18px' }}>{countChecks(weeklyChecks, weekDates)}日 / {workingDays}日</p>
           </div>
           
           {countChecks(weeklyChecks, weekDates) === 0 && (
-            <div className="bg-yellow-50 p-3 rounded mb-4">
-              <p className="text-sm font-semibold mb-2">できなかった理由</p>
-              <div className="flex flex-wrap gap-2 mb-3">
+            <div style={{ backgroundColor: '#fef9c3', padding: '16px', borderRadius: '12px', marginBottom: '16px' }}>
+              <p style={{ fontSize: '14px', fontWeight: '600', marginBottom: '8px' }}>できなかった理由</p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
                 {reasonOptions.map(r => (
-                  <button key={r} onClick={() => setZeroReason(r)} className={`btn text-xs ${zeroReason === r ? 'btn-blue' : 'btn-gray'}`}>{r}</button>
+                  <button key={r} onClick={() => setZeroReason(r)} style={{
+                    padding: '8px 12px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+                    fontSize: '12px', fontWeight: '500',
+                    backgroundColor: zeroReason === r ? '#3b82f6' : '#fff',
+                    color: zeroReason === r ? '#fff' : '#374151'
+                  }}>{r}</button>
                 ))}
               </div>
               {zeroReason === 'その他' && (
-                <input type="text" placeholder="理由を入力" className="input mb-3" onChange={e => setZeroReason(e.target.value)} />
+                <input type="text" placeholder="理由を入力" className="input" style={{ marginBottom: '12px' }} onChange={e => setZeroReason(e.target.value)} />
               )}
-              <p className="text-sm font-semibold mb-2">来週どうする？</p>
-              <div className="flex flex-wrap gap-2 mb-3">
+              <p style={{ fontSize: '14px', fontWeight: '600', marginBottom: '8px' }}>来週どうする？</p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
                 {actionOptions.map(a => (
-                  <button key={a} onClick={() => setNextAction(a)} className={`btn text-xs ${nextAction === a ? 'btn-blue' : 'btn-gray'}`}>{a}</button>
+                  <button key={a} onClick={() => setNextAction(a)} style={{
+                    padding: '8px 12px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+                    fontSize: '12px', fontWeight: '500',
+                    backgroundColor: nextAction === a ? '#3b82f6' : '#fff',
+                    color: nextAction === a ? '#fff' : '#374151'
+                  }}>{a}</button>
                 ))}
               </div>
               <input type="text" value={nextActionDetail} onChange={e => setNextActionDetail(e.target.value)} placeholder="補足（1行）" className="input" />
             </div>
           )}
           
-          <button onClick={submitWeekly} className="btn btn-green w-full py-3">
-            {currentWeekly?.submittedAt ? '再提出する' : '提出する'}
+          <button onClick={submitWeekly} style={{
+            width: '100%', padding: '14px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+            backgroundColor: '#22c55e', color: '#fff', fontWeight: 'bold', fontSize: '15px'
+          }}>
+            {currentWeekly?.submittedAt ? '✓ 再提出する' : '✓ 提出する'}
           </button>
           
           {currentWeekly?.submittedAt && (
-            <p className="text-center text-sm text-gray-500 mt-2">提出済: {new Date(currentWeekly.submittedAt).toLocaleString('ja-JP')}</p>
+            <p style={{ textAlign: 'center', fontSize: '13px', color: '#6b7280', marginTop: '8px' }}>提出済: {new Date(currentWeekly.submittedAt).toLocaleString('ja-JP')}</p>
           )}
 
           {currentWeekly && contactReplies.filter(r => r.weeklyId === currentWeekly.id).length > 0 && (
-            <div className="mt-4 bg-purple-50 p-3 rounded">
-              <p className="font-semibold text-sm mb-2">💬 返信</p>
+            <div style={{ marginTop: '16px', backgroundColor: '#f5f3ff', padding: '12px', borderRadius: '10px' }}>
+              <p style={{ fontWeight: '600', fontSize: '14px', marginBottom: '8px' }}>💬 返信</p>
               {contactReplies.filter(r => r.weeklyId === currentWeekly.id).map(r => (
-                <div key={r.id} className="text-sm"><span className="text-purple-600">{r.repliedBy}:</span> {r.replyText}</div>
+                <div key={r.id} style={{ fontSize: '14px' }}><span style={{ color: '#7c3aed' }}>{r.repliedBy}:</span> {r.replyText}</div>
               ))}
             </div>
           )}
@@ -3586,23 +3635,28 @@ function ContactBook({ staff, setStaff, contactGoals, setContactGoals, contactWe
       {/* ===== スタッフ：月次 ===== */}
       {mode === 'monthly' && !isAdmin && selectedStaff && (
         <div className="card">
-          <h3 className="font-bold mb-3">📝 今月の振り返り</h3>
-          <p className="text-sm text-gray-500 mb-4">{currentYearMonth}</p>
-          <div className="space-y-4">
+          <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>📝</span> 今月の振り返り
+          </h3>
+          <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '16px' }}>{currentYearMonth}</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>
-              <p className="text-sm font-semibold mb-1">Q1. 今月いちばん止まった行動はどれ？</p>
+              <p style={{ fontSize: '14px', fontWeight: '600', marginBottom: '8px' }}>Q1. 今月いちばん止まった行動はどれ？</p>
               <input type="text" value={q1Answer} onChange={e => setQ1Answer(e.target.value)} className="input" placeholder="3行以内で" />
             </div>
             <div>
-              <p className="text-sm font-semibold mb-1">Q2. それが止まった一番の理由は？</p>
+              <p style={{ fontSize: '14px', fontWeight: '600', marginBottom: '8px' }}>Q2. それが止まった一番の理由は？</p>
               <input type="text" value={q2Answer} onChange={e => setQ2Answer(e.target.value)} className="input" placeholder="3行以内で" />
             </div>
             <div>
-              <p className="text-sm font-semibold mb-1">Q3. 来月、最初に何を変える？</p>
+              <p style={{ fontSize: '14px', fontWeight: '600', marginBottom: '8px' }}>Q3. 来月、最初に何を変える？</p>
               <input type="text" value={q3Answer} onChange={e => setQ3Answer(e.target.value)} className="input" placeholder="3行以内で" />
             </div>
           </div>
-          <button onClick={submitMonthly} className="btn btn-green w-full py-3 mt-4">提出する</button>
+          <button onClick={submitMonthly} style={{
+            width: '100%', padding: '14px', borderRadius: '10px', border: 'none', cursor: 'pointer', marginTop: '16px',
+            backgroundColor: '#22c55e', color: '#fff', fontWeight: 'bold', fontSize: '15px'
+          }}>✓ 提出する</button>
         </div>
       )}
 
@@ -3610,22 +3664,24 @@ function ContactBook({ staff, setStaff, contactGoals, setContactGoals, contactWe
       {mode === 'admin' && isAdmin && (
         <div className="space-y-4">
           <div className="card">
-            <h3 className="font-bold mb-3">📊 今週（{currentWeekStart}〜）</h3>
+            <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>📊</span> 今週（{currentWeekStart}〜）
+            </h3>
             
             {/* 提出済み */}
-            <div className="bg-green-50 p-3 rounded mb-3">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-green-600 font-bold">✅ 提出済</span>
-                <span className="text-green-600 font-bold">{thisWeekSubmissions.filter(w => contactStaff.some(s => s.id === w.staffId)).length}人</span>
+            <div style={{ backgroundColor: '#f0fdf4', padding: '12px', borderRadius: '10px', marginBottom: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                <span style={{ color: '#16a34a', fontWeight: 'bold' }}>✅ 提出済</span>
+                <span style={{ color: '#16a34a', fontWeight: 'bold', fontSize: '18px' }}>{thisWeekSubmissions.filter(w => contactStaff.some(s => s.id === w.staffId)).length}人</span>
               </div>
               {thisWeekSubmissions.filter(w => contactStaff.some(s => s.id === w.staffId)).length > 0 ? (
-                <div className="flex flex-wrap gap-2">
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                   {thisWeekSubmissions.filter(w => contactStaff.some(s => s.id === w.staffId)).map(w => (
-                    <span key={w.id} className="text-sm bg-white px-2 py-1 rounded">{w.staffName}</span>
+                    <span key={w.id} style={{ fontSize: '13px', backgroundColor: '#fff', padding: '4px 10px', borderRadius: '6px' }}>{w.staffName}</span>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-gray-500">まだいません</p>
+                <p style={{ fontSize: '13px', color: '#6b7280' }}>まだいません</p>
               )}
             </div>
             
@@ -3633,14 +3689,14 @@ function ContactBook({ staff, setStaff, contactGoals, setContactGoals, contactWe
             {(() => {
               const notSubmitted = contactStaff.filter(s => !thisWeekSubmissions.some(w => w.staffId === s.id))
               return notSubmitted.length > 0 && (
-                <div className="bg-yellow-50 p-3 rounded mb-3">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-yellow-600 font-bold">⏳ 未提出</span>
-                    <span className="text-yellow-600 font-bold">{notSubmitted.length}人</span>
+                <div style={{ backgroundColor: '#fef9c3', padding: '12px', borderRadius: '10px', marginBottom: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                    <span style={{ color: '#d97706', fontWeight: 'bold' }}>⏳ 未提出</span>
+                    <span style={{ color: '#d97706', fontWeight: 'bold', fontSize: '18px' }}>{notSubmitted.length}人</span>
                   </div>
-                  <div className="flex flex-wrap gap-2">
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                     {notSubmitted.map(s => (
-                      <span key={s.id} className="text-sm bg-white px-2 py-1 rounded">{s.name}</span>
+                      <span key={s.id} style={{ fontSize: '13px', backgroundColor: '#fff', padding: '4px 10px', borderRadius: '6px' }}>{s.name}</span>
                     ))}
                   </div>
                 </div>
@@ -3649,23 +3705,23 @@ function ContactBook({ staff, setStaff, contactGoals, setContactGoals, contactWe
             
             {/* 赤信号 */}
             {redFlagStaff.length > 0 && (
-              <div className="bg-red-50 p-3 rounded mb-3">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-red-600 font-bold">⚠️ 赤信号</span>
-                  <span className="text-red-600 font-bold">{redFlagStaff.length}人</span>
+              <div style={{ backgroundColor: '#fef2f2', padding: '12px', borderRadius: '10px', marginBottom: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                  <span style={{ color: '#dc2626', fontWeight: 'bold' }}>⚠️ 赤信号</span>
+                  <span style={{ color: '#dc2626', fontWeight: 'bold', fontSize: '18px' }}>{redFlagStaff.length}人</span>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                   {redFlagStaff.map(s => (
-                    <span key={s.id} className="text-sm bg-white px-2 py-1 rounded">{s.name}</span>
+                    <span key={s.id} style={{ fontSize: '13px', backgroundColor: '#fff', padding: '4px 10px', borderRadius: '6px' }}>{s.name}</span>
                   ))}
                 </div>
-                <p className="text-xs text-red-400 mt-2">2週連続0日 or 未提出</p>
+                <p style={{ fontSize: '11px', color: '#f87171', marginTop: '8px' }}>2週連続0日 or 未提出</p>
               </div>
             )}
             
             {/* 個別状況（0日の人への返信用） */}
-            <div className="space-y-2 mt-4">
-              <p className="text-sm font-semibold text-gray-600">詳細（0日の人に返信可能）</p>
+            <div style={{ marginTop: '16px' }}>
+              <p style={{ fontSize: '14px', fontWeight: '600', color: '#6b7280', marginBottom: '8px' }}>詳細（0日の人に返信可能）</p>
               {contactStaff.map(s => {
                 const weekly = contactWeekly.find(w => w.staffId === s.id && w.weekStart === currentWeekStart)
                 const hasReply = weekly && contactReplies.some(r => r.weeklyId === weekly.id)
@@ -3674,17 +3730,17 @@ function ContactBook({ staff, setStaff, contactGoals, setContactGoals, contactWe
                 if (!weekly?.submittedAt || checkCount !== 0) return null
                 
                 return (
-                  <div key={s.id} className="flex justify-between items-center p-2 rounded bg-red-50">
+                  <div key={s.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', borderRadius: '8px', backgroundColor: '#fef2f2', marginBottom: '8px' }}>
                     <div>
-                      <span className="font-semibold">{s.name}</span>
-                      <span className="ml-2 text-red-500">0日</span>
-                      {weekly.zeroReason && <span className="ml-2 text-xs text-gray-500">({weekly.zeroReason})</span>}
+                      <span style={{ fontWeight: '600' }}>{s.name}</span>
+                      <span style={{ marginLeft: '8px', color: '#ef4444' }}>0日</span>
+                      {weekly.zeroReason && <span style={{ marginLeft: '8px', fontSize: '12px', color: '#6b7280' }}>({weekly.zeroReason})</span>}
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       {!hasReply && (
-                        <button onClick={() => { setReplyingTo(weekly.id); setReplyText('') }} className="text-purple-500 text-xs">返信する</button>
+                        <button onClick={() => { setReplyingTo(weekly.id); setReplyText('') }} style={{ color: '#7c3aed', fontSize: '13px', background: 'none', border: 'none', cursor: 'pointer' }}>返信する</button>
                       )}
-                      {hasReply && <span className="text-xs text-purple-500">返信済</span>}
+                      {hasReply && <span style={{ fontSize: '12px', color: '#7c3aed' }}>返信済</span>}
                     </div>
                   </div>
                 )
@@ -3692,12 +3748,18 @@ function ContactBook({ staff, setStaff, contactGoals, setContactGoals, contactWe
             </div>
             
             {replyingTo && (
-              <div className="mt-4 bg-purple-50 p-3 rounded">
-                <p className="text-sm font-semibold mb-2">💬 返信を書く</p>
-                <textarea value={replyText} onChange={e => setReplyText(e.target.value)} className="input w-full" rows={2} placeholder="事実確認＋質問1つまで" />
-                <div className="flex gap-2 mt-2">
-                  <button onClick={() => submitReply(replyingTo)} className="btn btn-purple flex-1">送信</button>
-                  <button onClick={() => setReplyingTo(null)} className="btn btn-gray flex-1">キャンセル</button>
+              <div style={{ marginTop: '16px', backgroundColor: '#f5f3ff', padding: '12px', borderRadius: '10px' }}>
+                <p style={{ fontSize: '14px', fontWeight: '600', marginBottom: '8px' }}>💬 返信を書く</p>
+                <textarea value={replyText} onChange={e => setReplyText(e.target.value)} className="input" style={{ width: '100%' }} rows={2} placeholder="事実確認＋質問1つまで" />
+                <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                  <button onClick={() => submitReply(replyingTo)} style={{
+                    flex: 1, padding: '10px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+                    backgroundColor: '#8b5cf6', color: '#fff', fontWeight: '600', fontSize: '14px'
+                  }}>送信</button>
+                  <button onClick={() => setReplyingTo(null)} style={{
+                    flex: 1, padding: '10px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+                    backgroundColor: '#e5e7eb', color: '#374151', fontWeight: '600', fontSize: '14px'
+                  }}>キャンセル</button>
                 </div>
               </div>
             )}
@@ -3708,16 +3770,20 @@ function ContactBook({ staff, setStaff, contactGoals, setContactGoals, contactWe
       {/* ===== 管理者：対象スタッフ設定 ===== */}
       {mode === 'members' && isAdmin && (
         <div className="card">
-          <h3 className="font-bold mb-3">👥 連絡帳の対象スタッフ</h3>
-          <p className="text-sm text-gray-500 mb-4">連絡帳を使うスタッフを選択</p>
-          <div className="space-y-2">
+          <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>👥</span> 連絡帳の対象スタッフ
+          </h3>
+          <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '16px' }}>連絡帳を使うスタッフを選択</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {staff.map(s => (
-              <div key={s.id} className="flex justify-between items-center p-3 bg-gray-50 rounded">
-                <span className="font-semibold">{s.name}</span>
-                <button 
-                  onClick={() => toggleContactEnabled(s.id)}
-                  className={`btn text-sm ${s.contactEnabled ? 'btn-green' : 'btn-gray'}`}
-                >
+              <div key={s.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', backgroundColor: '#f9fafb', borderRadius: '10px' }}>
+                <span style={{ fontWeight: '600' }}>{s.name}</span>
+                <button onClick={() => toggleContactEnabled(s.id)} style={{
+                  padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+                  fontSize: '13px', fontWeight: '600',
+                  backgroundColor: s.contactEnabled ? '#22c55e' : '#e5e7eb',
+                  color: s.contactEnabled ? '#fff' : '#6b7280'
+                }}>
                   {s.contactEnabled ? '✓ 対象' : '対象外'}
                 </button>
               </div>
@@ -3729,38 +3795,46 @@ function ContactBook({ staff, setStaff, contactGoals, setContactGoals, contactWe
       {/* ===== 管理者：目標設定 ===== */}
       {mode === 'goals' && isAdmin && (
         <div className="card">
-          <h3 className="font-bold mb-3">🎯 {currentYearMonth} 目標設定</h3>
-          <div className="space-y-3">
+          <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>🎯</span> {currentYearMonth} 目標設定
+          </h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {contactStaff.map(s => {
               const goal = contactGoals.find(g => g.staffId === s.id && g.yearMonth === currentYearMonth)
               const isEditing = editingGoal === s.id
               
               return (
-                <div key={s.id} className="border rounded p-3">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="font-semibold">{s.name}</span>
+                <div key={s.id} style={{ border: '1px solid #e5e7eb', borderRadius: '12px', padding: '12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <span style={{ fontWeight: '600' }}>{s.name}</span>
                     {!isEditing && (
-                      <button onClick={() => { setEditingGoal(s.id); setGoalData({ monthlyGoal: goal?.monthlyGoal || '', weeklyTask: goal?.weeklyTask || '' }) }} className="text-blue-500 text-sm">編集</button>
+                      <button onClick={() => { setEditingGoal(s.id); setGoalData({ monthlyGoal: goal?.monthlyGoal || '', weeklyTask: goal?.weeklyTask || '' }) }} style={{ color: '#3b82f6', fontSize: '13px', background: 'none', border: 'none', cursor: 'pointer' }}>編集</button>
                     )}
                   </div>
                   {isEditing ? (
-                    <div className="space-y-2">
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       <input type="text" value={goalData.monthlyGoal} onChange={e => setGoalData({...goalData, monthlyGoal: e.target.value})} placeholder="今月の目標" className="input" />
                       <input type="text" value={goalData.weeklyTask} onChange={e => setGoalData({...goalData, weeklyTask: e.target.value})} placeholder="毎日やること" className="input" />
-                      <div className="flex gap-2">
-                        <button onClick={() => saveGoal(s.id, s.name)} className="btn btn-green flex-1">保存</button>
-                        <button onClick={() => setEditingGoal(null)} className="btn btn-gray flex-1">キャンセル</button>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button onClick={() => saveGoal(s.id, s.name)} style={{
+                          flex: 1, padding: '10px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+                          backgroundColor: '#22c55e', color: '#fff', fontWeight: '600', fontSize: '14px'
+                        }}>保存</button>
+                        <button onClick={() => setEditingGoal(null)} style={{
+                          flex: 1, padding: '10px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+                          backgroundColor: '#e5e7eb', color: '#374151', fontWeight: '600', fontSize: '14px'
+                        }}>キャンセル</button>
                       </div>
                     </div>
                   ) : (
-                    <div className="text-sm text-gray-600">
+                    <div style={{ fontSize: '14px', color: '#4b5563' }}>
                       {goal ? (
                         <>
-                          <p><span className="text-gray-400">目標:</span> {goal.monthlyGoal}</p>
-                          <p><span className="text-gray-400">毎日:</span> {goal.weeklyTask}</p>
+                          <p><span style={{ color: '#9ca3af' }}>目標:</span> {goal.monthlyGoal}</p>
+                          <p><span style={{ color: '#9ca3af' }}>毎日:</span> {goal.weeklyTask}</p>
                         </>
                       ) : (
-                        <p className="text-gray-400">未設定</p>
+                        <p style={{ color: '#9ca3af' }}>未設定</p>
                       )}
                     </div>
                   )}
@@ -3775,7 +3849,7 @@ function ContactBook({ staff, setStaff, contactGoals, setContactGoals, contactWe
       {mode === 'detail' && isAdmin && (
         <div className="space-y-4">
           <div className="card">
-            <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>スタッフを選択</label>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>スタッフを選択</label>
             <select value={detailStaffId || ''} onChange={e => setDetailStaffId(parseInt(e.target.value))} className="select">
               <option value="">選択してください</option>
               {contactStaff.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -3785,19 +3859,19 @@ function ContactBook({ staff, setStaff, contactGoals, setContactGoals, contactWe
           {detailStaffId && (
             <>
               <div className="card">
-                <h3 className="font-bold mb-3">📈 週次推移</h3>
-                <div className="space-y-2">
+                <h3 style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '12px' }}>📈 週次推移</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {contactWeekly.filter(w => w.staffId === detailStaffId).slice(0, 8).map(w => {
                     const checkCount = countChecks(w.checks)
                     const hasReply = contactReplies.some(r => r.weeklyId === w.id)
                     return (
-                      <div key={w.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                      <div key={w.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', backgroundColor: '#f9fafb', borderRadius: '8px' }}>
                         <div>
-                          <span className="font-semibold">{w.weekStart}</span>
-                          <span className={`ml-2 ${checkCount === 0 ? 'text-red-500 font-bold' : 'text-green-600'}`}>{checkCount}日</span>
-                          {checkCount === 0 && w.zeroReason && (<span className="ml-2 text-xs text-gray-500">({w.zeroReason})</span>)}
+                          <span style={{ fontWeight: '600' }}>{w.weekStart}</span>
+                          <span style={{ marginLeft: '8px', color: checkCount === 0 ? '#ef4444' : '#16a34a', fontWeight: checkCount === 0 ? 'bold' : '600' }}>{checkCount}日</span>
+                          {checkCount === 0 && w.zeroReason && (<span style={{ marginLeft: '8px', fontSize: '12px', color: '#6b7280' }}>({w.zeroReason})</span>)}
                         </div>
-                        {hasReply && <span className="text-xs text-purple-500">返信済</span>}
+                        {hasReply && <span style={{ fontSize: '12px', color: '#7c3aed' }}>返信済</span>}
                       </div>
                     )
                   })}
@@ -3805,17 +3879,17 @@ function ContactBook({ staff, setStaff, contactGoals, setContactGoals, contactWe
               </div>
               
               <div className="card">
-                <h3 className="font-bold mb-3">📝 月次の問い</h3>
+                <h3 style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '12px' }}>📝 月次の問い</h3>
                 {contactMonthly.filter(m => m.staffId === detailStaffId).slice(0, 3).map(m => (
-                  <div key={m.id} className="bg-gray-50 p-3 rounded mb-2">
-                    <p className="font-semibold text-sm mb-2">{m.yearMonth}</p>
-                    <p className="text-sm"><span className="text-gray-500">Q1:</span> {m.q1}</p>
-                    <p className="text-sm"><span className="text-gray-500">Q2:</span> {m.q2}</p>
-                    <p className="text-sm"><span className="text-gray-500">Q3:</span> {m.q3}</p>
+                  <div key={m.id} style={{ backgroundColor: '#f9fafb', padding: '12px', borderRadius: '10px', marginBottom: '8px' }}>
+                    <p style={{ fontWeight: '600', fontSize: '14px', marginBottom: '8px' }}>{m.yearMonth}</p>
+                    <p style={{ fontSize: '14px' }}><span style={{ color: '#6b7280' }}>Q1:</span> {m.q1}</p>
+                    <p style={{ fontSize: '14px' }}><span style={{ color: '#6b7280' }}>Q2:</span> {m.q2}</p>
+                    <p style={{ fontSize: '14px' }}><span style={{ color: '#6b7280' }}>Q3:</span> {m.q3}</p>
                   </div>
                 ))}
                 {contactMonthly.filter(m => m.staffId === detailStaffId).length === 0 && (
-                  <p className="text-gray-400 text-sm">まだ回答がありません</p>
+                  <p style={{ color: '#9ca3af', fontSize: '14px' }}>まだ回答がありません</p>
                 )}
               </div>
             </>
