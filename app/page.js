@@ -3877,7 +3877,7 @@ function TimeCard({ staff, timeRecords, setTimeRecords, isAdmin }) {
     <div className="space-y-4">
       {/* スタッフ選択 */}
       <div className="card">
-        <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>スタッフ</label>
+        <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>スタッフ</label>
         <select value={selectedStaff} onChange={e => setSelectedStaff(e.target.value)} className="select">
           <option value="">選択してください</option>
           {staff.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -3885,55 +3885,93 @@ function TimeCard({ staff, timeRecords, setTimeRecords, isAdmin }) {
       </div>
 
       {/* モード切替 */}
-      <div className="flex gap-2">
-        <button onClick={() => setMode('punch')} className={`btn flex-1 ${mode === 'punch' ? 'btn-blue' : 'btn-gray'}`}>🕐 打刻</button>
-        <button onClick={() => setMode('manual')} className={`btn flex-1 ${mode === 'manual' ? 'btn-blue' : 'btn-gray'}`}>✏️ 手入力</button>
-        <button onClick={() => setMode('list')} className={`btn flex-1 ${mode === 'list' ? 'btn-blue' : 'btn-gray'}`}>📋 一覧</button>
+      <div style={{ display: 'flex', gap: '8px' }}>
+        {[
+          { key: 'punch', icon: '🕐', label: '打刻' },
+          { key: 'manual', icon: '✏️', label: '手入力' },
+          { key: 'list', icon: '📋', label: '一覧' }
+        ].map(m => (
+          <button key={m.key} onClick={() => setMode(m.key)} style={{
+            flex: 1, padding: '12px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+            fontWeight: '600', fontSize: '14px',
+            backgroundColor: mode === m.key ? '#3b82f6' : '#f3f4f6',
+            color: mode === m.key ? '#fff' : '#374151'
+          }}>{m.icon} {m.label}</button>
+        ))}
       </div>
 
       {/* 打刻モード */}
       {mode === 'punch' && (
         <div className="card">
-          <h3 className="text-lg font-bold mb-4">🕐 出勤・退勤打刻</h3>
+          <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>🕐</span> 出勤・退勤打刻
+          </h3>
           
           {!selectedStaff ? (
-            <p className="text-gray-500 text-center py-4">スタッフを選択してください</p>
+            <div style={{ textAlign: 'center', padding: '32px 16px', color: '#9ca3af' }}>
+              <div style={{ fontSize: '32px', marginBottom: '8px' }}>👆</div>
+              <p style={{ fontWeight: '600' }}>スタッフを選択してください</p>
+            </div>
           ) : (
-            <div className="text-center">
-              <p className="text-2xl font-bold mb-4">{getCurrentTime()}</p>
-              <p className="text-gray-500 mb-4">{today}</p>
+            <div style={{ textAlign: 'center' }}>
+              {/* 現在時刻 */}
+              <div style={{ backgroundColor: '#f3f4f6', padding: '24px', borderRadius: '16px', marginBottom: '16px' }}>
+                <div style={{ fontSize: '48px', fontWeight: 'bold', color: '#1f2937', fontFamily: 'monospace' }}>
+                  {getCurrentTime()}
+                </div>
+                <div style={{ fontSize: '14px', color: '#6b7280', marginTop: '4px' }}>{today}</div>
+              </div>
               
+              {/* 今日の記録 */}
               {todayRecord ? (
-                <div className="bg-gray-50 p-4 rounded mb-4">
-                  <p>出勤: <span className="font-bold text-green-600">{todayRecord.clockIn}</span></p>
-                  {todayRecord.clockOut ? (
-                    <p>退勤: <span className="font-bold text-blue-600">{todayRecord.clockOut}</span></p>
-                  ) : (
-                    <p className="text-gray-400">退勤: 未打刻</p>
-                  )}
+                <div style={{ backgroundColor: '#f0fdf4', padding: '16px', borderRadius: '12px', marginBottom: '16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: '24px', marginBottom: '8px' }}>
+                    <div>
+                      <div style={{ fontSize: '12px', color: '#6b7280' }}>出勤</div>
+                      <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#16a34a' }}>{todayRecord.clockIn}</div>
+                    </div>
+                    <div style={{ color: '#d1d5db', fontSize: '20px' }}>→</div>
+                    <div>
+                      <div style={{ fontSize: '12px', color: '#6b7280' }}>退勤</div>
+                      <div style={{ fontSize: '20px', fontWeight: 'bold', color: todayRecord.clockOut ? '#2563eb' : '#9ca3af' }}>
+                        {todayRecord.clockOut || '未打刻'}
+                      </div>
+                    </div>
+                  </div>
                   {todayRecord.clockIn && todayRecord.clockOut && (
-                    <p className="mt-2 font-bold">労働時間: {formatMinutes(calcWorkMinutes(todayRecord.clockIn, todayRecord.clockOut))}</p>
+                    <div style={{ borderTop: '1px solid #d1fae5', paddingTop: '8px', marginTop: '8px' }}>
+                      <span style={{ fontSize: '13px', color: '#6b7280' }}>労働時間：</span>
+                      <span style={{ fontWeight: 'bold', color: '#1f2937' }}>{formatMinutes(calcWorkMinutes(todayRecord.clockIn, todayRecord.clockOut))}</span>
+                    </div>
                   )}
                 </div>
               ) : (
-                <p className="text-gray-400 mb-4">今日の記録はありません</p>
+                <div style={{ color: '#9ca3af', marginBottom: '16px', padding: '16px' }}>
+                  今日の記録はありません
+                </div>
               )}
               
-              <div className="grid-2 gap-4">
+              {/* 打刻ボタン */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <button 
                   onClick={punchIn} 
                   disabled={todayRecord?.clockIn}
-                  className={`btn py-4 text-lg ${todayRecord?.clockIn ? 'btn-gray opacity-50' : 'btn-green'}`}
-                >
-                  出勤
-                </button>
+                  style={{
+                    padding: '20px', borderRadius: '12px', border: 'none', cursor: todayRecord?.clockIn ? 'not-allowed' : 'pointer',
+                    backgroundColor: todayRecord?.clockIn ? '#e5e7eb' : '#22c55e', color: '#fff',
+                    fontSize: '18px', fontWeight: 'bold', opacity: todayRecord?.clockIn ? 0.6 : 1
+                  }}
+                >☀️ 出勤</button>
                 <button 
                   onClick={punchOut} 
                   disabled={!todayRecord?.clockIn || todayRecord?.clockOut}
-                  className={`btn py-4 text-lg ${!todayRecord?.clockIn || todayRecord?.clockOut ? 'btn-gray opacity-50' : 'btn-blue'}`}
-                >
-                  退勤
-                </button>
+                  style={{
+                    padding: '20px', borderRadius: '12px', border: 'none', 
+                    cursor: (!todayRecord?.clockIn || todayRecord?.clockOut) ? 'not-allowed' : 'pointer',
+                    backgroundColor: (!todayRecord?.clockIn || todayRecord?.clockOut) ? '#e5e7eb' : '#3b82f6', color: '#fff',
+                    fontSize: '18px', fontWeight: 'bold', opacity: (!todayRecord?.clockIn || todayRecord?.clockOut) ? 0.6 : 1
+                  }}
+                >🌙 退勤</button>
               </div>
             </div>
           )}
@@ -3943,26 +3981,31 @@ function TimeCard({ staff, timeRecords, setTimeRecords, isAdmin }) {
       {/* 手入力モード */}
       {mode === 'manual' && (
         <div className="card">
-          <h3 className="text-lg font-bold mb-4">✏️ 手入力（15分単位）</h3>
+          <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>✏️</span> 手入力（15分単位）
+          </h3>
           
           {!selectedStaff ? (
-            <p className="text-gray-500 text-center py-4">スタッフを選択してください</p>
+            <div style={{ textAlign: 'center', padding: '32px 16px', color: '#9ca3af' }}>
+              <div style={{ fontSize: '32px', marginBottom: '8px' }}>👆</div>
+              <p style={{ fontWeight: '600' }}>スタッフを選択してください</p>
+            </div>
           ) : (
             <>
-              <div className="mb-4">
-                <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>日付</label>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>日付</label>
                 <input type="date" value={manualDate} onChange={e => setManualDate(e.target.value)} max={today} className="input" />
               </div>
               
-              <div className="grid-2 gap-4 mb-4">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
                 <div>
-                  <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>出勤</label>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>出勤</label>
                   <select value={manualClockIn} onChange={e => setManualClockIn(e.target.value)} className="select">
                     {timeOptions.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>退勤</label>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>退勤</label>
                   <select value={manualClockOut} onChange={e => setManualClockOut(e.target.value)} className="select">
                     {timeOptions.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
@@ -3970,10 +4013,10 @@ function TimeCard({ staff, timeRecords, setTimeRecords, isAdmin }) {
               </div>
               
               {isAdmin && (
-                <div className="mb-4 bg-yellow-50 p-3 rounded">
-                  <label className="flex items-center gap-2 cursor-pointer mb-2">
-                    <input type="checkbox" checked={isSpecial} onChange={e => setIsSpecial(e.target.checked)} />
-                    <span className="font-semibold">特殊勤務（早朝・ブライダル等）</span>
+                <div style={{ backgroundColor: '#fef9c3', padding: '12px', borderRadius: '10px', marginBottom: '16px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', marginBottom: isSpecial ? '8px' : 0 }}>
+                    <input type="checkbox" checked={isSpecial} onChange={e => setIsSpecial(e.target.checked)} style={{ width: '18px', height: '18px' }} />
+                    <span style={{ fontWeight: '600', color: '#854d0e' }}>⚡ 特殊勤務（早朝・ブライダル等）</span>
                   </label>
                   {isSpecial && (
                     <input 
@@ -3981,20 +4024,24 @@ function TimeCard({ staff, timeRecords, setTimeRecords, isAdmin }) {
                       value={specialNote} 
                       onChange={e => setSpecialNote(e.target.value)} 
                       placeholder="メモ（例：ブライダル出張）" 
-                      className="input mt-2" 
+                      className="input"
+                      style={{ marginTop: '8px' }}
                     />
                   )}
                 </div>
               )}
               
               {manualDate && (
-                <div className="bg-gray-50 p-3 rounded mb-4 text-center">
-                  <p className="text-sm text-gray-600">労働時間</p>
-                  <p className="text-2xl font-bold">{formatMinutes(calcWorkMinutes(manualClockIn, manualClockOut))}</p>
+                <div style={{ backgroundColor: '#f3f4f6', padding: '16px', borderRadius: '12px', marginBottom: '16px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>労働時間</div>
+                  <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#1f2937' }}>{formatMinutes(calcWorkMinutes(manualClockIn, manualClockOut))}</div>
                 </div>
               )}
               
-              <button onClick={saveManual} className="btn btn-blue w-full">保存</button>
+              <button onClick={saveManual} style={{
+                width: '100%', padding: '16px', borderRadius: '12px', border: 'none', cursor: 'pointer',
+                backgroundColor: '#3b82f6', color: '#fff', fontSize: '16px', fontWeight: 'bold'
+              }}>✓ 保存</button>
             </>
           )}
         </div>
@@ -4003,34 +4050,38 @@ function TimeCard({ staff, timeRecords, setTimeRecords, isAdmin }) {
       {/* 一覧モード */}
       {mode === 'list' && (
         <div className="card">
-          <h3 className="text-lg font-bold mb-4">📋 勤務記録</h3>
+          <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>📋</span> 勤務記録
+          </h3>
           
-          <div className="mb-4">
-            <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>表示月</label>
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>表示月</label>
             <input type="month" value={viewMonth} onChange={e => setViewMonth(e.target.value)} className="input" />
           </div>
           
           {/* 月次集計 */}
-          <div className="bg-blue-50 p-4 rounded mb-4">
-            <div className="grid-2 gap-4 text-center">
-              <div>
-                <p className="text-sm text-gray-600">出勤日数</p>
-                <p className="text-2xl font-bold text-blue-600">{monthlyStats.workDays}日</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">総労働時間</p>
-                <p className="text-2xl font-bold text-blue-600">
-                  {Math.floor(monthlyStats.totalMinutes / 60)}時間{monthlyStats.totalMinutes % 60}分
-                </p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+            <div style={{ backgroundColor: '#eff6ff', padding: '16px', borderRadius: '12px', textAlign: 'center' }}>
+              <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>出勤日数</div>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#2563eb' }}>{monthlyStats.workDays}<span style={{ fontSize: '14px', marginLeft: '4px' }}>日</span></div>
+            </div>
+            <div style={{ backgroundColor: '#f0fdf4', padding: '16px', borderRadius: '12px', textAlign: 'center' }}>
+              <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>総労働時間</div>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#16a34a' }}>
+                {Math.floor(monthlyStats.totalMinutes / 60)}<span style={{ fontSize: '14px' }}>h</span>
+                {monthlyStats.totalMinutes % 60}<span style={{ fontSize: '14px' }}>m</span>
               </div>
             </div>
           </div>
           
           {/* 記録一覧 */}
           {monthlyStats.records.length === 0 ? (
-            <p className="text-gray-500 text-center py-4">この月の記録はありません</p>
+            <div style={{ textAlign: 'center', padding: '32px 16px', color: '#9ca3af' }}>
+              <div style={{ fontSize: '32px', marginBottom: '8px' }}>📭</div>
+              <p style={{ fontWeight: '600' }}>この月の記録はありません</p>
+            </div>
           ) : (
-            <div className="space-y-2">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {[...monthlyStats.records].sort((a, b) => new Date(b.date) - new Date(a.date)).map(record => {
                 const d = new Date(record.date)
                 const dayNames = ['日', '月', '火', '水', '木', '金', '土']
@@ -4038,29 +4089,33 @@ function TimeCard({ staff, timeRecords, setTimeRecords, isAdmin }) {
                 const isWeekend = d.getDay() === 0 || d.getDay() === 6
                 
                 return (
-                  <div key={record.id} className={`border rounded p-3 ${record.isSpecial ? 'bg-yellow-50 border-yellow-300' : ''}`}>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <span className={`font-bold ${isWeekend ? 'text-red-500' : ''}`}>
+                  <div key={record.id} style={{
+                    padding: '12px', borderRadius: '10px',
+                    backgroundColor: record.isSpecial ? '#fef9c3' : '#fafafa',
+                    border: record.isSpecial ? '1px solid #fcd34d' : '1px solid #e5e7eb'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontWeight: 'bold', color: isWeekend ? '#ef4444' : '#374151' }}>
                           {record.date.slice(5)} ({dayName})
                         </span>
-                        {!selectedStaff && <span className="text-gray-500 text-sm ml-2">{record.staffName}</span>}
-                        {record.isSpecial && <span className="ml-2 text-yellow-600 text-xs">⚡特殊</span>}
-                        {record.inputType === 'punch' && <span className="ml-2 text-green-600 text-xs">●打刻</span>}
+                        {!selectedStaff && <span style={{ fontSize: '13px', color: '#6b7280' }}>{record.staffName}</span>}
+                        {record.isSpecial && <span style={{ fontSize: '11px', backgroundColor: '#fef3c7', color: '#92400e', padding: '2px 6px', borderRadius: '4px' }}>⚡特殊</span>}
+                        {record.inputType === 'punch' && <span style={{ fontSize: '11px', backgroundColor: '#dcfce7', color: '#166534', padding: '2px 6px', borderRadius: '4px' }}>打刻</span>}
                       </div>
                       {isAdmin && (
-                        <button onClick={() => deleteRecord(record.id)} className="text-red-500 text-sm">削除</button>
+                        <button onClick={() => deleteRecord(record.id)} style={{ color: '#ef4444', fontSize: '13px', background: 'none', border: 'none', cursor: 'pointer' }}>削除</button>
                       )}
                     </div>
-                    <div className="text-sm mt-1">
-                      <span className="text-green-600">{record.clockIn || '-'}</span>
-                      <span className="text-gray-400 mx-2">→</span>
-                      <span className="text-blue-600">{record.clockOut || '-'}</span>
-                      <span className="text-gray-600 ml-4 font-semibold">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
+                      <span style={{ color: '#16a34a', fontWeight: '600' }}>{record.clockIn || '-'}</span>
+                      <span style={{ color: '#d1d5db' }}>→</span>
+                      <span style={{ color: '#2563eb', fontWeight: '600' }}>{record.clockOut || '-'}</span>
+                      <span style={{ marginLeft: 'auto', fontWeight: 'bold', color: '#1f2937' }}>
                         {formatMinutes(calcWorkMinutes(record.clockIn, record.clockOut))}
                       </span>
                     </div>
-                    {record.specialNote && <p className="text-xs text-yellow-700 mt-1">{record.specialNote}</p>}
+                    {record.specialNote && <p style={{ fontSize: '12px', color: '#92400e', marginTop: '8px' }}>{record.specialNote}</p>}
                   </div>
                 )
               })}
