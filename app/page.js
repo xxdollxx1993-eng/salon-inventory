@@ -2135,41 +2135,95 @@ function DealerBudget({ products, usage, stockIn, categories, dealerBudgets, set
   return (
     <div className="space-y-4">
       <div className="card">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-bold">💰 予算管理</h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <h3 style={{ fontSize: '18px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>💰</span> 予算管理
+          </h3>
           <input type="month" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="input" style={{ width: 'auto' }} />
         </div>
-        <div className="bg-blue-50 p-4 rounded mb-4">
-          <div className="grid-2 gap-4 mb-4">
-            <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>売上目標</label><input type="number" value={targetSales} onChange={e => setTargetSales(e.target.value)} placeholder="例: 3000000" className="input" disabled={!isAdmin || !isEditing} /></div>
-            <div><label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>仕入れ目標率（%）</label><input type="number" value={targetRate} onChange={e => setTargetRate(e.target.value)} placeholder="20" className="input" disabled={!isAdmin || !isEditing} step="0.1" /></div>
+        <div style={{ backgroundColor: '#eff6ff', padding: '16px', borderRadius: '12px', marginBottom: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>売上目標</label>
+              <input type="number" value={targetSales} onChange={e => setTargetSales(e.target.value)} placeholder="例: 3000000" className="input" disabled={!isAdmin || !isEditing} />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>仕入れ目標率（%）</label>
+              <input type="number" value={targetRate} onChange={e => setTargetRate(e.target.value)} placeholder="20" className="input" disabled={!isAdmin || !isEditing} step="0.1" />
+            </div>
           </div>
-          <div className="text-center p-3 bg-white rounded"><div className="text-sm text-gray-500">仕入れ目標額</div><div className="text-2xl font-bold text-blue-600">¥{targetBudget.toLocaleString()}</div></div>
+          <div style={{ textAlign: 'center', padding: '16px', backgroundColor: '#fff', borderRadius: '10px' }}>
+            <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>仕入れ目標額</div>
+            <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#2563eb' }}>¥{targetBudget.toLocaleString()}</div>
+          </div>
         </div>
-        <div className="grid-3 gap-4 mb-4">
-          <div className="bg-green-50 p-3 rounded text-center"><div className="text-sm text-gray-600">今月の使用</div><div className="text-xl font-bold text-green-600">¥{totalUsage.toLocaleString()}</div></div>
-          <div className="bg-purple-50 p-3 rounded text-center"><div className="text-sm text-gray-600">今月の入荷</div><div className="text-xl font-bold text-purple-600">¥{totalStockIn.toLocaleString()}</div></div>
-          <div className={`p-3 rounded text-center ${totalStockIn <= targetBudget ? 'bg-green-50' : 'bg-red-50'}`}><div className="text-sm text-gray-600">予算残り</div><div className={`text-xl font-bold ${totalStockIn <= targetBudget ? 'text-green-600' : 'text-red-600'}`}>¥{(targetBudget - totalStockIn).toLocaleString()}</div></div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+          <div style={{ backgroundColor: '#f0fdf4', padding: '12px', borderRadius: '10px', textAlign: 'center' }}>
+            <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>今月の使用</div>
+            <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#16a34a' }}>¥{totalUsage.toLocaleString()}</div>
+          </div>
+          <div style={{ backgroundColor: '#f5f3ff', padding: '12px', borderRadius: '10px', textAlign: 'center' }}>
+            <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>今月の入荷</div>
+            <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#7c3aed' }}>¥{totalStockIn.toLocaleString()}</div>
+          </div>
+          <div style={{ backgroundColor: totalStockIn <= targetBudget ? '#f0fdf4' : '#fef2f2', padding: '12px', borderRadius: '10px', textAlign: 'center' }}>
+            <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>予算残り</div>
+            <div style={{ fontSize: '20px', fontWeight: 'bold', color: totalStockIn <= targetBudget ? '#16a34a' : '#dc2626' }}>¥{(targetBudget - totalStockIn).toLocaleString()}</div>
+          </div>
         </div>
       </div>
       <div className="card">
-        <div className="flex justify-between items-center mb-4">
-          <h4 className="font-bold">ディーラー別予算配分</h4>
-          {isAdmin && (!isEditing ? (<button onClick={() => setIsEditing(true)} className="btn btn-blue">編集</button>) : (<div className="flex gap-2"><button onClick={saveBudget} className="btn btn-green">保存</button><button onClick={() => setIsEditing(false)} className="btn btn-gray">取消</button></div>))}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <h4 style={{ fontWeight: 'bold', fontSize: '16px' }}>📊 ディーラー別予算配分</h4>
+          {isAdmin && (!isEditing ? (
+            <button onClick={() => setIsEditing(true)} style={{
+              padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+              backgroundColor: '#3b82f6', color: '#fff', fontWeight: '600', fontSize: '13px'
+            }}>編集</button>
+          ) : (
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button onClick={saveBudget} style={{
+                padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+                backgroundColor: '#22c55e', color: '#fff', fontWeight: '600', fontSize: '13px'
+              }}>保存</button>
+              <button onClick={() => setIsEditing(false)} style={{
+                padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+                backgroundColor: '#e5e7eb', color: '#374151', fontWeight: '600', fontSize: '13px'
+              }}>取消</button>
+            </div>
+          ))}
         </div>
-        <div className="overflow-x-auto">
-          <table>
-            <thead><tr><th>ディーラー</th><th className="text-right">予算</th><th className="text-right">過去3ヶ月平均</th><th className="text-right">今月使用</th><th className="text-right">今月入荷</th><th className="text-right">予算残り</th></tr></thead>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', fontSize: '13px', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ backgroundColor: '#f9fafb' }}>
+                <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>ディーラー</th>
+                <th style={{ padding: '12px 8px', textAlign: 'right', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>予算</th>
+                <th style={{ padding: '12px 8px', textAlign: 'right', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>過去3ヶ月平均</th>
+                <th style={{ padding: '12px 8px', textAlign: 'right', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>今月使用</th>
+                <th style={{ padding: '12px 8px', textAlign: 'right', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>今月入荷</th>
+                <th style={{ padding: '12px 8px', textAlign: 'right', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>予算残り</th>
+              </tr>
+            </thead>
             <tbody>
               {dealers.map(dealer => { const budget = parseInt(allocations[dealer]) || 0; const usageAmt = getMonthlyUsage(dealer); const stockInAmt = getMonthlyStockIn(dealer); const avg = getPast3MonthsAvg(dealer); const remaining = budget - stockInAmt; return (
-                <tr key={dealer}>
-                  <td className="font-semibold">{dealer}</td>
-                  <td className="text-right">{isEditing ? (<input type="number" value={allocations[dealer] || ''} onChange={e => setAllocations({...allocations, [dealer]: e.target.value})} className="input" style={{ width: '100px' }} />) : (`¥${budget.toLocaleString()}`)}</td>
-                  <td className="text-right text-gray-500">¥{avg.toLocaleString()}</td><td className="text-right text-green-600">¥{usageAmt.toLocaleString()}</td><td className="text-right text-purple-600">¥{stockInAmt.toLocaleString()}</td>
-                  <td className={`text-right font-semibold ${remaining >= 0 ? 'text-green-600' : 'text-red-600'}`}>¥{remaining.toLocaleString()}</td>
+                <tr key={dealer} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                  <td style={{ padding: '10px 8px', fontWeight: '600' }}>{dealer}</td>
+                  <td style={{ padding: '10px 8px', textAlign: 'right' }}>{isEditing ? (<input type="number" value={allocations[dealer] || ''} onChange={e => setAllocations({...allocations, [dealer]: e.target.value})} className="input" style={{ width: '100px' }} />) : (`¥${budget.toLocaleString()}`)}</td>
+                  <td style={{ padding: '10px 8px', textAlign: 'right', color: '#6b7280' }}>¥{avg.toLocaleString()}</td>
+                  <td style={{ padding: '10px 8px', textAlign: 'right', color: '#16a34a' }}>¥{usageAmt.toLocaleString()}</td>
+                  <td style={{ padding: '10px 8px', textAlign: 'right', color: '#7c3aed' }}>¥{stockInAmt.toLocaleString()}</td>
+                  <td style={{ padding: '10px 8px', textAlign: 'right', fontWeight: '600', color: remaining >= 0 ? '#16a34a' : '#dc2626' }}>¥{remaining.toLocaleString()}</td>
                 </tr>
               ) })}
-              <tr className="font-bold bg-gray-50"><td>合計</td><td className="text-right">¥{totalAllocation.toLocaleString()}</td><td></td><td className="text-right text-green-600">¥{totalUsage.toLocaleString()}</td><td className="text-right text-purple-600">¥{totalStockIn.toLocaleString()}</td><td className={`text-right ${totalAllocation - totalStockIn >= 0 ? 'text-green-600' : 'text-red-600'}`}>¥{(totalAllocation - totalStockIn).toLocaleString()}</td></tr>
+              <tr style={{ fontWeight: 'bold', backgroundColor: '#f9fafb' }}>
+                <td style={{ padding: '12px 8px' }}>合計</td>
+                <td style={{ padding: '12px 8px', textAlign: 'right' }}>¥{totalAllocation.toLocaleString()}</td>
+                <td></td>
+                <td style={{ padding: '12px 8px', textAlign: 'right', color: '#16a34a' }}>¥{totalUsage.toLocaleString()}</td>
+                <td style={{ padding: '12px 8px', textAlign: 'right', color: '#7c3aed' }}>¥{totalStockIn.toLocaleString()}</td>
+                <td style={{ padding: '12px 8px', textAlign: 'right', color: totalAllocation - totalStockIn >= 0 ? '#16a34a' : '#dc2626' }}>¥{(totalAllocation - totalStockIn).toLocaleString()}</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -4025,7 +4079,7 @@ function PracticeReservation({ staff, practiceReservations, setPracticeReservati
     <div className="space-y-4">
       {/* スタッフ選択 */}
       <div className="card">
-        <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>スタッフ</label>
+        <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>スタッフ</label>
         <select value={selectedStaff} onChange={e => setSelectedStaff(e.target.value)} className="select">
           <option value="">選択してください</option>
           {staff.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -4034,37 +4088,49 @@ function PracticeReservation({ staff, practiceReservations, setPracticeReservati
 
       {/* モデルルール */}
       <div className="card">
-        <div className="flex justify-between items-center mb-2">
-          <h3 className="font-bold">📋 モデルルール</h3>
-          <button onClick={() => setShowRules(!showRules)} className="text-blue-500 text-sm">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+          <h3 style={{ fontWeight: 'bold', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>📋</span> モデルルール
+          </h3>
+          <button onClick={() => setShowRules(!showRules)} style={{ color: '#3b82f6', fontSize: '13px', background: 'none', border: 'none', cursor: 'pointer' }}>
             {showRules ? '閉じる' : '確認する'}
           </button>
         </div>
         {showRules && (
-          <div className="bg-gray-50 p-3 rounded">
+          <div style={{ backgroundColor: '#f9fafb', padding: '12px', borderRadius: '10px' }}>
             {editingRules ? (
               <>
                 <textarea 
                   value={rulesText} 
                   onChange={e => setRulesText(e.target.value)} 
-                  className="input w-full" 
+                  className="input" 
+                  style={{ width: '100%' }}
                   rows={8}
                   placeholder="モデル練習のルールを記載..."
                 />
-                <div className="flex gap-2 mt-2">
-                  <button onClick={saveRules} className="btn btn-green flex-1">保存</button>
-                  <button onClick={() => { setEditingRules(false); setRulesText(modelRules) }} className="btn btn-gray flex-1">キャンセル</button>
+                <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                  <button onClick={saveRules} style={{
+                    flex: 1, padding: '10px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+                    backgroundColor: '#22c55e', color: '#fff', fontWeight: '600', fontSize: '14px'
+                  }}>保存</button>
+                  <button onClick={() => { setEditingRules(false); setRulesText(modelRules) }} style={{
+                    flex: 1, padding: '10px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+                    backgroundColor: '#e5e7eb', color: '#374151', fontWeight: '600', fontSize: '14px'
+                  }}>キャンセル</button>
                 </div>
               </>
             ) : (
               <>
                 {modelRules ? (
-                  <p className="whitespace-pre-wrap text-sm">{modelRules}</p>
+                  <p style={{ whiteSpace: 'pre-wrap', fontSize: '14px' }}>{modelRules}</p>
                 ) : (
-                  <p className="text-gray-400 text-sm">ルールが設定されていません</p>
+                  <p style={{ color: '#9ca3af', fontSize: '14px' }}>ルールが設定されていません</p>
                 )}
                 {isAdmin && (
-                  <button onClick={() => { setEditingRules(true); setRulesText(modelRules) }} className="btn btn-blue mt-2 text-sm">編集</button>
+                  <button onClick={() => { setEditingRules(true); setRulesText(modelRules) }} style={{
+                    marginTop: '8px', padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+                    backgroundColor: '#3b82f6', color: '#fff', fontWeight: '600', fontSize: '13px'
+                  }}>編集</button>
                 )}
               </>
             )}
@@ -4089,28 +4155,34 @@ function PracticeReservation({ staff, practiceReservations, setPracticeReservati
       {/* 予約登録 */}
       {selectedStaff && (
         <div className="card">
-          <h3 className="font-bold mb-3">➕ 練習予約を追加</h3>
-          <div className="grid-2 gap-3 mb-3">
+          <h3 style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>➕</span> 練習予約を追加
+          </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
             <div>
-              <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>日付</label>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>日付</label>
               <input type="date" value={practiceDate} onChange={e => setPracticeDate(e.target.value)} min={today} className="input" />
             </div>
             <div>
-              <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>時間</label>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>時間</label>
               <select value={practiceTime} onChange={e => setPracticeTime(e.target.value)} className="select">
                 {timeOptions.map(t => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
           </div>
-          <div className="mb-3">
-            <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>メニュー</label>
-            <div className="flex gap-2 flex-wrap mb-2">
+          <div style={{ marginBottom: '12px' }}>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>メニュー</label>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '8px' }}>
               {menuOptions.map(m => (
                 <button 
                   key={m} 
                   onClick={() => setPracticeMenu(m)} 
-                  className={`btn text-sm ${practiceMenu === m ? 'btn-blue' : 'btn-gray'}`}
-                  style={{ padding: '4px 12px' }}
+                  style={{
+                    padding: '8px 14px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+                    fontSize: '13px', fontWeight: '500',
+                    backgroundColor: practiceMenu === m ? '#3b82f6' : '#f3f4f6',
+                    color: practiceMenu === m ? '#fff' : '#374151'
+                  }}
                 >
                   {m}
                 </button>
@@ -4124,28 +4196,31 @@ function PracticeReservation({ staff, practiceReservations, setPracticeReservati
               className="input" 
             />
           </div>
-          <div className="mb-3">
-            <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>メモ（任意）</label>
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>メモ（任意）</label>
             <input type="text" value={practiceMemo} onChange={e => setPracticeMemo(e.target.value)} placeholder="詳細など" className="input" />
           </div>
-          <button onClick={submitReservation} className="btn btn-green w-full py-3">予約登録</button>
+          <button onClick={submitReservation} style={{
+            width: '100%', padding: '14px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+            backgroundColor: '#22c55e', color: '#fff', fontWeight: 'bold', fontSize: '15px'
+          }}>✓ 予約登録</button>
         </div>
       )}
 
       {/* 自分の予約一覧 */}
       {selectedStaff && myReservations.length > 0 && (
         <div className="card">
-          <h3 className="font-bold mb-3">📝 自分の予約一覧</h3>
-          <div className="space-y-2">
+          <h3 style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '12px' }}>📝 自分の予約一覧</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {myReservations.filter(r => r.date >= today).sort((a, b) => a.date.localeCompare(b.date)).map(r => (
-              <div key={r.id} className="flex justify-between items-center bg-gray-50 p-3 rounded">
+              <div key={r.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f9fafb', padding: '12px', borderRadius: '10px' }}>
                 <div>
-                  <span className="font-bold">{r.date}</span>
-                  <span className="ml-2 text-gray-600">{r.time}</span>
-                  <span className="ml-2 text-blue-600">{r.menu}</span>
-                  {r.memo && <span className="ml-2 text-gray-400 text-sm">({r.memo})</span>}
+                  <span style={{ fontWeight: 'bold' }}>{r.date}</span>
+                  <span style={{ marginLeft: '8px', color: '#6b7280' }}>{r.time}</span>
+                  <span style={{ marginLeft: '8px', color: '#3b82f6' }}>{r.menu}</span>
+                  {r.memo && <span style={{ marginLeft: '8px', color: '#9ca3af', fontSize: '13px' }}>({r.memo})</span>}
                 </div>
-                <button onClick={() => deleteReservation(r.id)} className="text-red-500 text-sm">削除</button>
+                <button onClick={() => deleteReservation(r.id)} style={{ color: '#ef4444', fontSize: '13px', background: 'none', border: 'none', cursor: 'pointer' }}>削除</button>
               </div>
             ))}
           </div>
@@ -4897,7 +4972,7 @@ function LeaveManagement({ staff, leaveGrants, setLeaveGrants, leaveRequests, se
     <div className="space-y-4">
       {/* スタッフ選択 */}
       <div className="card">
-        <label className="text-sm font-semibold mb-2" style={{ display: 'block' }}>スタッフ</label>
+        <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>スタッフ</label>
         <select value={selectedStaff} onChange={e => setSelectedStaff(e.target.value)} className="select">
           <option value="">選択してください</option>
           {staff.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -4905,23 +4980,48 @@ function LeaveManagement({ staff, leaveGrants, setLeaveGrants, leaveRequests, se
       </div>
 
       {/* モード切替 */}
-      <div className="flex gap-2 flex-wrap">
-        <button onClick={() => setMode('calendar')} className={`btn flex-1 ${mode === 'calendar' ? 'btn-blue' : 'btn-gray'}`}>📅 カレンダー</button>
-        <button onClick={() => setMode('status')} className={`btn flex-1 ${mode === 'status' ? 'btn-blue' : 'btn-gray'}`}>📊 残日数</button>
-        <button onClick={() => setMode('request')} className={`btn flex-1 ${mode === 'request' ? 'btn-blue' : 'btn-gray'}`}>📝 申請</button>
-        {isAdmin && <button onClick={() => setMode('approve')} className={`btn flex-1 ${mode === 'approve' ? 'btn-blue' : 'btn-gray'}`}>✅ 承認{pendingRequests.length > 0 && <span className="ml-1 bg-red-500 text-white text-xs px-1 rounded">{pendingRequests.length}</span>}</button>}
-        {isAdmin && <button onClick={() => setMode('settings')} className={`btn flex-1 ${mode === 'settings' ? 'btn-blue' : 'btn-gray'}`}>⚙️ 設定</button>}
+      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        <button onClick={() => setMode('calendar')} style={{
+          flex: 1, padding: '10px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+          fontWeight: '600', fontSize: '13px',
+          backgroundColor: mode === 'calendar' ? '#3b82f6' : '#f3f4f6',
+          color: mode === 'calendar' ? '#fff' : '#374151'
+        }}>📅 カレンダー</button>
+        <button onClick={() => setMode('status')} style={{
+          flex: 1, padding: '10px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+          fontWeight: '600', fontSize: '13px',
+          backgroundColor: mode === 'status' ? '#3b82f6' : '#f3f4f6',
+          color: mode === 'status' ? '#fff' : '#374151'
+        }}>📊 残日数</button>
+        <button onClick={() => setMode('request')} style={{
+          flex: 1, padding: '10px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+          fontWeight: '600', fontSize: '13px',
+          backgroundColor: mode === 'request' ? '#3b82f6' : '#f3f4f6',
+          color: mode === 'request' ? '#fff' : '#374151'
+        }}>📝 申請</button>
+        {isAdmin && <button onClick={() => setMode('approve')} style={{
+          flex: 1, padding: '10px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+          fontWeight: '600', fontSize: '13px', position: 'relative',
+          backgroundColor: mode === 'approve' ? '#3b82f6' : '#f3f4f6',
+          color: mode === 'approve' ? '#fff' : '#374151'
+        }}>✅ 承認{pendingRequests.length > 0 && <span style={{ marginLeft: '4px', backgroundColor: '#ef4444', color: '#fff', fontSize: '11px', padding: '2px 6px', borderRadius: '9999px' }}>{pendingRequests.length}</span>}</button>}
+        {isAdmin && <button onClick={() => setMode('settings')} style={{
+          flex: 1, padding: '10px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+          fontWeight: '600', fontSize: '13px',
+          backgroundColor: mode === 'settings' ? '#3b82f6' : '#f3f4f6',
+          color: mode === 'settings' ? '#fff' : '#374151'
+        }}>⚙️ 設定</button>}
       </div>
 
       {/* 通知表示 */}
       {myNotifications.filter(n => !n.isRead).length > 0 && (
-        <div className="card bg-yellow-50 border-yellow-300">
-          <h4 className="font-bold mb-2">🔔 新着通知</h4>
-          <div className="space-y-2">
+        <div className="card" style={{ backgroundColor: '#fef9c3', border: '1px solid #fcd34d' }}>
+          <h4 style={{ fontWeight: 'bold', marginBottom: '8px' }}>🔔 新着通知</h4>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {myNotifications.filter(n => !n.isRead).map(n => (
-              <div key={n.id} className="flex justify-between items-center bg-white p-2 rounded text-sm">
+              <div key={n.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fff', padding: '10px 12px', borderRadius: '8px', fontSize: '14px' }}>
                 <span>{n.message}</span>
-                <button onClick={() => markAsRead(n.id)} className="text-blue-500 text-xs">既読</button>
+                <button onClick={() => markAsRead(n.id)} style={{ color: '#3b82f6', fontSize: '12px', background: 'none', border: 'none', cursor: 'pointer' }}>既読</button>
               </div>
             ))}
           </div>
@@ -4946,15 +5046,15 @@ function LeaveManagement({ staff, leaveGrants, setLeaveGrants, leaveRequests, se
       {/* 残日数表示 */}
       {mode === 'status' && (
         <div className="card">
-          <h3 className="text-lg font-bold mb-4">📊 {fiscalYear}年度 有給残日数</h3>
+          <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px' }}>📊 {fiscalYear}年度 有給残日数</h3>
           
           {/* 法定付与日数の一覧（折りたたみ） */}
-          <details className="mb-4">
+          <details style={{ marginBottom: '16px' }}>
             <summary style={{ cursor: 'pointer', fontSize: '14px', color: '#3b82f6', marginBottom: '8px' }}>📋 法定付与日数を確認する</summary>
-            <div className="bg-blue-50 p-4 rounded mt-2">
-              <div className="grid-2 gap-4">
+            <div style={{ backgroundColor: '#eff6ff', padding: '16px', borderRadius: '10px', marginTop: '8px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div>
-                  <p className="text-xs font-semibold text-gray-600 mb-2">週5日勤務</p>
+                  <p style={{ fontSize: '12px', fontWeight: '600', color: '#6b7280', marginBottom: '8px' }}>週5日勤務</p>
                   <table style={{ width: '100%', fontSize: '12px', borderCollapse: 'collapse' }}>
                     <tbody>
                       {[
@@ -4970,7 +5070,7 @@ function LeaveManagement({ staff, leaveGrants, setLeaveGrants, leaveRequests, se
                   </table>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-gray-600 mb-2">週4日勤務</p>
+                  <p style={{ fontSize: '12px', fontWeight: '600', color: '#6b7280', marginBottom: '8px' }}>週4日勤務</p>
                   <table style={{ width: '100%', fontSize: '12px', borderCollapse: 'collapse' }}>
                     <tbody>
                       {[
@@ -4986,12 +5086,12 @@ function LeaveManagement({ staff, leaveGrants, setLeaveGrants, leaveRequests, se
                   </table>
                 </div>
               </div>
-              <p className="text-xs text-gray-500 mt-3">※ 試用期間（入社〜1年）を経て付与開始</p>
+              <p style={{ fontSize: '11px', color: '#6b7280', marginTop: '12px' }}>※ 試用期間（入社〜1年）を経て付与開始</p>
             </div>
           </details>
           
           {!selectedStaff ? (
-            <div className="space-y-3">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {staff.map(s => {
                 const paidGrant = leaveGrants.find(g => g.staffId === s.id && g.fiscalYear === fiscalYear && g.leaveType === 'paid')
                 const summerGrant = leaveGrants.find(g => g.staffId === s.id && g.fiscalYear === fiscalYear && g.leaveType === 'summer')
@@ -5001,18 +5101,18 @@ function LeaveManagement({ staff, leaveGrants, setLeaveGrants, leaveRequests, se
                 const summerUsed = getUsedDays(s.id, fiscalYear, 'summer')
                 
                 return (
-                  <div key={s.id} className="border rounded p-3">
-                    <div className="font-bold mb-2">{s.name}</div>
-                    <div className="grid-2 gap-2 text-sm">
+                  <div key={s.id} style={{ border: '1px solid #e5e7eb', borderRadius: '12px', padding: '12px' }}>
+                    <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>{s.name}</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '14px' }}>
                       <div>
-                        <span className="text-gray-500">有給: </span>
-                        <span className="font-bold text-blue-600">{paidTotal - paidUsed}日</span>
-                        <span className="text-gray-400 text-xs ml-1">/ {paidTotal}日</span>
+                        <span style={{ color: '#6b7280' }}>有給: </span>
+                        <span style={{ fontWeight: 'bold', color: '#2563eb' }}>{paidTotal - paidUsed}日</span>
+                        <span style={{ color: '#9ca3af', fontSize: '12px', marginLeft: '4px' }}>/ {paidTotal}日</span>
                       </div>
                       <div>
-                        <span className="text-gray-500">夏休: </span>
-                        <span className="font-bold text-green-600">{summerTotal - summerUsed}日</span>
-                        <span className="text-gray-400 text-xs ml-1">/ {summerTotal}日</span>
+                        <span style={{ color: '#6b7280' }}>夏休: </span>
+                        <span style={{ fontWeight: 'bold', color: '#16a34a' }}>{summerTotal - summerUsed}日</span>
+                        <span style={{ color: '#9ca3af', fontSize: '12px', marginLeft: '4px' }}>/ {summerTotal}日</span>
                       </div>
                     </div>
                   </div>
@@ -6416,23 +6516,35 @@ function AppSettings({ passwords, setPasswords }) {
 
   return (
     <div className="card">
-      <h3 className="text-lg font-bold mb-4">⚙️ アプリ設定</h3>
-      <div className="space-y-4">
+      <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <span>⚙️</span> アプリ設定
+      </h3>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         <div>
-          <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>管理者パスワード</label>
-          <div className="flex gap-2">
-            <input type={showAdmin ? 'text' : 'password'} value={adminPw} onChange={e => setAdminPw(e.target.value)} className="input" />
-            <button onClick={() => setShowAdmin(!showAdmin)} className="btn btn-gray">{showAdmin ? <Icons.EyeOff /> : <Icons.Eye />}</button>
+          <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>管理者パスワード</label>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <input type={showAdmin ? 'text' : 'password'} value={adminPw} onChange={e => setAdminPw(e.target.value)} className="input" style={{ flex: 1 }} />
+            <button onClick={() => setShowAdmin(!showAdmin)} style={{
+              padding: '10px 14px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+              backgroundColor: '#e5e7eb', color: '#374151'
+            }}>{showAdmin ? <Icons.EyeOff /> : <Icons.Eye />}</button>
           </div>
         </div>
         <div>
-          <label className="text-sm font-semibold mb-1" style={{ display: 'block' }}>スタッフパスワード</label>
-          <div className="flex gap-2">
-            <input type={showStaff ? 'text' : 'password'} value={staffPw} onChange={e => setStaffPw(e.target.value)} className="input" />
-            <button onClick={() => setShowStaff(!showStaff)} className="btn btn-gray">{showStaff ? <Icons.EyeOff /> : <Icons.Eye />}</button>
+          <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>スタッフパスワード</label>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <input type={showStaff ? 'text' : 'password'} value={staffPw} onChange={e => setStaffPw(e.target.value)} className="input" style={{ flex: 1 }} />
+            <button onClick={() => setShowStaff(!showStaff)} style={{
+              padding: '10px 14px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+              backgroundColor: '#e5e7eb', color: '#374151'
+            }}>{showStaff ? <Icons.EyeOff /> : <Icons.Eye />}</button>
           </div>
         </div>
-        <button onClick={savePasswords} className="btn btn-green"><Icons.Save /> パスワードを保存</button>
+        <button onClick={savePasswords} style={{
+          padding: '12px 24px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+          backgroundColor: '#22c55e', color: '#fff', fontWeight: '600', fontSize: '15px',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
+        }}><Icons.Save /> パスワードを保存</button>
       </div>
     </div>
   )
