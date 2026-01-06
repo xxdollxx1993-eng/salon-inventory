@@ -319,7 +319,7 @@ function LoginScreen({ passwords, onLogin }) {
           <div style={{ width: '60px', height: '60px', backgroundColor: colors.primary, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', color: 'white' }}>
             <Icons.Lock />
           </div>
-          <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: colors.text }}>美容室在庫管理</h1>
+          <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: colors.text }}>📓 DOLL note</h1>
           <p style={{ ...styles.textSmall, marginTop: '8px' }}>パスワードを入力してログイン</p>
         </div>
         <form onSubmit={handleSubmit}>
@@ -868,7 +868,7 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
       {/* ヘッダー */}
       <div style={{ ...styles.card, marginBottom: '16px' }}>
         <div style={{ ...styles.flexBetween, marginBottom: '16px' }}>
-          <h1 style={{ fontSize: '20px', fontWeight: 'bold', color: colors.text }}>美容室在庫管理</h1>
+          <h1 style={{ fontSize: '20px', fontWeight: 'bold', color: colors.text }}>📓 DOLL note</h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <button onClick={() => setShowHelp(true)} style={sx(styles.btnBase, styles.btnGray, { padding: '6px 10px' })}>❓</button>
             <span style={sx(styles.badge, isAdmin ? styles.badgeRed : styles.badgeBlue)}>{isAdmin ? '管理者' : 'スタッフ'}</span>
