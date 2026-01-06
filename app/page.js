@@ -1723,7 +1723,13 @@ function UsageInput({ products, usage, setUsage, favorites, setFavorites }) {
     if (!error) { setUsage(usage.map(u => u.id === id ? { ...u, quantity: parseInt(editData.quantity) || 1, date: editData.date } : u)); setEditingId(null) }
   }
 
-  const displayProducts = viewMode === 'material' ? materialProducts : viewMode === 'favorites' ? favoriteProducts : filteredProducts
+  // 材料モード用のフィルター済み商品
+  const filteredMaterialProducts = materialProducts.filter(p => {
+    if (filterDealer && p.largeCategory !== filterDealer) return false
+    return true
+  })
+
+  const displayProducts = viewMode === 'material' ? filteredMaterialProducts : viewMode === 'favorites' ? favoriteProducts : filteredProducts
   const totalCount = Object.values(entries).reduce((sum, qty) => sum + qty, 0)
   const totalAmount = Object.entries(entries).reduce((sum, [pid, qty]) => { const product = products.find(p => p.id === parseInt(pid)); return sum + (product ? qty * product.purchasePrice : 0) }, 0)
   const recentUsage = [...usage].reverse().slice(0, 50)
@@ -1789,11 +1795,26 @@ function UsageInput({ products, usage, setUsage, favorites, setFavorites }) {
               </div>
             )}
 
+            {viewMode === 'material' && (
+              <div style={{ marginBottom: '16px' }}>
+                <select value={filterDealer} onChange={e => setFilterDealer(e.target.value)} className="select">
+                  <option value="">全ディーラー</option>
+                  {[...new Set(materialProducts.map(p => p.largeCategory))].map((d, i) => <option key={i} value={d}>{d}</option>)}
+                </select>
+              </div>
+            )}
+
             {viewMode === 'favorites' && favoriteProducts.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '32px 16px', color: '#9ca3af' }}>
                 <div style={{ fontSize: '32px', marginBottom: '8px' }}>⭐</div>
                 <p style={{ marginBottom: '8px', fontWeight: '600' }}>お気に入り商品がありません</p>
                 <p style={{ fontSize: '13px' }}>「検索」モードから商品を選んでお気に入り登録してください</p>
+              </div>
+            ) : viewMode === 'material' && materialProducts.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '32px 16px', color: '#9ca3af' }}>
+                <div style={{ fontSize: '32px', marginBottom: '8px' }}>🧪</div>
+                <p style={{ marginBottom: '8px', fontWeight: '600' }}>材料が登録されていません</p>
+                <p style={{ fontSize: '13px' }}>商品管理で「材料」にチェックを入れてください</p>
               </div>
             ) : viewMode === 'search' && !filterDealer && !filterCategory ? (
               <div style={{ textAlign: 'center', padding: '32px 16px', color: '#9ca3af' }}>
