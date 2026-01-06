@@ -298,15 +298,14 @@ export default function Home() {
 
 // ==================== ログイン画面 ====================
 function LoginScreen({ passwords, onLogin }) {
+  const [mode, setMode] = useState('select') // 'select' or 'admin'
   const [inputPassword, setInputPassword] = useState('')
   const [error, setError] = useState('')
 
-  const handleSubmit = (e) => {
+  const handleAdminLogin = (e) => {
     e.preventDefault()
     if (inputPassword === passwords.admin) {
       onLogin('admin')
-    } else if (inputPassword === passwords.staff) {
-      onLogin('staff')
     } else {
       setError('パスワードが違います')
     }
@@ -316,29 +315,68 @@ function LoginScreen({ passwords, onLogin }) {
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', backgroundColor: '#f8fafc' }}>
       <div style={{ ...styles.card, maxWidth: '400px', width: '100%', textAlign: 'center' }}>
         <div style={{ marginBottom: '24px' }}>
-          <div style={{ width: '60px', height: '60px', backgroundColor: colors.primary, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', color: 'white' }}>
-            <Icons.Lock />
+          <div style={{ width: '60px', height: '60px', backgroundColor: colors.primary, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', color: 'white', fontSize: '28px' }}>
+            📓
           </div>
-          <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: colors.text }}>📓 DOLL note</h1>
-          <p style={{ ...styles.textSmall, marginTop: '8px' }}>パスワードを入力してログイン</p>
+          <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: colors.text }}>DOLL note</h1>
+          <p style={{ ...styles.textSmall, marginTop: '8px' }}>
+            {mode === 'select' ? 'ログイン方法を選んでください' : 'オーナーパスワードを入力'}
+          </p>
         </div>
-        <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: '16px', textAlign: 'left' }}>
-            <label style={styles.label}>パスワード</label>
-            <input
-              type="password"
-              value={inputPassword}
-              onChange={e => { setInputPassword(e.target.value); setError('') }}
-              style={styles.input}
-              placeholder="パスワードを入力"
-              autoFocus
-            />
+        
+        {mode === 'select' ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <button 
+              onClick={() => onLogin('staff')} 
+              style={{
+                padding: '20px', borderRadius: '12px', border: '2px solid #e5e7eb', cursor: 'pointer',
+                backgroundColor: '#f0fdf4', fontWeight: '600', fontSize: '18px', color: '#16a34a',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px'
+              }}
+            >
+              <span style={{ fontSize: '28px' }}>👤</span> スタッフ
+            </button>
+            <button 
+              onClick={() => setMode('admin')} 
+              style={{
+                padding: '20px', borderRadius: '12px', border: '2px solid #e5e7eb', cursor: 'pointer',
+                backgroundColor: '#eff6ff', fontWeight: '600', fontSize: '18px', color: '#2563eb',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px'
+              }}
+            >
+              <span style={{ fontSize: '28px' }}>👑</span> オーナー
+            </button>
           </div>
-          {error && <p style={{ color: colors.danger, fontSize: '14px', marginBottom: '16px' }}>{error}</p>}
-          <button type="submit" style={sx(styles.btnBase, styles.btnPrimary, styles.btnFull, styles.btnLarge)}>
-            ログイン
-          </button>
-        </form>
+        ) : (
+          <form onSubmit={handleAdminLogin}>
+            <div style={{ marginBottom: '16px', textAlign: 'left' }}>
+              <label style={styles.label}>オーナーパスワード</label>
+              <input
+                type="password"
+                value={inputPassword}
+                onChange={e => { setInputPassword(e.target.value); setError('') }}
+                style={styles.input}
+                placeholder="パスワードを入力"
+                autoFocus
+              />
+            </div>
+            {error && <p style={{ color: colors.danger, fontSize: '14px', marginBottom: '16px' }}>{error}</p>}
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button type="button" onClick={() => { setMode('select'); setInputPassword(''); setError('') }} style={{
+                flex: 1, padding: '14px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+                backgroundColor: '#e5e7eb', color: '#374151', fontWeight: '600', fontSize: '15px'
+              }}>
+                ← 戻る
+              </button>
+              <button type="submit" style={{
+                flex: 2, padding: '14px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+                backgroundColor: '#3b82f6', color: '#fff', fontWeight: '600', fontSize: '15px'
+              }}>
+                ログイン
+              </button>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   )
