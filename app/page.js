@@ -1016,6 +1016,48 @@ function HomeScreen({ staff, leaveRequests, practiceReservations, contactWeekly,
   const today = new Date()
   const todayStr = today.toISOString().split('T')[0]
   
+  // 当日の連絡機能
+  const [dailyMessage, setDailyMessage] = useState('')
+  const [savedMessage, setSavedMessage] = useState(null)
+  const [isEditingMessage, setIsEditingMessage] = useState(false)
+  
+  // 当日の連絡を取得
+  useEffect(() => {
+    const fetchDailyMessage = async () => {
+      const { data } = await supabase.from('app_settings').select('*').eq('setting_key', 'daily_announcement').single()
+      if (data) {
+        try {
+          const parsed = JSON.parse(data.setting_value)
+          if (parsed.date === todayStr) {
+            setSavedMessage(parsed)
+            setDailyMessage(parsed.message)
+          }
+        } catch (e) {}
+      }
+    }
+    fetchDailyMessage()
+  }, [todayStr])
+  
+  // 連絡を保存
+  const saveDailyMessage = async () => {
+    const payload = JSON.stringify({ date: todayStr, message: dailyMessage, createdAt: new Date().toISOString() })
+    const { data: existing } = await supabase.from('app_settings').select('*').eq('setting_key', 'daily_announcement').single()
+    if (existing) {
+      await supabase.from('app_settings').update({ setting_value: payload }).eq('setting_key', 'daily_announcement')
+    } else {
+      await supabase.from('app_settings').insert({ setting_key: 'daily_announcement', setting_value: payload })
+    }
+    setSavedMessage({ date: todayStr, message: dailyMessage })
+    setIsEditingMessage(false)
+  }
+  
+  // 連絡を削除
+  const clearDailyMessage = async () => {
+    await supabase.from('app_settings').update({ setting_value: JSON.stringify({ date: '', message: '' }) }).eq('setting_key', 'daily_announcement')
+    setSavedMessage(null)
+    setDailyMessage('')
+  }
+  
   // 曜日
   const dayNames = ['日', '月', '火', '水', '木', '金', '土']
   const todayDayName = dayNames[today.getDay()]
@@ -1138,6 +1180,66 @@ function HomeScreen({ staff, leaveRequests, practiceReservations, contactWeekly,
           </div>
         )}
       </div>
+
+      {/* 📢 当日の連絡 */}
+      {(savedMessage?.message || isAdmin) && (
+        <div className="card" style={{ backgroundColor: '#fef3c7', border: '1px solid #fcd34d' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: savedMessage?.message || isEditingMessage ? '12px' : '0' }}>
+            <h3 style={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '20px' }}>📢</span> 今日の連絡
+            </h3>
+            {isAdmin && !isEditingMessage && (
+              <button onClick={() => setIsEditingMessage(true)} style={{
+                padding: '6px 12px', borderRadius: '6px', border: 'none', cursor: 'pointer',
+                backgroundColor: '#f59e0b', color: '#fff', fontSize: '12px', fontWeight: '600'
+              }}>{savedMessage?.message ? '編集' : '＋ 追加'}</button>
+            )}
+          </div>
+          
+          {/* 表示モード（スタッフ & 管理者共通） */}
+          {!isEditingMessage && savedMessage?.message && (
+            <div style={{ backgroundColor: '#fff', padding: '12px', borderRadius: '10px', whiteSpace: 'pre-wrap', fontSize: '15px', lineHeight: '1.6' }}>
+              {savedMessage.message}
+            </div>
+          )}
+          
+          {/* 編集モード（管理者のみ） */}
+          {isAdmin && isEditingMessage && (
+            <div>
+              <textarea
+                value={dailyMessage}
+                onChange={e => setDailyMessage(e.target.value)}
+                placeholder="今日の連絡事項を入力..."
+                style={{
+                  width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #e5e7eb',
+                  fontSize: '15px', lineHeight: '1.6', minHeight: '100px', resize: 'vertical'
+                }}
+              />
+              <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                <button onClick={saveDailyMessage} style={{
+                  flex: 1, padding: '10px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+                  backgroundColor: '#22c55e', color: '#fff', fontWeight: '600', fontSize: '14px'
+                }}>保存</button>
+                {savedMessage?.message && (
+                  <button onClick={clearDailyMessage} style={{
+                    padding: '10px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+                    backgroundColor: '#ef4444', color: '#fff', fontWeight: '600', fontSize: '14px'
+                  }}>削除</button>
+                )}
+                <button onClick={() => { setIsEditingMessage(false); setDailyMessage(savedMessage?.message || '') }} style={{
+                  padding: '10px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+                  backgroundColor: '#e5e7eb', color: '#374151', fontWeight: '600', fontSize: '14px'
+                }}>キャンセル</button>
+              </div>
+            </div>
+          )}
+          
+          {/* 連絡がない場合（管理者向けプレースホルダー） */}
+          {isAdmin && !isEditingMessage && !savedMessage?.message && (
+            <p style={{ color: '#92400e', fontSize: '14px' }}>連絡事項はありません</p>
+          )}
+        </div>
+      )}
 
       {/* 今日の出勤 */}
       {!isTodayHoliday && (
