@@ -1021,6 +1021,11 @@ function HomeScreen({ staff, leaveRequests, practiceReservations, contactWeekly,
   const [savedMessage, setSavedMessage] = useState(null)
   const [isEditingMessage, setIsEditingMessage] = useState(false)
   
+  // 緊急メッセージ機能
+  const [urgentMessage, setUrgentMessage] = useState('')
+  const [savedUrgent, setSavedUrgent] = useState(null)
+  const [isEditingUrgent, setIsEditingUrgent] = useState(false)
+  
   // 当日の連絡を取得
   useEffect(() => {
     const fetchDailyMessage = async () => {
@@ -1037,6 +1042,23 @@ function HomeScreen({ staff, leaveRequests, practiceReservations, contactWeekly,
     }
     fetchDailyMessage()
   }, [todayStr])
+  
+  // 緊急メッセージを取得（日付関係なく常に表示）
+  useEffect(() => {
+    const fetchUrgentMessage = async () => {
+      const { data } = await supabase.from('app_settings').select('*').eq('setting_key', 'urgent_announcement').single()
+      if (data) {
+        try {
+          const parsed = JSON.parse(data.setting_value)
+          if (parsed.message) {
+            setSavedUrgent(parsed)
+            setUrgentMessage(parsed.message)
+          }
+        } catch (e) {}
+      }
+    }
+    fetchUrgentMessage()
+  }, [])
   
   // 連絡を保存
   const saveDailyMessage = async () => {
@@ -1056,6 +1078,27 @@ function HomeScreen({ staff, leaveRequests, practiceReservations, contactWeekly,
     await supabase.from('app_settings').update({ setting_value: JSON.stringify({ date: '', message: '' }) }).eq('setting_key', 'daily_announcement')
     setSavedMessage(null)
     setDailyMessage('')
+  }
+  
+  // 緊急メッセージを保存
+  const saveUrgentMessage = async () => {
+    const payload = JSON.stringify({ message: urgentMessage, createdAt: new Date().toISOString() })
+    const { data: existing } = await supabase.from('app_settings').select('*').eq('setting_key', 'urgent_announcement').single()
+    if (existing) {
+      await supabase.from('app_settings').update({ setting_value: payload }).eq('setting_key', 'urgent_announcement')
+    } else {
+      await supabase.from('app_settings').insert({ setting_key: 'urgent_announcement', setting_value: payload })
+    }
+    setSavedUrgent({ message: urgentMessage })
+    setIsEditingUrgent(false)
+  }
+  
+  // 緊急メッセージを削除
+  const clearUrgentMessage = async () => {
+    await supabase.from('app_settings').update({ setting_value: JSON.stringify({ message: '' }) }).eq('setting_key', 'urgent_announcement')
+    setSavedUrgent(null)
+    setUrgentMessage('')
+    setIsEditingUrgent(false)
   }
   
   // 曜日
@@ -1155,6 +1198,67 @@ function HomeScreen({ staff, leaveRequests, practiceReservations, contactWeekly,
 
   return (
     <div className="space-y-4">
+      {/* 🚨 緊急メッセージ（最上部・日付関係なく残る） */}
+      {(savedUrgent?.message || isAdmin) && (
+        <div className="card" style={{ backgroundColor: '#fef2f2', border: '2px solid #ef4444', boxShadow: '0 4px 12px rgba(239, 68, 68, 0.2)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: savedUrgent?.message || isEditingUrgent ? '12px' : '0' }}>
+            <h3 style={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', color: '#dc2626' }}>
+              <span style={{ fontSize: '20px' }}>🚨</span> 緊急連絡
+            </h3>
+            {isAdmin && !isEditingUrgent && (
+              <button onClick={() => setIsEditingUrgent(true)} style={{
+                padding: '6px 12px', borderRadius: '6px', border: 'none', cursor: 'pointer',
+                backgroundColor: '#ef4444', color: '#fff', fontSize: '12px', fontWeight: '600'
+              }}>{savedUrgent?.message ? '編集' : '＋ 追加'}</button>
+            )}
+          </div>
+          
+          {/* 表示モード */}
+          {!isEditingUrgent && savedUrgent?.message && (
+            <div style={{ backgroundColor: '#fff', padding: '12px', borderRadius: '10px', whiteSpace: 'pre-wrap', fontSize: '15px', lineHeight: '1.6', borderLeft: '4px solid #ef4444' }}>
+              {savedUrgent.message}
+            </div>
+          )}
+          
+          {/* 編集モード（管理者のみ） */}
+          {isAdmin && isEditingUrgent && (
+            <div>
+              <textarea
+                value={urgentMessage}
+                onChange={e => setUrgentMessage(e.target.value)}
+                placeholder="緊急の連絡事項を入力..."
+                style={{
+                  width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #fecaca',
+                  fontSize: '15px', lineHeight: '1.6', minHeight: '100px', resize: 'vertical'
+                }}
+              />
+              <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                <button onClick={saveUrgentMessage} style={{
+                  flex: 1, padding: '10px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+                  backgroundColor: '#ef4444', color: '#fff', fontWeight: '600', fontSize: '14px'
+                }}>保存（残す）</button>
+                {savedUrgent?.message && (
+                  <button onClick={clearUrgentMessage} style={{
+                    padding: '10px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+                    backgroundColor: '#6b7280', color: '#fff', fontWeight: '600', fontSize: '14px'
+                  }}>削除</button>
+                )}
+                <button onClick={() => { setIsEditingUrgent(false); setUrgentMessage(savedUrgent?.message || '') }} style={{
+                  padding: '10px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+                  backgroundColor: '#e5e7eb', color: '#374151', fontWeight: '600', fontSize: '14px'
+                }}>キャンセル</button>
+              </div>
+              <p style={{ fontSize: '11px', color: '#991b1b', marginTop: '8px' }}>※ 緊急連絡は削除するまで表示され続けます</p>
+            </div>
+          )}
+          
+          {/* メッセージがない場合（管理者向けプレースホルダー） */}
+          {isAdmin && !isEditingUrgent && !savedUrgent?.message && (
+            <p style={{ color: '#991b1b', fontSize: '14px' }}>緊急連絡はありません</p>
+          )}
+        </div>
+      )}
+
       {/* スタッフ向け：連絡帳の締切お知らせ */}
       {!isAdmin && isContactOverdue && (
         <div className="card" style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca' }}>
