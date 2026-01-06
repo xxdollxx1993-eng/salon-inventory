@@ -413,7 +413,7 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
         isManagement: s.is_management || false, workDaysPerWeek: s.work_days_per_week || 5,
         contactEnabled: s.contact_enabled || false
       })))
-      if (productsRes.data) setProducts(productsRes.data.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)).map(p => ({ id: p.id, largeCategory: p.large_category, mediumCategory: p.medium_category, name: p.name, purchasePrice: p.purchase_price, sellingPrice: p.selling_price, productType: p.product_type || 'business', sortOrder: p.sort_order || 0 })))
+      if (productsRes.data) setProducts(productsRes.data.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)).map(p => ({ id: p.id, largeCategory: p.large_category, mediumCategory: p.medium_category, name: p.name, purchasePrice: p.purchase_price, sellingPrice: p.selling_price, productType: p.product_type || 'business', sortOrder: p.sort_order || 0, isMaterial: p.is_material || false })))
       if (categoriesRes.data) {
         setCategories({
           large: categoriesRes.data.filter(c => c.type === 'large').map(c => ({
@@ -1664,12 +1664,13 @@ function UsageInput({ products, usage, setUsage, favorites, setFavorites }) {
   const [showHistory, setShowHistory] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [editData, setEditData] = useState({})
-  const [viewMode, setViewMode] = useState('favorites') // 'favorites' or 'search'
+  const [viewMode, setViewMode] = useState('material') // 'material', 'favorites', 'search'
   const [filterDealer, setFilterDealer] = useState('')
   const [filterCategory, setFilterCategory] = useState('')
 
   useEffect(() => { const init = {}; products.forEach(p => init[p.id] = 0); setEntries(init) }, [products])
 
+  const materialProducts = products.filter(p => p.isMaterial)
   const favoriteProducts = products.filter(p => favorites.includes(p.id))
   const dealers = [...new Set(products.map(p => p.largeCategory))]
   const categories = [...new Set(products.map(p => p.mediumCategory))]
@@ -1722,7 +1723,7 @@ function UsageInput({ products, usage, setUsage, favorites, setFavorites }) {
     if (!error) { setUsage(usage.map(u => u.id === id ? { ...u, quantity: parseInt(editData.quantity) || 1, date: editData.date } : u)); setEditingId(null) }
   }
 
-  const displayProducts = viewMode === 'favorites' ? favoriteProducts : filteredProducts
+  const displayProducts = viewMode === 'material' ? materialProducts : viewMode === 'favorites' ? favoriteProducts : filteredProducts
   const totalCount = Object.values(entries).reduce((sum, qty) => sum + qty, 0)
   const totalAmount = Object.entries(entries).reduce((sum, [pid, qty]) => { const product = products.find(p => p.id === parseInt(pid)); return sum + (product ? qty * product.purchasePrice : 0) }, 0)
   const recentUsage = [...usage].reverse().slice(0, 50)
@@ -1758,6 +1759,11 @@ function UsageInput({ products, usage, setUsage, favorites, setFavorites }) {
             
             {/* モード切替 */}
             <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+              <button onClick={() => setViewMode('material')} style={{
+                flex: 1, padding: '10px', borderRadius: '8px', fontWeight: '600', fontSize: '14px', cursor: 'pointer', border: 'none',
+                backgroundColor: viewMode === 'material' ? '#22c55e' : '#f3f4f6',
+                color: viewMode === 'material' ? '#fff' : '#374151'
+              }}>🧪 材料</button>
               <button onClick={() => setViewMode('favorites')} style={{
                 flex: 1, padding: '10px', borderRadius: '8px', fontWeight: '600', fontSize: '14px', cursor: 'pointer', border: 'none',
                 backgroundColor: viewMode === 'favorites' ? '#3b82f6' : '#f3f4f6',
@@ -2972,12 +2978,13 @@ function StaffPurchase({ products, staff, staffPurchases, setStaffPurchases }) {
 function ProductManagement({ products, setProducts, categories, setCategories }) {
   const [newLarge, setNewLarge] = useState('')
   const [newMedium, setNewMedium] = useState('')
-  const [newProduct, setNewProduct] = useState({ largeCategory: '', mediumCategory: '', name: '', purchasePrice: '', sellingPrice: '', productType: 'business' })
+  const [newProduct, setNewProduct] = useState({ largeCategory: '', mediumCategory: '', name: '', purchasePrice: '', sellingPrice: '', productType: 'business', isMaterial: false })
   const [editingId, setEditingId] = useState(null)
   const [editData, setEditData] = useState({})
   const [filterDealer, setFilterDealer] = useState('')
   const [filterCategory, setFilterCategory] = useState('')
   const [searchText, setSearchText] = useState('')
+  const [filterMaterial, setFilterMaterial] = useState('all') // 'all', 'material', 'other'
 
   const productTypes = [{ value: 'business', label: '業務用' }, { value: 'retail', label: '店販' }, { value: 'both', label: '両方' }]
 
@@ -3002,14 +3009,14 @@ function ProductManagement({ products, setProducts, categories, setCategories })
   const addProduct = async () => {
     if (!newProduct.name || !newProduct.largeCategory || !newProduct.mediumCategory) return
     const maxOrder = products.length > 0 ? Math.max(...products.map(p => p.sortOrder || 0)) + 1 : 1
-    const { data, error } = await supabase.from('products').insert({ large_category: newProduct.largeCategory, medium_category: newProduct.mediumCategory, name: newProduct.name, purchase_price: parseFloat(newProduct.purchasePrice) || 0, selling_price: parseFloat(newProduct.sellingPrice) || 0, product_type: newProduct.productType, sort_order: maxOrder }).select()
-    if (!error && data) { setProducts([...products, { id: data[0].id, largeCategory: newProduct.largeCategory, mediumCategory: newProduct.mediumCategory, name: newProduct.name, purchasePrice: parseFloat(newProduct.purchasePrice) || 0, sellingPrice: parseFloat(newProduct.sellingPrice) || 0, productType: newProduct.productType, sortOrder: maxOrder }]); setNewProduct({ largeCategory: '', mediumCategory: '', name: '', purchasePrice: '', sellingPrice: '', productType: 'business' }) }
+    const { data, error } = await supabase.from('products').insert({ large_category: newProduct.largeCategory, medium_category: newProduct.mediumCategory, name: newProduct.name, purchase_price: parseFloat(newProduct.purchasePrice) || 0, selling_price: parseFloat(newProduct.sellingPrice) || 0, product_type: newProduct.productType, sort_order: maxOrder, is_material: newProduct.isMaterial }).select()
+    if (!error && data) { setProducts([...products, { id: data[0].id, largeCategory: newProduct.largeCategory, mediumCategory: newProduct.mediumCategory, name: newProduct.name, purchasePrice: parseFloat(newProduct.purchasePrice) || 0, sellingPrice: parseFloat(newProduct.sellingPrice) || 0, productType: newProduct.productType, sortOrder: maxOrder, isMaterial: newProduct.isMaterial }]); setNewProduct({ largeCategory: '', mediumCategory: '', name: '', purchasePrice: '', sellingPrice: '', productType: 'business', isMaterial: false }) }
   }
   const deleteProduct = async (id) => { if (!confirm('この商品を削除しますか？')) return; const { error } = await supabase.from('products').delete().eq('id', id); if (!error) setProducts(products.filter(p => p.id !== id)) }
-  const startEdit = (product) => { setEditingId(product.id); setEditData({ name: product.name, largeCategory: product.largeCategory, mediumCategory: product.mediumCategory, purchasePrice: product.purchasePrice, sellingPrice: product.sellingPrice, productType: product.productType || 'business' }) }
-  const saveEdit = async (id) => { const { error } = await supabase.from('products').update({ name: editData.name, large_category: editData.largeCategory, medium_category: editData.mediumCategory, purchase_price: parseFloat(editData.purchasePrice) || 0, selling_price: parseFloat(editData.sellingPrice) || 0, product_type: editData.productType }).eq('id', id); if (!error) { setProducts(products.map(p => p.id === id ? { ...p, ...editData, purchasePrice: parseFloat(editData.purchasePrice) || 0, sellingPrice: parseFloat(editData.sellingPrice) || 0 } : p)); setEditingId(null) } }
+  const startEdit = (product) => { setEditingId(product.id); setEditData({ name: product.name, largeCategory: product.largeCategory, mediumCategory: product.mediumCategory, purchasePrice: product.purchasePrice, sellingPrice: product.sellingPrice, productType: product.productType || 'business', isMaterial: product.isMaterial || false }) }
+  const saveEdit = async (id) => { const { error } = await supabase.from('products').update({ name: editData.name, large_category: editData.largeCategory, medium_category: editData.mediumCategory, purchase_price: parseFloat(editData.purchasePrice) || 0, selling_price: parseFloat(editData.sellingPrice) || 0, product_type: editData.productType, is_material: editData.isMaterial }).eq('id', id); if (!error) { setProducts(products.map(p => p.id === id ? { ...p, ...editData, purchasePrice: parseFloat(editData.purchasePrice) || 0, sellingPrice: parseFloat(editData.sellingPrice) || 0 } : p)); setEditingId(null) } }
   const getTypeLabel = (type) => { const found = productTypes.find(t => t.value === type); return found ? found.label : '業務用' }
-  const filteredProducts = products.filter(p => { if (filterDealer && p.largeCategory !== filterDealer) return false; if (filterCategory && p.mediumCategory !== filterCategory) return false; if (searchText && !p.name.toLowerCase().includes(searchText.toLowerCase())) return false; return true })
+  const filteredProducts = products.filter(p => { if (filterDealer && p.largeCategory !== filterDealer) return false; if (filterCategory && p.mediumCategory !== filterCategory) return false; if (searchText && !p.name.toLowerCase().includes(searchText.toLowerCase())) return false; if (filterMaterial === 'material' && !p.isMaterial) return false; if (filterMaterial === 'other' && p.isMaterial) return false; return true })
 
   return (
     <div className="space-y-4">
@@ -3091,9 +3098,20 @@ function ProductManagement({ products, setProducts, categories, setCategories })
             {productTypes.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
           </select>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
           <input type="number" value={newProduct.purchasePrice} onChange={e => setNewProduct({ ...newProduct, purchasePrice: e.target.value })} placeholder="仕入れ価格" className="input" />
           <input type="number" value={newProduct.sellingPrice} onChange={e => setNewProduct({ ...newProduct, sellingPrice: e.target.value })} placeholder="販売価格" className="input" />
+        </div>
+        <div style={{ marginBottom: '16px' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+            <input 
+              type="checkbox" 
+              checked={newProduct.isMaterial} 
+              onChange={e => setNewProduct({ ...newProduct, isMaterial: e.target.checked })}
+              style={{ width: '20px', height: '20px', accentColor: '#22c55e' }}
+            />
+            <span style={{ fontSize: '14px', fontWeight: '600', color: '#374151' }}>🧪 材料（使用入力に表示）</span>
+          </label>
         </div>
         <button onClick={addProduct} style={{
           padding: '12px 24px', borderRadius: '10px', border: 'none', cursor: 'pointer',
@@ -3108,7 +3126,7 @@ function ProductManagement({ products, setProducts, categories, setCategories })
         </h3>
         
         {/* フィルター */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
           <select value={filterDealer} onChange={e => setFilterDealer(e.target.value)} className="select">
             <option value="">全ディーラー</option>
             {categories.large.map((c, i) => <option key={i} value={c.name}>{c.name}</option>)}
@@ -3116,6 +3134,13 @@ function ProductManagement({ products, setProducts, categories, setCategories })
           <select value={filterCategory} onChange={e => setFilterCategory(e.target.value)} className="select">
             <option value="">全種類</option>
             {categories.medium.map((c, i) => <option key={i} value={c}>{c}</option>)}
+          </select>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '16px' }}>
+          <select value={filterMaterial} onChange={e => setFilterMaterial(e.target.value)} className="select">
+            <option value="all">全商品</option>
+            <option value="material">🧪 材料のみ</option>
+            <option value="other">材料以外</option>
           </select>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#f9fafb', borderRadius: '8px', padding: '0 12px' }}>
             <span style={{ color: '#9ca3af' }}>🔍</span>
@@ -3130,6 +3155,7 @@ function ProductManagement({ products, setProducts, categories, setCategories })
           <table style={{ width: '100%', fontSize: '13px', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ backgroundColor: '#f9fafb' }}>
+                <th style={{ padding: '12px 8px', textAlign: 'center', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>材料</th>
                 <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>タイプ</th>
                 <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>ディーラー</th>
                 <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: '600', borderBottom: '2px solid #e5e7eb' }}>種類</th>
@@ -3143,6 +3169,9 @@ function ProductManagement({ products, setProducts, categories, setCategories })
               {filteredProducts.map(p => (
                 editingId === p.id ? (
                   <tr key={p.id} style={{ backgroundColor: '#fef9c3' }}>
+                    <td style={{ padding: '8px', textAlign: 'center' }}>
+                      <input type="checkbox" checked={editData.isMaterial} onChange={e => setEditData({...editData, isMaterial: e.target.checked})} style={{ width: '18px', height: '18px', accentColor: '#22c55e' }} />
+                    </td>
                     <td style={{ padding: '8px' }}><select value={editData.productType} onChange={e => setEditData({...editData, productType: e.target.value})} className="select" style={{ fontSize: '12px' }}>{productTypes.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}</select></td>
                     <td style={{ padding: '8px' }}><select value={editData.largeCategory} onChange={e => setEditData({...editData, largeCategory: e.target.value})} className="select" style={{ fontSize: '12px' }}>{categories.large.map((c, i) => <option key={i} value={c.name}>{c.name}</option>)}</select></td>
                     <td style={{ padding: '8px' }}><select value={editData.mediumCategory} onChange={e => setEditData({...editData, mediumCategory: e.target.value})} className="select" style={{ fontSize: '12px' }}>{categories.medium.map((c, i) => <option key={i} value={c}>{c}</option>)}</select></td>
@@ -3156,6 +3185,9 @@ function ProductManagement({ products, setProducts, categories, setCategories })
                   </tr>
                 ) : (
                   <tr key={p.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                    <td style={{ padding: '10px 8px', textAlign: 'center' }}>
+                      {p.isMaterial && <span style={{ fontSize: '16px' }}>🧪</span>}
+                    </td>
                     <td style={{ padding: '10px 8px' }}>
                       <span style={{
                         display: 'inline-block', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: '600',
