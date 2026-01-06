@@ -3015,6 +3015,16 @@ function ProductManagement({ products, setProducts, categories, setCategories })
   const deleteProduct = async (id) => { if (!confirm('この商品を削除しますか？')) return; const { error } = await supabase.from('products').delete().eq('id', id); if (!error) setProducts(products.filter(p => p.id !== id)) }
   const startEdit = (product) => { setEditingId(product.id); setEditData({ name: product.name, largeCategory: product.largeCategory, mediumCategory: product.mediumCategory, purchasePrice: product.purchasePrice, sellingPrice: product.sellingPrice, productType: product.productType || 'business', isMaterial: product.isMaterial || false }) }
   const saveEdit = async (id) => { const { error } = await supabase.from('products').update({ name: editData.name, large_category: editData.largeCategory, medium_category: editData.mediumCategory, purchase_price: parseFloat(editData.purchasePrice) || 0, selling_price: parseFloat(editData.sellingPrice) || 0, product_type: editData.productType, is_material: editData.isMaterial }).eq('id', id); if (!error) { setProducts(products.map(p => p.id === id ? { ...p, ...editData, purchasePrice: parseFloat(editData.purchasePrice) || 0, sellingPrice: parseFloat(editData.sellingPrice) || 0 } : p)); setEditingId(null) } }
+  
+  // 材料フラグをワンタップで切り替え
+  const toggleMaterial = async (product) => {
+    const newValue = !product.isMaterial
+    const { error } = await supabase.from('products').update({ is_material: newValue }).eq('id', product.id)
+    if (!error) {
+      setProducts(products.map(p => p.id === product.id ? { ...p, isMaterial: newValue } : p))
+    }
+  }
+  
   const getTypeLabel = (type) => { const found = productTypes.find(t => t.value === type); return found ? found.label : '業務用' }
   const filteredProducts = products.filter(p => { if (filterDealer && p.largeCategory !== filterDealer) return false; if (filterCategory && p.mediumCategory !== filterCategory) return false; if (searchText && !p.name.toLowerCase().includes(searchText.toLowerCase())) return false; if (filterMaterial === 'material' && !p.isMaterial) return false; if (filterMaterial === 'other' && p.isMaterial) return false; return true })
 
@@ -3186,7 +3196,12 @@ function ProductManagement({ products, setProducts, categories, setCategories })
                 ) : (
                   <tr key={p.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
                     <td style={{ padding: '10px 8px', textAlign: 'center' }}>
-                      {p.isMaterial && <span style={{ fontSize: '16px' }}>🧪</span>}
+                      <input 
+                        type="checkbox" 
+                        checked={p.isMaterial || false} 
+                        onChange={() => toggleMaterial(p)}
+                        style={{ width: '20px', height: '20px', accentColor: '#22c55e', cursor: 'pointer' }} 
+                      />
                     </td>
                     <td style={{ padding: '10px 8px' }}>
                       <span style={{
