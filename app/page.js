@@ -4684,6 +4684,7 @@ function TimeCard({ staff, timeRecords, setTimeRecords, isAdmin }) {
   const [isSpecial, setIsSpecial] = useState(false)
   const [specialNote, setSpecialNote] = useState('')
   const [viewMonth, setViewMonth] = useState(`${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`)
+  const [todayExcluded, setTodayExcluded] = useState([]) // その日だけ除外（有給・休み）
 
   const today = new Date()
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
@@ -4691,6 +4692,18 @@ function TimeCard({ staff, timeRecords, setTimeRecords, isAdmin }) {
 
   // タイムカード対象のスタッフのみ
   const timecardStaff = staff.filter(s => s.timecardEnabled !== false)
+  
+  // その日の打刻対象（除外されてない人）
+  const todayTargetStaff = timecardStaff.filter(s => !todayExcluded.includes(s.id))
+
+  // 除外トグル
+  const toggleExclude = (staffId) => {
+    if (todayExcluded.includes(staffId)) {
+      setTodayExcluded(todayExcluded.filter(id => id !== staffId))
+    } else {
+      setTodayExcluded([...todayExcluded, staffId])
+    }
+  }
 
   // 15分単位の時間オプションを生成
   const timeOptions = []
@@ -4713,10 +4726,10 @@ function TimeCard({ staff, timeRecords, setTimeRecords, isAdmin }) {
   // 一括出勤
   const bulkPunchIn = async () => {
     const currentTime = getCurrentTime()
-    const targets = timecardStaff.filter(s => !getTodayRecord(s.id))
+    const targets = todayTargetStaff.filter(s => !getTodayRecord(s.id))
     
     if (targets.length === 0) {
-      alert('全員出勤済みです')
+      alert('出勤対象者がいません')
       return
     }
     
@@ -4756,7 +4769,7 @@ function TimeCard({ staff, timeRecords, setTimeRecords, isAdmin }) {
   // 一括退勤
   const bulkPunchOut = async () => {
     const currentTime = getCurrentTime()
-    const targets = timecardStaff.filter(s => {
+    const targets = todayTargetStaff.filter(s => {
       const record = getTodayRecord(s.id)
       return record && record.clockIn && !record.clockOut
     })
@@ -5002,16 +5015,32 @@ function TimeCard({ staff, timeRecords, setTimeRecords, isAdmin }) {
           </div>
           
           {/* 今日のスタッフ状況 */}
-          <h4 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '12px', color: '#6b7280' }}>今日の打刻状況</h4>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+            <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#6b7280' }}>今日の打刻対象</h4>
+            <span style={{ fontSize: '12px', color: '#9ca3af' }}>休みの人はタップで除外</span>
+          </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {timecardStaff.map(s => {
               const record = getTodayRecord(s.id)
+              const isExcluded = todayExcluded.includes(s.id)
               return (
                 <div key={s.id} style={{
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  padding: '12px', borderRadius: '10px', backgroundColor: '#f9fafb', border: '1px solid #e5e7eb'
+                  padding: '12px', borderRadius: '10px', 
+                  backgroundColor: isExcluded ? '#fef2f2' : '#f9fafb', 
+                  border: isExcluded ? '2px solid #fca5a5' : '1px solid #e5e7eb',
+                  opacity: isExcluded ? 0.7 : 1
                 }}>
-                  <span style={{ fontWeight: '600' }}>{s.name}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <button onClick={() => toggleExclude(s.id)} style={{
+                      width: '32px', height: '32px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+                      backgroundColor: isExcluded ? '#ef4444' : '#22c55e',
+                      color: '#fff', fontWeight: 'bold', fontSize: '14px'
+                    }}>
+                      {isExcluded ? '休' : '✓'}
+                    </button>
+                    <span style={{ fontWeight: '600', textDecoration: isExcluded ? 'line-through' : 'none', color: isExcluded ? '#9ca3af' : '#1f2937' }}>{s.name}</span>
+                  </div>
                   <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                     {record ? (
                       <>
@@ -5022,7 +5051,9 @@ function TimeCard({ staff, timeRecords, setTimeRecords, isAdmin }) {
                         </span>
                       </>
                     ) : (
-                      <span style={{ color: '#9ca3af', fontSize: '14px' }}>未出勤</span>
+                      <span style={{ color: isExcluded ? '#ef4444' : '#9ca3af', fontSize: '14px' }}>
+                        {isExcluded ? '休み' : '未出勤'}
+                      </span>
                     )}
                   </div>
                 </div>
