@@ -1014,7 +1014,8 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
 // ==================== ホーム画面 ====================
 function HomeScreen({ staff, leaveRequests, practiceReservations, contactWeekly, isAdmin }) {
   const today = new Date()
-  const todayStr = today.toISOString().split('T')[0]
+  // ローカル時間（日本時間）で日付を取得
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
   
   // 当日の連絡機能
   const [dailyMessage, setDailyMessage] = useState('')
