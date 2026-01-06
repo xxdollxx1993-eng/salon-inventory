@@ -3334,11 +3334,11 @@ function StaffManagement({ staff, setStaff, categories, isAdmin }) {
     }
   }
   const deleteStaff = async (id, name) => { if (!confirm(`「${name}」を削除しますか？`)) return; const { error } = await supabase.from('staff').delete().eq('id', id); if (!error) setStaff(staff.filter(s => s.id !== id)) }
-  const startEdit = (s) => { setEditingId(s.id); setEditData({ name: s.name, dealers: s.dealer ? s.dealer.split(',').filter(d => d) : [], joinDate: s.joinDate || '', tenureRate: s.tenureRate || 100, workType: s.workType || 'full', partTimeRate: s.partTimeRate || 100, workDaysPerWeek: s.workDaysPerWeek || 5, isOpeningStaff: s.isOpeningStaff || false, specialRate: s.specialRate || 0, isManagement: s.isManagement || false }) }
+  const startEdit = (s) => { setEditingId(s.id); setEditData({ name: s.name, dealers: s.dealer ? s.dealer.split(',').filter(d => d) : [], joinDate: s.joinDate || '', tenureRate: s.tenureRate || 100, workType: s.workType || 'full', partTimeRate: s.partTimeRate || 100, workDaysPerWeek: s.workDaysPerWeek || 5, isOpeningStaff: s.isOpeningStaff || false, specialRate: s.specialRate || 0, isManagement: s.isManagement || false, timecardEnabled: s.timecardEnabled !== false }) }
   const saveEdit = async (id) => {
     const dealerStr = editData.dealers.join(',')
-    const { error } = await supabase.from('staff').update({ name: editData.name, dealer: dealerStr, join_date: editData.joinDate || null, tenure_rate: editData.tenureRate, work_type: editData.workType, part_time_rate: editData.partTimeRate, work_days_per_week: editData.workDaysPerWeek, is_opening_staff: editData.isOpeningStaff, special_rate: editData.specialRate, is_management: editData.isManagement }).eq('id', id)
-    if (!error) { setStaff(staff.map(s => s.id === id ? { ...s, name: editData.name, dealer: dealerStr, joinDate: editData.joinDate || null, tenureRate: editData.tenureRate, workType: editData.workType, partTimeRate: editData.partTimeRate, workDaysPerWeek: editData.workDaysPerWeek, isOpeningStaff: editData.isOpeningStaff, specialRate: editData.specialRate, isManagement: editData.isManagement } : s)); setEditingId(null) }
+    const { error } = await supabase.from('staff').update({ name: editData.name, dealer: dealerStr, join_date: editData.joinDate || null, tenure_rate: editData.tenureRate, work_type: editData.workType, part_time_rate: editData.partTimeRate, work_days_per_week: editData.workDaysPerWeek, is_opening_staff: editData.isOpeningStaff, special_rate: editData.specialRate, is_management: editData.isManagement, timecard_enabled: editData.timecardEnabled }).eq('id', id)
+    if (!error) { setStaff(staff.map(s => s.id === id ? { ...s, name: editData.name, dealer: dealerStr, joinDate: editData.joinDate || null, tenureRate: editData.tenureRate, workType: editData.workType, partTimeRate: editData.partTimeRate, workDaysPerWeek: editData.workDaysPerWeek, isOpeningStaff: editData.isOpeningStaff, specialRate: editData.specialRate, isManagement: editData.isManagement, timecardEnabled: editData.timecardEnabled } : s)); setEditingId(null) }
   }
 
   // スタッフ用のシンプル表示
@@ -3546,6 +3546,13 @@ function StaffManagement({ staff, setStaff, categories, isAdmin }) {
                   <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '10px', backgroundColor: '#fef2f2', borderRadius: '8px', border: '1px solid #fecaca' }}>
                     <input type="checkbox" checked={editData.isManagement} onChange={e => setEditData({...editData, isManagement: e.target.checked})} style={{ width: '16px', height: '16px' }} />
                     <span style={{ fontWeight: '600', color: '#dc2626', fontSize: '13px' }}>👑 経営陣（ボーナス対象外）</span>
+                  </label>
+                </div>
+                
+                <div style={{ marginBottom: '12px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '10px', backgroundColor: '#eff6ff', borderRadius: '8px', border: '1px solid #bfdbfe' }}>
+                    <input type="checkbox" checked={editData.timecardEnabled !== false} onChange={e => setEditData({...editData, timecardEnabled: e.target.checked})} style={{ width: '16px', height: '16px' }} />
+                    <span style={{ fontWeight: '600', color: '#2563eb', fontSize: '13px' }}>🕐 タイムカード対象（一括打刻に含める）</span>
                   </label>
                 </div>
                 
