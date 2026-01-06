@@ -1199,13 +1199,13 @@ function HomeScreen({ staff, leaveRequests, practiceReservations, contactWeekly,
   return (
     <div className="space-y-4">
       {/* 🚨 緊急メッセージ（最上部・日付関係なく残る） */}
-      {(savedUrgent?.message || isAdmin) && (
+      {(savedUrgent?.message || isEditingUrgent) && (
         <div className="card" style={{ backgroundColor: '#fef2f2', border: '2px solid #ef4444', boxShadow: '0 4px 12px rgba(239, 68, 68, 0.2)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: savedUrgent?.message || isEditingUrgent ? '12px' : '0' }}>
             <h3 style={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', color: '#dc2626' }}>
               <span style={{ fontSize: '20px' }}>🚨</span> 緊急連絡
             </h3>
-            {isAdmin && !isEditingUrgent && (
+            {!isEditingUrgent && (
               <button onClick={() => setIsEditingUrgent(true)} style={{
                 padding: '6px 12px', borderRadius: '6px', border: 'none', cursor: 'pointer',
                 backgroundColor: '#ef4444', color: '#fff', fontSize: '12px', fontWeight: '600'
@@ -1220,8 +1220,8 @@ function HomeScreen({ staff, leaveRequests, practiceReservations, contactWeekly,
             </div>
           )}
           
-          {/* 編集モード（管理者のみ） */}
-          {isAdmin && isEditingUrgent && (
+          {/* 編集モード */}
+          {isEditingUrgent && (
             <div>
               <textarea
                 value={urgentMessage}
@@ -1251,12 +1251,15 @@ function HomeScreen({ staff, leaveRequests, practiceReservations, contactWeekly,
               <p style={{ fontSize: '11px', color: '#991b1b', marginTop: '8px' }}>※ 緊急連絡は削除するまで表示され続けます</p>
             </div>
           )}
-          
-          {/* メッセージがない場合（管理者向けプレースホルダー） */}
-          {isAdmin && !isEditingUrgent && !savedUrgent?.message && (
-            <p style={{ color: '#991b1b', fontSize: '14px' }}>緊急連絡はありません</p>
-          )}
         </div>
+      )}
+      
+      {/* 緊急連絡がない時の追加ボタン */}
+      {!savedUrgent?.message && !isEditingUrgent && (
+        <button onClick={() => setIsEditingUrgent(true)} style={{
+          width: '100%', padding: '12px', borderRadius: '12px', border: '2px dashed #fecaca',
+          backgroundColor: '#fef2f2', color: '#dc2626', fontWeight: '600', fontSize: '14px', cursor: 'pointer'
+        }}>🚨 緊急連絡を追加</button>
       )}
 
       {/* スタッフ向け：連絡帳の締切お知らせ */}
@@ -1286,13 +1289,13 @@ function HomeScreen({ staff, leaveRequests, practiceReservations, contactWeekly,
       </div>
 
       {/* 📢 当日の連絡 */}
-      {(savedMessage?.message || isAdmin) && (
+      {(savedMessage?.message || isEditingMessage) && (
         <div className="card" style={{ backgroundColor: '#fef3c7', border: '1px solid #fcd34d' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: savedMessage?.message || isEditingMessage ? '12px' : '0' }}>
             <h3 style={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span style={{ fontSize: '20px' }}>📢</span> 今日の連絡
             </h3>
-            {isAdmin && !isEditingMessage && (
+            {!isEditingMessage && (
               <button onClick={() => setIsEditingMessage(true)} style={{
                 padding: '6px 12px', borderRadius: '6px', border: 'none', cursor: 'pointer',
                 backgroundColor: '#f59e0b', color: '#fff', fontSize: '12px', fontWeight: '600'
@@ -1300,15 +1303,15 @@ function HomeScreen({ staff, leaveRequests, practiceReservations, contactWeekly,
             )}
           </div>
           
-          {/* 表示モード（スタッフ & 管理者共通） */}
+          {/* 表示モード */}
           {!isEditingMessage && savedMessage?.message && (
             <div style={{ backgroundColor: '#fff', padding: '12px', borderRadius: '10px', whiteSpace: 'pre-wrap', fontSize: '15px', lineHeight: '1.6' }}>
               {savedMessage.message}
             </div>
           )}
           
-          {/* 編集モード（管理者のみ） */}
-          {isAdmin && isEditingMessage && (
+          {/* 編集モード */}
+          {isEditingMessage && (
             <div>
               <textarea
                 value={dailyMessage}
@@ -1335,14 +1338,18 @@ function HomeScreen({ staff, leaveRequests, practiceReservations, contactWeekly,
                   backgroundColor: '#e5e7eb', color: '#374151', fontWeight: '600', fontSize: '14px'
                 }}>キャンセル</button>
               </div>
+              <p style={{ fontSize: '11px', color: '#92400e', marginTop: '8px' }}>※ 今日の連絡は日付が変わると自動で消えます</p>
             </div>
           )}
-          
-          {/* 連絡がない場合（管理者向けプレースホルダー） */}
-          {isAdmin && !isEditingMessage && !savedMessage?.message && (
-            <p style={{ color: '#92400e', fontSize: '14px' }}>連絡事項はありません</p>
-          )}
         </div>
+      )}
+      
+      {/* 今日の連絡がない時の追加ボタン */}
+      {!savedMessage?.message && !isEditingMessage && (
+        <button onClick={() => setIsEditingMessage(true)} style={{
+          width: '100%', padding: '12px', borderRadius: '12px', border: '2px dashed #fcd34d',
+          backgroundColor: '#fef3c7', color: '#92400e', fontWeight: '600', fontSize: '14px', cursor: 'pointer'
+        }}>📢 今日の連絡を追加</button>
       )}
 
       {/* 今日の出勤 */}
