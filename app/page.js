@@ -449,7 +449,8 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
         workType: s.work_type || 'full', partTimeRate: s.part_time_rate || 100,
         isOpeningStaff: s.is_opening_staff || false, specialRate: s.special_rate || 0,
         isManagement: s.is_management || false, workDaysPerWeek: s.work_days_per_week || 5,
-        contactEnabled: s.contact_enabled || false
+        contactEnabled: s.contact_enabled || false,
+        timecardEnabled: s.timecard_enabled !== false // デフォルトtrue
       })))
       if (productsRes.data) setProducts(productsRes.data.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)).map(p => ({ id: p.id, largeCategory: p.large_category, mediumCategory: p.medium_category, name: p.name, purchasePrice: p.purchase_price, sellingPrice: p.selling_price, productType: p.product_type || 'business', sortOrder: p.sort_order || 0, isMaterial: p.is_material || false })))
       if (categoriesRes.data) {
@@ -3597,6 +3598,11 @@ function StaffManagement({ staff, setStaff, categories, isAdmin }) {
                       {s.specialRate > 0 && (
                         <span style={{ display: 'inline-block', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: '600', backgroundColor: '#fee2e2', color: '#dc2626' }}>特別+{s.specialRate}%</span>
                       )}
+                      <button onClick={() => toggleTimecardEnabled(s.id)} style={{
+                        display: 'inline-block', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: '600', border: 'none', cursor: 'pointer',
+                        backgroundColor: s.timecardEnabled !== false ? '#eff6ff' : '#f3f4f6',
+                        color: s.timecardEnabled !== false ? '#2563eb' : '#9ca3af'
+                      }}>🕐 {s.timecardEnabled !== false ? 'タイムカード○' : 'タイムカード×'}</button>
                     </div>
                     {s.dealer && (
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
@@ -3900,6 +3906,14 @@ function ContactBook({ staff, setStaff, contactGoals, setContactGoals, contactWe
     const newVal = !s.contactEnabled
     const { error } = await supabase.from('staff').update({ contact_enabled: newVal }).eq('id', staffId)
     if (!error) setStaff(staff.map(x => x.id === staffId ? { ...x, contactEnabled: newVal } : x))
+  }
+
+  // タイムカード対象スタッフ切り替え
+  const toggleTimecardEnabled = async (staffId) => {
+    const s = staff.find(x => x.id === staffId)
+    const newVal = s.timecardEnabled === false ? true : false
+    const { error } = await supabase.from('staff').update({ timecard_enabled: newVal }).eq('id', staffId)
+    if (!error) setStaff(staff.map(x => x.id === staffId ? { ...x, timecardEnabled: newVal } : x))
   }
 
   const thisWeekSubmissions = contactWeekly.filter(w => w.weekStart === currentWeekStart && w.submittedAt)
@@ -4656,7 +4670,7 @@ function PracticeReservation({ staff, practiceReservations, setPracticeReservati
 // ==================== タイムカード ====================
 function TimeCard({ staff, timeRecords, setTimeRecords, isAdmin }) {
   const [selectedStaff, setSelectedStaff] = useState('')
-  const [mode, setMode] = useState('punch') // 'punch' or 'manual' or 'list'
+  const [mode, setMode] = useState('bulk') // 'bulk' or 'punch' or 'manual' or 'list'
   const [manualDate, setManualDate] = useState('')
   const [manualClockIn, setManualClockIn] = useState('09:00')
   const [manualClockOut, setManualClockOut] = useState('15:00')
@@ -4664,8 +4678,12 @@ function TimeCard({ staff, timeRecords, setTimeRecords, isAdmin }) {
   const [specialNote, setSpecialNote] = useState('')
   const [viewMonth, setViewMonth] = useState(`${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`)
 
-  const today = new Date().toISOString().split('T')[0]
+  const today = new Date()
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
   const now = new Date()
+
+  // タイムカード対象のスタッフのみ
+  const timecardStaff = staff.filter(s => s.timecardEnabled !== false)
 
   // 15分単位の時間オプションを生成
   const timeOptions = []
@@ -4677,7 +4695,7 @@ function TimeCard({ staff, timeRecords, setTimeRecords, isAdmin }) {
 
   // 今日の記録を取得
   const getTodayRecord = (staffId) => {
-    return timeRecords.find(r => r.staffId === staffId && r.date === today)
+    return timeRecords.find(r => r.staffId === staffId && r.date === todayStr)
   }
 
   // 現在時刻を取得（HH:MM形式）
@@ -4685,7 +4703,89 @@ function TimeCard({ staff, timeRecords, setTimeRecords, isAdmin }) {
     return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
   }
 
-  // 出勤打刻
+  // 一括出勤
+  const bulkPunchIn = async () => {
+    const currentTime = getCurrentTime()
+    const targets = timecardStaff.filter(s => !getTodayRecord(s.id))
+    
+    if (targets.length === 0) {
+      alert('全員出勤済みです')
+      return
+    }
+    
+    if (!confirm(`${targets.map(s => s.name).join('、')} の出勤を記録しますか？`)) return
+    
+    const newRecords = []
+    for (const s of targets) {
+      const { data, error } = await supabase.from('time_records').insert({
+        staff_id: s.id,
+        staff_name: s.name,
+        record_date: todayStr,
+        clock_in: currentTime,
+        input_type: 'punch'
+      }).select()
+      
+      if (!error && data) {
+        newRecords.push({
+          id: data[0].id,
+          staffId: s.id,
+          staffName: s.name,
+          date: todayStr,
+          clockIn: currentTime,
+          clockOut: null,
+          isSpecial: false,
+          specialNote: '',
+          inputType: 'punch'
+        })
+      }
+    }
+    
+    if (newRecords.length > 0) {
+      setTimeRecords([...timeRecords, ...newRecords])
+      alert(`${newRecords.length}名の出勤を記録しました！ (${currentTime})`)
+    }
+  }
+
+  // 一括退勤
+  const bulkPunchOut = async () => {
+    const currentTime = getCurrentTime()
+    const targets = timecardStaff.filter(s => {
+      const record = getTodayRecord(s.id)
+      return record && record.clockIn && !record.clockOut
+    })
+    
+    if (targets.length === 0) {
+      alert('退勤対象者がいません')
+      return
+    }
+    
+    if (!confirm(`${targets.map(s => s.name).join('、')} の退勤を記録しますか？`)) return
+    
+    let count = 0
+    for (const s of targets) {
+      const record = getTodayRecord(s.id)
+      const { error } = await supabase.from('time_records').update({
+        clock_out: currentTime
+      }).eq('id', record.id)
+      
+      if (!error) {
+        count++
+      }
+    }
+    
+    if (count > 0) {
+      setTimeRecords(timeRecords.map(r => {
+        const target = targets.find(s => s.id === r.staffId)
+        if (target && r.date === todayStr && !r.clockOut) {
+          return { ...r, clockOut: currentTime }
+        }
+        return r
+      }))
+      alert(`${count}名の退勤を記録しました！ (${currentTime})`)
+    }
+  }
+
+  // 個別出勤打刻
   const punchIn = async () => {
     if (!selectedStaff) { alert('スタッフを選択してください'); return }
     const staffMember = staff.find(s => s.id === parseInt(selectedStaff))
@@ -4700,7 +4800,7 @@ function TimeCard({ staff, timeRecords, setTimeRecords, isAdmin }) {
     const { data, error } = await supabase.from('time_records').insert({
       staff_id: parseInt(selectedStaff),
       staff_name: staffMember.name,
-      record_date: today,
+      record_date: todayStr,
       clock_in: currentTime,
       input_type: 'punch'
     }).select()
@@ -4710,7 +4810,7 @@ function TimeCard({ staff, timeRecords, setTimeRecords, isAdmin }) {
         id: data[0].id,
         staffId: parseInt(selectedStaff),
         staffName: staffMember.name,
-        date: today,
+        date: todayStr,
         clockIn: currentTime,
         clockOut: null,
         isSpecial: false,
@@ -4721,7 +4821,7 @@ function TimeCard({ staff, timeRecords, setTimeRecords, isAdmin }) {
     }
   }
 
-  // 退勤打刻
+  // 個別退勤打刻
   const punchOut = async () => {
     if (!selectedStaff) { alert('スタッフを選択してください'); return }
     const staffMember = staff.find(s => s.id === parseInt(selectedStaff))
@@ -4850,19 +4950,11 @@ function TimeCard({ staff, timeRecords, setTimeRecords, isAdmin }) {
 
   return (
     <div className="space-y-4">
-      {/* スタッフ選択 */}
-      <div className="card">
-        <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>スタッフ</label>
-        <select value={selectedStaff} onChange={e => setSelectedStaff(e.target.value)} className="select">
-          <option value="">選択してください</option>
-          {staff.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-        </select>
-      </div>
-
       {/* モード切替 */}
       <div style={{ display: 'flex', gap: '8px' }}>
         {[
-          { key: 'punch', icon: '🕐', label: '打刻' },
+          { key: 'bulk', icon: '👥', label: '一括' },
+          { key: 'punch', icon: '👤', label: '個別' },
           { key: 'manual', icon: '✏️', label: '手入力' },
           { key: 'list', icon: '📋', label: '一覧' }
         ].map(m => (
@@ -4875,12 +4967,86 @@ function TimeCard({ staff, timeRecords, setTimeRecords, isAdmin }) {
         ))}
       </div>
 
-      {/* 打刻モード */}
+      {/* 一括モード */}
+      {mode === 'bulk' && (
+        <div className="card">
+          <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>👥</span> 一括打刻
+          </h3>
+          
+          {/* 現在時刻 */}
+          <div style={{ backgroundColor: '#f3f4f6', padding: '24px', borderRadius: '16px', marginBottom: '16px', textAlign: 'center' }}>
+            <div style={{ fontSize: '48px', fontWeight: 'bold', color: '#1f2937', fontFamily: 'monospace' }}>
+              {getCurrentTime()}
+            </div>
+            <div style={{ fontSize: '14px', color: '#6b7280', marginTop: '4px' }}>{todayStr}</div>
+          </div>
+          
+          {/* 一括ボタン */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
+            <button onClick={bulkPunchIn} style={{
+              padding: '20px', borderRadius: '12px', border: 'none', cursor: 'pointer',
+              backgroundColor: '#22c55e', color: '#fff', fontSize: '18px', fontWeight: 'bold'
+            }}>☀️ 全員出勤</button>
+            <button onClick={bulkPunchOut} style={{
+              padding: '20px', borderRadius: '12px', border: 'none', cursor: 'pointer',
+              backgroundColor: '#3b82f6', color: '#fff', fontSize: '18px', fontWeight: 'bold'
+            }}>🌙 全員退勤</button>
+          </div>
+          
+          {/* 今日のスタッフ状況 */}
+          <h4 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '12px', color: '#6b7280' }}>今日の打刻状況</h4>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {timecardStaff.map(s => {
+              const record = getTodayRecord(s.id)
+              return (
+                <div key={s.id} style={{
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  padding: '12px', borderRadius: '10px', backgroundColor: '#f9fafb', border: '1px solid #e5e7eb'
+                }}>
+                  <span style={{ fontWeight: '600' }}>{s.name}</span>
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    {record ? (
+                      <>
+                        <span style={{ color: '#16a34a', fontWeight: '600' }}>{record.clockIn}</span>
+                        <span style={{ color: '#d1d5db' }}>→</span>
+                        <span style={{ color: record.clockOut ? '#2563eb' : '#9ca3af', fontWeight: '600' }}>
+                          {record.clockOut || '---'}
+                        </span>
+                      </>
+                    ) : (
+                      <span style={{ color: '#9ca3af', fontSize: '14px' }}>未出勤</span>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+          
+          {timecardStaff.length === 0 && (
+            <div style={{ textAlign: 'center', padding: '24px', color: '#9ca3af' }}>
+              <p>タイムカード対象のスタッフがいません</p>
+              <p style={{ fontSize: '13px' }}>スタッフ管理で設定してください</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 個別打刻モード */}
       {mode === 'punch' && (
         <div className="card">
           <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span>🕐</span> 出勤・退勤打刻
+            <span>👤</span> 個別打刻
           </h3>
+          
+          {/* スタッフ選択 */}
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>スタッフ</label>
+            <select value={selectedStaff} onChange={e => setSelectedStaff(e.target.value)} className="select">
+              <option value="">選択してください</option>
+              {staff.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+          </div>
           
           {!selectedStaff ? (
             <div style={{ textAlign: 'center', padding: '32px 16px', color: '#9ca3af' }}>
@@ -4894,7 +5060,7 @@ function TimeCard({ staff, timeRecords, setTimeRecords, isAdmin }) {
                 <div style={{ fontSize: '48px', fontWeight: 'bold', color: '#1f2937', fontFamily: 'monospace' }}>
                   {getCurrentTime()}
                 </div>
-                <div style={{ fontSize: '14px', color: '#6b7280', marginTop: '4px' }}>{today}</div>
+                <div style={{ fontSize: '14px', color: '#6b7280', marginTop: '4px' }}>{todayStr}</div>
               </div>
               
               {/* 今日の記録 */}
@@ -4960,6 +5126,15 @@ function TimeCard({ staff, timeRecords, setTimeRecords, isAdmin }) {
             <span>✏️</span> 手入力（15分単位）
           </h3>
           
+          {/* スタッフ選択 */}
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>スタッフ</label>
+            <select value={selectedStaff} onChange={e => setSelectedStaff(e.target.value)} className="select">
+              <option value="">選択してください</option>
+              {staff.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+          </div>
+          
           {!selectedStaff ? (
             <div style={{ textAlign: 'center', padding: '32px 16px', color: '#9ca3af' }}>
               <div style={{ fontSize: '32px', marginBottom: '8px' }}>👆</div>
@@ -4969,7 +5144,7 @@ function TimeCard({ staff, timeRecords, setTimeRecords, isAdmin }) {
             <>
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>日付</label>
-                <input type="date" value={manualDate} onChange={e => setManualDate(e.target.value)} max={today} className="input" />
+                <input type="date" value={manualDate} onChange={e => setManualDate(e.target.value)} max={todayStr} className="input" />
               </div>
               
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
