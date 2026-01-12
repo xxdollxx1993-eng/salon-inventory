@@ -1615,6 +1615,7 @@ function SharedCalendar({ year, month, leaveRequests, practiceReservations, staf
           const isToday = dateStr === todayStr
           
           const dayLeave = leaveRequests.filter(r => r.leaveDate === dateStr && r.status === 'approved')
+          const dayLeavePending = leaveRequests.filter(r => r.leaveDate === dateStr && r.status === 'pending')
           const dayPractice = practiceReservations.filter(p => p.date === dateStr)
           
           let bgColor = '#ffffff'
@@ -1647,7 +1648,7 @@ function SharedCalendar({ year, month, leaveRequests, practiceReservations, staf
               {isThirdSun && <div style={{ fontSize: '9px', color: '#9ca3af', textAlign: 'center' }}>休</div>}
               {!isHolidayDay && (
                 <div style={{ fontSize: '9px', lineHeight: '1.3' }}>
-                  {/* 有給 */}
+                  {/* 有給（承認済み） */}
                   {dayLeave.slice(0, 2).map(r => (
                     <div key={r.id} style={{ 
                       backgroundColor: '#dbeafe',
@@ -1664,8 +1665,27 @@ function SharedCalendar({ year, month, leaveRequests, practiceReservations, staf
                   ))}
                   {dayLeave.length > 2 && <div style={{ color: '#6b7280', textAlign: 'center', fontSize: '8px' }}>+{dayLeave.length - 2}休</div>}
                   
+                  {/* 有給（申請中） - 黄色で表示 */}
+                  {dayLeavePending.slice(0, Math.max(0, 2 - dayLeave.length)).map(r => (
+                    <div key={r.id} style={{ 
+                      backgroundColor: '#fef3c7',
+                      color: '#92400e',
+                      borderRadius: '2px',
+                      padding: '1px 3px',
+                      marginBottom: '1px',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
+                    }}>
+                      ⏳{r.staffName?.slice(0, 3)}
+                    </div>
+                  ))}
+                  {dayLeavePending.length > Math.max(0, 2 - dayLeave.length) && (
+                    <div style={{ color: '#92400e', textAlign: 'center', fontSize: '8px' }}>+{dayLeavePending.length - Math.max(0, 2 - dayLeave.length)}申請中</div>
+                  )}
+                  
                   {/* 練習 */}
-                  {dayPractice.slice(0, Math.max(0, 2 - dayLeave.length)).map(p => {
+                  {dayPractice.slice(0, Math.max(0, 2 - dayLeave.length - dayLeavePending.length)).map(p => {
                     const color = getStaffColor(p.staffId)
                     return (
                       <div key={p.id} style={{ 
@@ -1683,8 +1703,8 @@ function SharedCalendar({ year, month, leaveRequests, practiceReservations, staf
                       </div>
                     )
                   })}
-                  {dayPractice.length > Math.max(0, 2 - dayLeave.length) && (
-                    <div style={{ color: '#6b7280', textAlign: 'center', fontSize: '8px' }}>+{dayPractice.length - Math.max(0, 2 - dayLeave.length)}件</div>
+                  {dayPractice.length > Math.max(0, 2 - dayLeave.length - dayLeavePending.length) && (
+                    <div style={{ color: '#6b7280', textAlign: 'center', fontSize: '8px' }}>+{dayPractice.length - Math.max(0, 2 - dayLeave.length - dayLeavePending.length)}件</div>
                   )}
                 </div>
               )}
@@ -5396,60 +5416,90 @@ function LeaveManagement({ staff, leaveGrants, setLeaveGrants, leaveRequests, se
 
   // 有給申請
   const submitRequest = async () => {
-    if (!selectedStaff || !requestDate) { alert('スタッフと日付を選択してください'); return }
+    if (!selectedStaff) { 
+      alert('スタッフを選択してください')
+      return 
+    }
+    if (!requestDate) { 
+      alert('日付を選択してください')
+      return 
+    }
+    
     const staffMember = staff.find(s => s.id === parseInt(selectedStaff))
     const dayValue = dayType === 'full' ? 1.0 : 0.5
+    
+    // 同じ日付で既に申請していないかチェック
+    const existingRequest = leaveRequests.find(r => 
+      r.staffId === parseInt(selectedStaff) && 
+      r.leaveDate === requestDate &&
+      r.status !== 'rejected'
+    )
+    if (existingRequest) {
+      alert('この日付は既に申請済みです')
+      return
+    }
     
     // 残日数チェック
     const remaining = getRemainingDays(parseInt(selectedStaff), fiscalYear, requestType)
     if (remaining < dayValue) {
-      alert('残日数が足りません')
+      alert(`残日数が足りません（残り${remaining}日）`)
       return
     }
 
-    const { data, error } = await supabase.from('leave_requests').insert({
-      staff_id: parseInt(selectedStaff),
-      staff_name: staffMember.name,
-      leave_type: requestType,
-      leave_date: requestDate,
-      day_type: dayType,
-      day_value: dayValue,
-      status: 'pending',
-      memo: requestMemo
-    }).select()
-
-    if (!error && data) {
-      setLeaveRequests([{
-        id: data[0].id,
-        staffId: parseInt(selectedStaff),
-        staffName: staffMember.name,
-        leaveType: requestType,
-        leaveDate: requestDate,
-        dayType,
-        dayValue,
+    try {
+      const { data, error } = await supabase.from('leave_requests').insert({
+        staff_id: parseInt(selectedStaff),
+        staff_name: staffMember.name,
+        leave_type: requestType,
+        leave_date: requestDate,
+        day_type: dayType,
+        day_value: dayValue,
         status: 'pending',
-        memo: requestMemo,
-        approvedBy: null,
-        approvedAt: null
-      }, ...leaveRequests])
-      
-      // 管理者へ通知
-      const dayTypeLabel = { full: '全休', am: '午前休', pm: '午後休' }
-      const { data: notifData } = await supabase.from('notifications').insert({
-        target_role: 'admin',
-        target_staff_id: null,
-        message: `${staffMember.name}さんが${requestType === 'paid' ? '有給' : '夏休み'}を申請（${requestDate} ${dayTypeLabel[dayType]}）`,
-        link_to: 'leave',
-        is_read: false
+        memo: requestMemo
       }).select()
-      
-      if (notifData) {
-        setNotifications([{ id: notifData[0].id, targetRole: 'admin', targetStaffId: null, message: notifData[0].message, linkTo: 'leave', isRead: false, createdAt: notifData[0].created_at }, ...notifications])
+
+      if (error) {
+        console.error('申請エラー:', error)
+        alert('申請に失敗しました。もう一度お試しください。')
+        return
       }
       
-      alert('申請しました！')
-      setRequestDate('')
-      setRequestMemo('')
+      if (data) {
+        setLeaveRequests([{
+          id: data[0].id,
+          staffId: parseInt(selectedStaff),
+          staffName: staffMember.name,
+          leaveType: requestType,
+          leaveDate: requestDate,
+          dayType,
+          dayValue,
+          status: 'pending',
+          memo: requestMemo,
+          approvedBy: null,
+          approvedAt: null
+        }, ...leaveRequests])
+        
+        // 管理者へ通知
+        const dayTypeLabel = { full: '全休', am: '午前休', pm: '午後休' }
+        const { data: notifData } = await supabase.from('notifications').insert({
+          target_role: 'admin',
+          target_staff_id: null,
+          message: `${staffMember.name}さんが${requestType === 'paid' ? '有給' : '夏休み'}を申請（${requestDate} ${dayTypeLabel[dayType]}）`,
+          link_to: 'leave',
+          is_read: false
+        }).select()
+        
+        if (notifData) {
+          setNotifications([{ id: notifData[0].id, targetRole: 'admin', targetStaffId: null, message: notifData[0].message, linkTo: 'leave', isRead: false, createdAt: notifData[0].created_at }, ...notifications])
+        }
+        
+        alert('申請しました！')
+        setRequestDate('')
+        setRequestMemo('')
+      }
+    } catch (err) {
+      console.error('申請エラー:', err)
+      alert('申請に失敗しました。もう一度お試しください。')
     }
   }
 
