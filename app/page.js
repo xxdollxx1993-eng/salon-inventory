@@ -410,6 +410,8 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
   const [contactMonthly, setContactMonthly] = useState([])
   const [lossRecords, setLossRecords] = useState([])
   const [lossPrices, setLossPrices] = useState([])
+  const [visitSources, setVisitSources] = useState([])
+  const [newVisits, setNewVisits] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => { loadAllData() }, [])
@@ -417,7 +419,7 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
   const loadAllData = async () => {
     setLoading(true)
     try {
-      const [staffRes, productsRes, categoriesRes, usageRes, stockInRes, inventoryRes, favoritesRes, purchasesRes, budgetsRes, allocationsRes, bonusRes, lossRes, lossPricesRes, monthlyRes, timeRes, leaveGrantsRes, leaveRequestsRes, notificationsRes, practiceRes, modelRulesRes, contactGoalsRes, contactWeeklyRes, contactRepliesRes, contactMonthlyRes] = await Promise.all([
+      const [staffRes, productsRes, categoriesRes, usageRes, stockInRes, inventoryRes, favoritesRes, purchasesRes, budgetsRes, allocationsRes, bonusRes, lossRes, lossPricesRes, monthlyRes, timeRes, leaveGrantsRes, leaveRequestsRes, notificationsRes, practiceRes, modelRulesRes, contactGoalsRes, contactWeeklyRes, contactRepliesRes, contactMonthlyRes, visitSourcesRes, newVisitsRes] = await Promise.all([
         supabase.from('staff').select('*').order('id'),
         supabase.from('products').select('*').order('id'),
         supabase.from('categories').select('*').order('id'),
@@ -442,6 +444,8 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
         supabase.from('contact_weekly').select('*').order('week_start', { ascending: false }),
         supabase.from('contact_replies').select('*').order('created_at', { ascending: false }),
         supabase.from('contact_monthly').select('*').order('year_month', { ascending: false }),
+        supabase.from('visit_sources').select('*').order('sort_order'),
+        supabase.from('new_visits').select('*').order('visit_date', { ascending: false }),
       ])
       if (staffRes.data) setStaff(staffRes.data.map(s => ({
         id: s.id, name: s.name, dealer: s.dealer || '',
@@ -483,6 +487,8 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
       if (contactWeeklyRes.data) setContactWeekly(contactWeeklyRes.data.map(w => ({ id: w.id, staffId: w.staff_id, staffName: w.staff_name, weekStart: w.week_start, checks: [w.check_mon, w.check_tue, w.check_wed, w.check_thu, w.check_fri, w.check_sat, w.check_sun], zeroReason: w.zero_reason, nextAction: w.next_action, nextActionDetail: w.next_action_detail, submittedAt: w.submitted_at })))
       if (contactRepliesRes.data) setContactReplies(contactRepliesRes.data.map(r => ({ id: r.id, weeklyId: r.weekly_id, replyText: r.reply_text, repliedBy: r.replied_by, createdAt: r.created_at })))
       if (contactMonthlyRes.data) setContactMonthly(contactMonthlyRes.data.map(m => ({ id: m.id, staffId: m.staff_id, staffName: m.staff_name, yearMonth: m.year_month, q1: m.q1_answer, q2: m.q2_answer, q3: m.q3_answer, submittedAt: m.submitted_at })))
+      if (visitSourcesRes.data) setVisitSources(visitSourcesRes.data.map(s => ({ id: s.id, name: s.name, sortOrder: s.sort_order })))
+      if (newVisitsRes.data) setNewVisits(newVisitsRes.data.map(v => ({ id: v.id, date: v.visit_date, staffId: v.staff_id, staffName: v.staff_name, sourceId: v.source_id, sourceName: v.source_name, memo: v.memo })))
     } catch (e) { console.error('データ読み込みエラー:', e) }
     setLoading(false)
   }
@@ -875,6 +881,7 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
     { key: 'leave', label: '🏖️ 有給管理' }
   ]
   const adminBusinessTabs = [
+    { key: 'newvisit', label: '✨ 新規' },
     { key: 'inventory', label: '📋 棚卸' },
     { key: 'monthly', label: '📊 月次レポート' },
     { key: 'dealer', label: '💰 予算管理' },
@@ -1007,6 +1014,7 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
       {tab === 'monthly' && <MonthlyReport monthlyReports={monthlyReports} setMonthlyReports={setMonthlyReports} stockIn={stockIn} products={products} staffPurchases={staffPurchases} isAdmin={isAdmin} />}
       {tab === 'loss' && <LossInput lossRecords={lossRecords} setLossRecords={setLossRecords} lossPrices={lossPrices} isAdmin={isAdmin} />}
       {tab === 'lossprice' && isAdmin && <LossPriceSettings lossPrices={lossPrices} setLossPrices={setLossPrices} />}
+      {tab === 'newvisit' && <NewVisitTracking staff={staff} visitSources={visitSources} setVisitSources={setVisitSources} newVisits={newVisits} setNewVisits={setNewVisits} isAdmin={isAdmin} />}
       {tab === 'settings' && isAdmin && <AppSettings passwords={passwords} setPasswords={setPasswords} />}
 
       {/* ヘルプモーダル */}
@@ -7180,6 +7188,320 @@ function LossPriceSettings({ lossPrices, setLossPrices }) {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ==================== 新規来店トラッキング ====================
+function NewVisitTracking({ staff, visitSources, setVisitSources, newVisits, setNewVisits, isAdmin }) {
+  const [mode, setMode] = useState('record') // 'record', 'stats', 'settings'
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
+  const [selectedStaff, setSelectedStaff] = useState('')
+  const [selectedSource, setSelectedSource] = useState('')
+  const [memo, setMemo] = useState('')
+  const [viewMonth, setViewMonth] = useState(`${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`)
+  const [newSourceName, setNewSourceName] = useState('')
+  const [editingId, setEditingId] = useState(null)
+  const [editData, setEditData] = useState({})
+
+  // 記録を追加
+  const addVisit = async () => {
+    if (!selectedStaff || !selectedSource) {
+      alert('担当スタッフと来店経路を選択してください')
+      return
+    }
+    
+    const staffMember = staff.find(s => s.id === parseInt(selectedStaff))
+    const source = visitSources.find(s => s.id === parseInt(selectedSource))
+    
+    const { data, error } = await supabase.from('new_visits').insert({
+      visit_date: selectedDate,
+      staff_id: parseInt(selectedStaff),
+      staff_name: staffMember.name,
+      source_id: parseInt(selectedSource),
+      source_name: source.name,
+      memo: memo
+    }).select()
+    
+    if (!error && data) {
+      setNewVisits([{
+        id: data[0].id,
+        date: selectedDate,
+        staffId: parseInt(selectedStaff),
+        staffName: staffMember.name,
+        sourceId: parseInt(selectedSource),
+        sourceName: source.name,
+        memo: memo
+      }, ...newVisits])
+      setSelectedStaff('')
+      setSelectedSource('')
+      setMemo('')
+      alert('記録しました！')
+    }
+  }
+
+  // 記録を削除
+  const deleteVisit = async (id) => {
+    if (!confirm('この記録を削除しますか？')) return
+    const { error } = await supabase.from('new_visits').delete().eq('id', id)
+    if (!error) setNewVisits(newVisits.filter(v => v.id !== id))
+  }
+
+  // 来店経路を追加
+  const addSource = async () => {
+    if (!newSourceName.trim()) return
+    const maxOrder = visitSources.length > 0 ? Math.max(...visitSources.map(s => s.sortOrder || 0)) + 1 : 1
+    
+    const { data, error } = await supabase.from('visit_sources').insert({
+      name: newSourceName.trim(),
+      sort_order: maxOrder
+    }).select()
+    
+    if (!error && data) {
+      setVisitSources([...visitSources, { id: data[0].id, name: newSourceName.trim(), sortOrder: maxOrder }])
+      setNewSourceName('')
+    }
+  }
+
+  // 来店経路を削除
+  const deleteSource = async (id) => {
+    const source = visitSources.find(s => s.id === id)
+    if (!confirm(`「${source.name}」を削除しますか？`)) return
+    const { error } = await supabase.from('visit_sources').delete().eq('id', id)
+    if (!error) setVisitSources(visitSources.filter(s => s.id !== id))
+  }
+
+  // 月別フィルター
+  const [filterYear, filterMonth] = viewMonth.split('-').map(Number)
+  const monthlyVisits = newVisits.filter(v => {
+    const d = new Date(v.date)
+    return d.getFullYear() === filterYear && d.getMonth() + 1 === filterMonth
+  })
+
+  // 経路別集計
+  const sourceStats = visitSources.map(source => {
+    const count = monthlyVisits.filter(v => v.sourceId === source.id).length
+    return { ...source, count }
+  }).filter(s => s.count > 0).sort((a, b) => b.count - a.count)
+
+  // スタッフ別集計
+  const staffStats = staff.map(s => {
+    const count = monthlyVisits.filter(v => v.staffId === s.id).length
+    return { ...s, count }
+  }).filter(s => s.count > 0).sort((a, b) => b.count - a.count)
+
+  const totalMonthly = monthlyVisits.length
+  const maxCount = Math.max(...sourceStats.map(s => s.count), 1)
+
+  // 今日の記録
+  const todayStr = new Date().toISOString().split('T')[0]
+  const todayVisits = newVisits.filter(v => v.date === todayStr)
+
+  return (
+    <div className="space-y-4">
+      {/* モード切替 */}
+      <div style={{ display: 'flex', gap: '8px' }}>
+        {[
+          { key: 'record', icon: '📝', label: '記録' },
+          { key: 'stats', icon: '📊', label: '集計' },
+          { key: 'settings', icon: '⚙️', label: '設定' }
+        ].map(m => (
+          <button key={m.key} onClick={() => setMode(m.key)} style={{
+            flex: 1, padding: '12px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+            fontWeight: '600', fontSize: '14px',
+            backgroundColor: mode === m.key ? '#3b82f6' : '#f3f4f6',
+            color: mode === m.key ? '#fff' : '#374151'
+          }}>{m.icon} {m.label}</button>
+        ))}
+      </div>
+
+      {/* 記録モード */}
+      {mode === 'record' && (
+        <div className="card">
+          <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>✨</span> 新規来店を記録
+          </h3>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>日付</label>
+              <input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} className="input" />
+            </div>
+            
+            <div>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>担当スタッフ</label>
+              <select value={selectedStaff} onChange={e => setSelectedStaff(e.target.value)} className="select">
+                <option value="">選択してください</option>
+                {staff.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+            </div>
+            
+            <div>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>来店経路</label>
+              {visitSources.length === 0 ? (
+                <p style={{ color: '#9ca3af', fontSize: '14px' }}>設定タブで来店経路を追加してください</p>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+                  {visitSources.map(source => (
+                    <button key={source.id} onClick={() => setSelectedSource(String(source.id))} style={{
+                      padding: '12px 8px', borderRadius: '10px', cursor: 'pointer',
+                      fontWeight: '600', fontSize: '13px',
+                      border: selectedSource === String(source.id) ? '2px solid #3b82f6' : '1px solid #e5e7eb',
+                      backgroundColor: selectedSource === String(source.id) ? '#eff6ff' : '#fff',
+                      color: selectedSource === String(source.id) ? '#2563eb' : '#374151'
+                    }}>{source.name}</button>
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            <div>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>メモ（任意）</label>
+              <input type="text" value={memo} onChange={e => setMemo(e.target.value)} placeholder="例：〇〇さんの紹介" className="input" />
+            </div>
+            
+            <button onClick={addVisit} style={{
+              padding: '14px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+              backgroundColor: '#22c55e', color: '#fff', fontWeight: '600', fontSize: '15px'
+            }}>✨ 記録する</button>
+          </div>
+          
+          {/* 今日の記録 */}
+          {todayVisits.length > 0 && (
+            <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #e5e7eb' }}>
+              <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#6b7280', marginBottom: '12px' }}>今日の記録 ({todayVisits.length}件)</h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {todayVisits.map(v => (
+                  <div key={v.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', backgroundColor: '#f9fafb', borderRadius: '8px' }}>
+                    <div>
+                      <span style={{ fontWeight: '600' }}>{v.staffName}</span>
+                      <span style={{ marginLeft: '8px', color: '#3b82f6' }}>{v.sourceName}</span>
+                      {v.memo && <span style={{ marginLeft: '8px', color: '#9ca3af', fontSize: '13px' }}>({v.memo})</span>}
+                    </div>
+                    <button onClick={() => deleteVisit(v.id)} style={{ color: '#ef4444', fontSize: '13px', background: 'none', border: 'none', cursor: 'pointer' }}>削除</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 集計モード */}
+      {mode === 'stats' && (
+        <div className="card">
+          <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>📊</span> 新規来店 集計
+          </h3>
+          
+          {/* 月選択 */}
+          <div style={{ marginBottom: '16px' }}>
+            <input type="month" value={viewMonth} onChange={e => setViewMonth(e.target.value)} className="input" style={{ width: 'auto' }} />
+          </div>
+          
+          {/* サマリー */}
+          <div style={{ backgroundColor: '#eff6ff', padding: '20px', borderRadius: '12px', textAlign: 'center', marginBottom: '20px' }}>
+            <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>今月の新規</div>
+            <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#2563eb' }}>{totalMonthly}<span style={{ fontSize: '16px', marginLeft: '4px' }}>名</span></div>
+          </div>
+          
+          {/* 経路別グラフ */}
+          <div style={{ marginBottom: '24px' }}>
+            <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#374151', marginBottom: '12px' }}>📈 来店経路別</h4>
+            {sourceStats.length === 0 ? (
+              <p style={{ color: '#9ca3af', textAlign: 'center', padding: '20px' }}>データがありません</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {sourceStats.map(s => (
+                  <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ width: '100px', fontSize: '13px', fontWeight: '600', color: '#374151' }}>{s.name}</div>
+                    <div style={{ flex: 1, height: '24px', backgroundColor: '#f3f4f6', borderRadius: '4px', overflow: 'hidden' }}>
+                      <div style={{ 
+                        width: `${(s.count / maxCount) * 100}%`, 
+                        height: '100%', 
+                        backgroundColor: '#3b82f6',
+                        borderRadius: '4px',
+                        transition: 'width 0.3s'
+                      }}></div>
+                    </div>
+                    <div style={{ width: '60px', textAlign: 'right', fontSize: '14px', fontWeight: 'bold', color: '#2563eb' }}>
+                      {s.count}名 <span style={{ color: '#9ca3af', fontSize: '12px' }}>({totalMonthly > 0 ? Math.round(s.count / totalMonthly * 100) : 0}%)</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          
+          {/* スタッフ別 */}
+          <div>
+            <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#374151', marginBottom: '12px' }}>👤 スタッフ別 新規数</h4>
+            {staffStats.length === 0 ? (
+              <p style={{ color: '#9ca3af', textAlign: 'center', padding: '20px' }}>データがありません</p>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '8px' }}>
+                {staffStats.map(s => (
+                  <div key={s.id} style={{ backgroundColor: '#f0fdf4', padding: '12px', borderRadius: '10px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>{s.name}</div>
+                    <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#16a34a' }}>{s.count}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          
+          {/* 詳細リスト */}
+          {monthlyVisits.length > 0 && (
+            <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid #e5e7eb' }}>
+              <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#374151', marginBottom: '12px' }}>📋 詳細</h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '300px', overflowY: 'auto' }}>
+                {monthlyVisits.sort((a, b) => b.date.localeCompare(a.date)).map(v => (
+                  <div key={v.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', backgroundColor: '#f9fafb', borderRadius: '6px', fontSize: '13px' }}>
+                    <div>
+                      <span style={{ color: '#6b7280' }}>{v.date}</span>
+                      <span style={{ marginLeft: '8px', fontWeight: '600' }}>{v.staffName}</span>
+                      <span style={{ marginLeft: '8px', color: '#3b82f6' }}>{v.sourceName}</span>
+                    </div>
+                    <button onClick={() => deleteVisit(v.id)} style={{ color: '#ef4444', fontSize: '12px', background: 'none', border: 'none', cursor: 'pointer' }}>削除</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 設定モード */}
+      {mode === 'settings' && (
+        <div className="card">
+          <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>⚙️</span> 来店経路の設定
+          </h3>
+          
+          {/* 追加フォーム */}
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+            <input type="text" value={newSourceName} onChange={e => setNewSourceName(e.target.value)} placeholder="新しい来店経路" className="input" style={{ flex: 1 }} />
+            <button onClick={addSource} style={{
+              padding: '10px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+              backgroundColor: '#3b82f6', color: '#fff', fontWeight: '600', fontSize: '14px'
+            }}>追加</button>
+          </div>
+          
+          {/* 一覧 */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {visitSources.length === 0 ? (
+              <p style={{ color: '#9ca3af', textAlign: 'center', padding: '20px' }}>来店経路がありません。上から追加してください。</p>
+            ) : (
+              visitSources.map(source => (
+                <div key={source.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', backgroundColor: '#f9fafb', borderRadius: '8px' }}>
+                  <span style={{ fontWeight: '600' }}>{source.name}</span>
+                  <button onClick={() => deleteSource(source.id)} style={{ color: '#ef4444', fontSize: '13px', background: 'none', border: 'none', cursor: 'pointer' }}>削除</button>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       )}
     </div>
