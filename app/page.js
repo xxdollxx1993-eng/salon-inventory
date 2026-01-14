@@ -7249,6 +7249,46 @@ function NewVisitTracking({ staff, visitSources, setVisitSources, newVisits, set
     if (!error) setNewVisits(newVisits.filter(v => v.id !== id))
   }
 
+  // 編集開始
+  const startEdit = (visit) => {
+    setEditingId(visit.id)
+    setEditData({
+      date: visit.date,
+      staffId: String(visit.staffId),
+      sourceId: String(visit.sourceId),
+      memo: visit.memo || ''
+    })
+  }
+
+  // 編集保存
+  const saveEdit = async () => {
+    const staffMember = staff.find(s => s.id === parseInt(editData.staffId))
+    const source = visitSources.find(s => s.id === parseInt(editData.sourceId))
+    
+    const { error } = await supabase.from('new_visits').update({
+      visit_date: editData.date,
+      staff_id: parseInt(editData.staffId),
+      staff_name: staffMember.name,
+      source_id: parseInt(editData.sourceId),
+      source_name: source.name,
+      memo: editData.memo
+    }).eq('id', editingId)
+    
+    if (!error) {
+      setNewVisits(newVisits.map(v => v.id === editingId ? {
+        ...v,
+        date: editData.date,
+        staffId: parseInt(editData.staffId),
+        staffName: staffMember.name,
+        sourceId: parseInt(editData.sourceId),
+        sourceName: source.name,
+        memo: editData.memo
+      } : v))
+      setEditingId(null)
+      setEditData({})
+    }
+  }
+
   // 来店経路を追加
   const addSource = async () => {
     if (!newSourceName.trim()) return
@@ -7456,16 +7496,51 @@ function NewVisitTracking({ staff, visitSources, setVisitSources, newVisits, set
           {monthlyVisits.length > 0 && (
             <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid #e5e7eb' }}>
               <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#374151', marginBottom: '12px' }}>📋 詳細</h4>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '300px', overflowY: 'auto' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '400px', overflowY: 'auto' }}>
                 {monthlyVisits.sort((a, b) => b.date.localeCompare(a.date)).map(v => (
-                  <div key={v.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', backgroundColor: '#f9fafb', borderRadius: '6px', fontSize: '13px' }}>
-                    <div>
-                      <span style={{ color: '#6b7280' }}>{v.date}</span>
-                      <span style={{ marginLeft: '8px', fontWeight: '600' }}>{v.staffName}</span>
-                      <span style={{ marginLeft: '8px', color: '#3b82f6' }}>{v.sourceName}</span>
+                  editingId === v.id ? (
+                    <div key={v.id} style={{ padding: '12px', backgroundColor: '#fef9c3', borderRadius: '8px', border: '1px solid #fcd34d' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
+                        <div>
+                          <label style={{ fontSize: '11px', color: '#6b7280' }}>日付</label>
+                          <input type="date" value={editData.date} onChange={e => setEditData({...editData, date: e.target.value})} className="input" style={{ fontSize: '13px', padding: '6px 8px' }} />
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '11px', color: '#6b7280' }}>担当</label>
+                          <select value={editData.staffId} onChange={e => setEditData({...editData, staffId: e.target.value})} className="select" style={{ fontSize: '13px', padding: '6px 8px' }}>
+                            {staff.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                          </select>
+                        </div>
+                      </div>
+                      <div style={{ marginBottom: '8px' }}>
+                        <label style={{ fontSize: '11px', color: '#6b7280' }}>来店経路</label>
+                        <select value={editData.sourceId} onChange={e => setEditData({...editData, sourceId: e.target.value})} className="select" style={{ fontSize: '13px', padding: '6px 8px' }}>
+                          {visitSources.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                        </select>
+                      </div>
+                      <div style={{ marginBottom: '8px' }}>
+                        <label style={{ fontSize: '11px', color: '#6b7280' }}>メモ</label>
+                        <input type="text" value={editData.memo} onChange={e => setEditData({...editData, memo: e.target.value})} className="input" style={{ fontSize: '13px', padding: '6px 8px' }} />
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button onClick={saveEdit} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: 'none', cursor: 'pointer', backgroundColor: '#22c55e', color: '#fff', fontWeight: '600', fontSize: '13px' }}>保存</button>
+                        <button onClick={() => { setEditingId(null); setEditData({}) }} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: 'none', cursor: 'pointer', backgroundColor: '#e5e7eb', color: '#374151', fontWeight: '600', fontSize: '13px' }}>取消</button>
+                      </div>
                     </div>
-                    <button onClick={() => deleteVisit(v.id)} style={{ color: '#ef4444', fontSize: '12px', background: 'none', border: 'none', cursor: 'pointer' }}>削除</button>
-                  </div>
+                  ) : (
+                    <div key={v.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', backgroundColor: '#f9fafb', borderRadius: '6px', fontSize: '13px' }}>
+                      <div>
+                        <span style={{ color: '#6b7280' }}>{v.date}</span>
+                        <span style={{ marginLeft: '8px', fontWeight: '600' }}>{v.staffName}</span>
+                        <span style={{ marginLeft: '8px', color: '#3b82f6' }}>{v.sourceName}</span>
+                        {v.memo && <span style={{ marginLeft: '8px', color: '#9ca3af' }}>({v.memo})</span>}
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button onClick={() => startEdit(v)} style={{ color: '#3b82f6', fontSize: '12px', background: 'none', border: 'none', cursor: 'pointer' }}>編集</button>
+                        <button onClick={() => deleteVisit(v.id)} style={{ color: '#ef4444', fontSize: '12px', background: 'none', border: 'none', cursor: 'pointer' }}>削除</button>
+                      </div>
+                    </div>
+                  )
                 ))}
               </div>
             </div>
