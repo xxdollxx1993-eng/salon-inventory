@@ -412,6 +412,7 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
   const [lossPrices, setLossPrices] = useState([])
   const [visitSources, setVisitSources] = useState([])
   const [newVisits, setNewVisits] = useState([])
+  const [salesTargets, setSalesTargets] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => { loadAllData() }, [])
@@ -419,7 +420,7 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
   const loadAllData = async () => {
     setLoading(true)
     try {
-      const [staffRes, productsRes, categoriesRes, usageRes, stockInRes, inventoryRes, favoritesRes, purchasesRes, budgetsRes, allocationsRes, bonusRes, lossRes, lossPricesRes, monthlyRes, timeRes, leaveGrantsRes, leaveRequestsRes, notificationsRes, practiceRes, modelRulesRes, contactGoalsRes, contactWeeklyRes, contactRepliesRes, contactMonthlyRes, visitSourcesRes, newVisitsRes] = await Promise.all([
+      const [staffRes, productsRes, categoriesRes, usageRes, stockInRes, inventoryRes, favoritesRes, purchasesRes, budgetsRes, allocationsRes, bonusRes, lossRes, lossPricesRes, monthlyRes, timeRes, leaveGrantsRes, leaveRequestsRes, notificationsRes, practiceRes, modelRulesRes, contactGoalsRes, contactWeeklyRes, contactRepliesRes, contactMonthlyRes, visitSourcesRes, newVisitsRes, salesTargetsRes] = await Promise.all([
         supabase.from('staff').select('*').order('id'),
         supabase.from('products').select('*').order('id'),
         supabase.from('categories').select('*').order('id'),
@@ -446,6 +447,7 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
         supabase.from('contact_monthly').select('*').order('year_month', { ascending: false }),
         supabase.from('visit_sources').select('*').order('sort_order'),
         supabase.from('new_visits').select('*').order('visit_date', { ascending: false }),
+        supabase.from('sales_targets').select('*').order('year_month', { ascending: false }),
       ])
       if (staffRes.data) setStaff(staffRes.data.map(s => ({
         id: s.id, name: s.name, dealer: s.dealer || '',
@@ -489,6 +491,7 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
       if (contactMonthlyRes.data) setContactMonthly(contactMonthlyRes.data.map(m => ({ id: m.id, staffId: m.staff_id, staffName: m.staff_name, yearMonth: m.year_month, q1: m.q1_answer, q2: m.q2_answer, q3: m.q3_answer, submittedAt: m.submitted_at })))
       if (visitSourcesRes.data) setVisitSources(visitSourcesRes.data.map(s => ({ id: s.id, name: s.name, sortOrder: s.sort_order })))
       if (newVisitsRes.data) setNewVisits(newVisitsRes.data.map(v => ({ id: v.id, date: v.visit_date, staffId: v.staff_id, staffName: v.staff_name, sourceId: v.source_id, sourceName: v.source_name, memo: v.memo })))
+      if (salesTargetsRes.data) setSalesTargets(salesTargetsRes.data.map(t => ({ id: t.id, staffId: t.staff_id, staffName: t.staff_name, yearMonth: t.year_month, targetSales: t.target_sales, existingCustomers: t.existing_customers, existingUnitPrice: t.existing_unit_price, newUnitPrice: t.new_unit_price, workingDays: t.working_days, actualSales: t.actual_sales, whyResult: t.why_result, nextAction: t.next_action })))
     } catch (e) { console.error('データ読み込みエラー:', e) }
     setLoading(false)
   }
@@ -858,6 +861,7 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
     { key: 'leave', label: '🏖️ 有給' }
   ]
   const staffOtherTabs = [
+    { key: 'sales', label: '💰 売上目標' },
     { key: 'inventory', label: '📋 棚卸' },
     { key: 'purchase', label: '🛒 スタッフ購入' },
     { key: 'loss', label: '📉 ロス入力' },
@@ -881,6 +885,7 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
     { key: 'leave', label: '🏖️ 有給管理' }
   ]
   const adminBusinessTabs = [
+    { key: 'sales', label: '💰 売上目標' },
     { key: 'newvisit', label: '✨ 新規' },
     { key: 'inventory', label: '📋 棚卸' },
     { key: 'monthly', label: '📊 月次レポート' },
@@ -1015,6 +1020,7 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
       {tab === 'loss' && <LossInput lossRecords={lossRecords} setLossRecords={setLossRecords} lossPrices={lossPrices} isAdmin={isAdmin} />}
       {tab === 'lossprice' && isAdmin && <LossPriceSettings lossPrices={lossPrices} setLossPrices={setLossPrices} />}
       {tab === 'newvisit' && <NewVisitTracking staff={staff} visitSources={visitSources} setVisitSources={setVisitSources} newVisits={newVisits} setNewVisits={setNewVisits} isAdmin={isAdmin} />}
+      {tab === 'sales' && <SalesTarget staff={staff} salesTargets={salesTargets} setSalesTargets={setSalesTargets} newVisits={newVisits} isAdmin={isAdmin} />}
       {tab === 'settings' && isAdmin && <AppSettings passwords={passwords} setPasswords={setPasswords} />}
 
       {/* ヘルプモーダル */}
@@ -7583,8 +7589,525 @@ function NewVisitTracking({ staff, visitSources, setVisitSources, newVisits, set
   )
 }
 
+// ==================== 売上目標・シミュレーター ====================
+function SalesTarget({ staff, salesTargets, setSalesTargets, newVisits, isAdmin }) {
+  const [mode, setMode] = useState('simulator') // 'simulator', 'review', 'history', 'all'
+  const [selectedStaff, setSelectedStaff] = useState('')
+  const [selectedMonth, setSelectedMonth] = useState(`${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`)
+  const [editingId, setEditingId] = useState(null)
+  
+  // フォーム用state
+  const [formData, setFormData] = useState({
+    targetSales: 1000000,
+    existingCustomers: 80,
+    existingUnitPrice: 8000,
+    newUnitPrice: 10000,
+    workingDays: 22,
+    actualSales: '',
+    whyResult: '',
+    nextAction: ''
+  })
+
+  // 選択中のスタッフ&月のデータを取得
+  const currentTarget = salesTargets.find(t => 
+    t.staffId === parseInt(selectedStaff) && t.yearMonth === selectedMonth
+  )
+
+  // データがあればフォームに反映
+  React.useEffect(() => {
+    if (currentTarget) {
+      setFormData({
+        targetSales: currentTarget.targetSales || 1000000,
+        existingCustomers: currentTarget.existingCustomers || 80,
+        existingUnitPrice: currentTarget.existingUnitPrice || 8000,
+        newUnitPrice: currentTarget.newUnitPrice || 10000,
+        workingDays: currentTarget.workingDays || 22,
+        actualSales: currentTarget.actualSales || '',
+        whyResult: currentTarget.whyResult || '',
+        nextAction: currentTarget.nextAction || ''
+      })
+    } else {
+      setFormData({
+        targetSales: 1000000,
+        existingCustomers: 80,
+        existingUnitPrice: 8000,
+        newUnitPrice: 10000,
+        workingDays: 22,
+        actualSales: '',
+        whyResult: '',
+        nextAction: ''
+      })
+    }
+  }, [selectedStaff, selectedMonth, currentTarget])
+
+  // 計算
+  const existingSales = formData.existingCustomers * formData.existingUnitPrice
+  const remainingSales = Math.max(0, formData.targetSales - existingSales)
+  const requiredNewCustomers = formData.newUnitPrice > 0 ? Math.ceil(remainingSales / formData.newUnitPrice) : 0
+  const newPerDay = formData.workingDays > 0 ? (requiredNewCustomers / formData.workingDays).toFixed(1) : 0
+
+  // 新規実績（newVisitsから自動取得）
+  const getActualNewVisits = (staffId, yearMonth) => {
+    const [year, month] = yearMonth.split('-').map(Number)
+    return newVisits.filter(v => {
+      const d = new Date(v.date)
+      return v.staffId === staffId && d.getFullYear() === year && d.getMonth() + 1 === month
+    }).length
+  }
+
+  const actualNewVisits = selectedStaff ? getActualNewVisits(parseInt(selectedStaff), selectedMonth) : 0
+
+  // 達成率
+  const achievementRate = formData.actualSales && formData.targetSales > 0 
+    ? Math.round((formData.actualSales / formData.targetSales) * 100) 
+    : null
+
+  // 保存
+  const saveTarget = async () => {
+    if (!selectedStaff) { alert('スタッフを選択してください'); return }
+    const staffMember = staff.find(s => s.id === parseInt(selectedStaff))
+
+    if (currentTarget) {
+      // 更新
+      const { error } = await supabase.from('sales_targets').update({
+        target_sales: formData.targetSales,
+        existing_customers: formData.existingCustomers,
+        existing_unit_price: formData.existingUnitPrice,
+        new_unit_price: formData.newUnitPrice,
+        working_days: formData.workingDays,
+        actual_sales: formData.actualSales || null,
+        why_result: formData.whyResult,
+        next_action: formData.nextAction,
+        updated_at: new Date().toISOString()
+      }).eq('id', currentTarget.id)
+
+      if (!error) {
+        setSalesTargets(salesTargets.map(t => t.id === currentTarget.id ? {
+          ...t,
+          targetSales: formData.targetSales,
+          existingCustomers: formData.existingCustomers,
+          existingUnitPrice: formData.existingUnitPrice,
+          newUnitPrice: formData.newUnitPrice,
+          workingDays: formData.workingDays,
+          actualSales: formData.actualSales || null,
+          whyResult: formData.whyResult,
+          nextAction: formData.nextAction
+        } : t))
+        alert('保存しました！')
+      }
+    } else {
+      // 新規作成
+      const { data, error } = await supabase.from('sales_targets').insert({
+        staff_id: parseInt(selectedStaff),
+        staff_name: staffMember.name,
+        year_month: selectedMonth,
+        target_sales: formData.targetSales,
+        existing_customers: formData.existingCustomers,
+        existing_unit_price: formData.existingUnitPrice,
+        new_unit_price: formData.newUnitPrice,
+        working_days: formData.workingDays,
+        actual_sales: formData.actualSales || null,
+        why_result: formData.whyResult,
+        next_action: formData.nextAction
+      }).select()
+
+      if (!error && data) {
+        setSalesTargets([{
+          id: data[0].id,
+          staffId: parseInt(selectedStaff),
+          staffName: staffMember.name,
+          yearMonth: selectedMonth,
+          targetSales: formData.targetSales,
+          existingCustomers: formData.existingCustomers,
+          existingUnitPrice: formData.existingUnitPrice,
+          newUnitPrice: formData.newUnitPrice,
+          workingDays: formData.workingDays,
+          actualSales: formData.actualSales || null,
+          whyResult: formData.whyResult,
+          nextAction: formData.nextAction
+        }, ...salesTargets])
+        alert('保存しました！')
+      }
+    }
+  }
+
+  // 削除
+  const deleteTarget = async (id) => {
+    if (!confirm('このデータを削除しますか？')) return
+    const { error } = await supabase.from('sales_targets').delete().eq('id', id)
+    if (!error) setSalesTargets(salesTargets.filter(t => t.id !== id))
+  }
+
+  // 先月の「来月どうする？」を取得
+  const getPrevMonthAction = () => {
+    if (!selectedStaff) return null
+    const [year, month] = selectedMonth.split('-').map(Number)
+    const prevMonth = month === 1 ? `${year - 1}-12` : `${year}-${String(month - 1).padStart(2, '0')}`
+    const prevTarget = salesTargets.find(t => t.staffId === parseInt(selectedStaff) && t.yearMonth === prevMonth)
+    return prevTarget?.nextAction || null
+  }
+
+  const prevMonthAction = getPrevMonthAction()
+
+  // スタッフの履歴
+  const staffHistory = selectedStaff 
+    ? salesTargets.filter(t => t.staffId === parseInt(selectedStaff)).sort((a, b) => b.yearMonth.localeCompare(a.yearMonth))
+    : []
+
+  // 全員の今月データ（管理者用）
+  const allStaffThisMonth = salesTargets.filter(t => t.yearMonth === selectedMonth)
+
+  const formatYen = (num) => num ? `¥${num.toLocaleString()}` : '-'
+
+  return (
+    <div className="space-y-4">
+      {/* スタッフ＆月選択 */}
+      <div className="card">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>スタッフ</label>
+            <select value={selectedStaff} onChange={e => setSelectedStaff(e.target.value)} className="select">
+              <option value="">選択してください</option>
+              {staff.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>月</label>
+            <input type="month" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="input" />
+          </div>
+        </div>
+      </div>
+
+      {/* モード切替 */}
+      <div style={{ display: 'flex', gap: '8px' }}>
+        {[
+          { key: 'simulator', icon: '🧮', label: 'シミュレーター' },
+          { key: 'review', icon: '📝', label: '振り返り' },
+          { key: 'history', icon: '📚', label: '履歴' },
+          ...(isAdmin ? [{ key: 'all', icon: '👥', label: '全員' }] : [])
+        ].map(m => (
+          <button key={m.key} onClick={() => setMode(m.key)} style={{
+            flex: 1, padding: '10px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+            fontWeight: '600', fontSize: '13px',
+            backgroundColor: mode === m.key ? '#3b82f6' : '#f3f4f6',
+            color: mode === m.key ? '#fff' : '#374151'
+          }}>{m.icon} {m.label}</button>
+        ))}
+      </div>
+
+      {/* シミュレーター */}
+      {mode === 'simulator' && (
+        <div className="card">
+          <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>🧮</span> 売上シミュレーター
+          </h3>
+
+          {!selectedStaff ? (
+            <p style={{ color: '#9ca3af', textAlign: 'center', padding: '24px' }}>スタッフを選択してください</p>
+          ) : (
+            <>
+              {/* 先月のアクション表示 */}
+              {prevMonthAction && (
+                <div style={{ backgroundColor: '#fef3c7', padding: '12px', borderRadius: '10px', marginBottom: '16px', border: '1px solid #fcd34d' }}>
+                  <div style={{ fontSize: '12px', color: '#92400e', marginBottom: '4px' }}>📌 先月決めたこと</div>
+                  <div style={{ fontSize: '14px', color: '#78350f', fontWeight: '600' }}>{prevMonthAction}</div>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {/* 目標売上 */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>🎯 目標売上</label>
+                  <input type="number" value={formData.targetSales} onChange={e => setFormData({...formData, targetSales: parseInt(e.target.value) || 0})} className="input" style={{ fontSize: '18px', fontWeight: 'bold' }} />
+                </div>
+
+                {/* 既存 */}
+                <div style={{ backgroundColor: '#f0fdf4', padding: '16px', borderRadius: '10px' }}>
+                  <div style={{ fontSize: '14px', fontWeight: '600', color: '#166534', marginBottom: '12px' }}>👥 既存（リピーター）</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div>
+                      <label style={{ fontSize: '12px', color: '#6b7280' }}>見込み客数</label>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <input type="number" value={formData.existingCustomers} onChange={e => setFormData({...formData, existingCustomers: parseInt(e.target.value) || 0})} className="input" />
+                        <span style={{ color: '#6b7280' }}>人</span>
+                      </div>
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '12px', color: '#6b7280' }}>平均単価</label>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <input type="number" value={formData.existingUnitPrice} onChange={e => setFormData({...formData, existingUnitPrice: parseInt(e.target.value) || 0})} className="input" />
+                        <span style={{ color: '#6b7280' }}>円</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ marginTop: '12px', textAlign: 'right', fontSize: '15px' }}>
+                    既存売上見込み: <span style={{ fontWeight: 'bold', color: '#166534' }}>{formatYen(existingSales)}</span>
+                  </div>
+                </div>
+
+                {/* 新規 */}
+                <div style={{ backgroundColor: '#eff6ff', padding: '16px', borderRadius: '10px' }}>
+                  <div style={{ fontSize: '14px', fontWeight: '600', color: '#1e40af', marginBottom: '12px' }}>✨ 新規</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div>
+                      <label style={{ fontSize: '12px', color: '#6b7280' }}>新規単価</label>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <input type="number" value={formData.newUnitPrice} onChange={e => setFormData({...formData, newUnitPrice: parseInt(e.target.value) || 0})} className="input" />
+                        <span style={{ color: '#6b7280' }}>円</span>
+                      </div>
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '12px', color: '#6b7280' }}>稼働日数</label>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <input type="number" value={formData.workingDays} onChange={e => setFormData({...formData, workingDays: parseInt(e.target.value) || 0})} className="input" />
+                        <span style={{ color: '#6b7280' }}>日</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 結果 */}
+                <div style={{ backgroundColor: '#fef2f2', padding: '20px', borderRadius: '12px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>あと必要な売上</div>
+                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#dc2626', marginBottom: '16px' }}>{formatYen(remainingSales)}</div>
+                  
+                  <div style={{ backgroundColor: '#fff', padding: '16px', borderRadius: '10px', border: '2px solid #f87171' }}>
+                    <div style={{ fontSize: '16px', color: '#374151', marginBottom: '8px' }}>目標達成には...</div>
+                    <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#dc2626' }}>
+                      ✨ 新規 {requiredNewCustomers}人
+                    </div>
+                    <div style={{ fontSize: '14px', color: '#6b7280', marginTop: '8px' }}>
+                      📅 {formData.workingDays}日稼働 → 1日あたり <span style={{ fontWeight: 'bold' }}>{newPerDay}人</span>
+                    </div>
+                  </div>
+                </div>
+
+                <button onClick={saveTarget} style={{
+                  padding: '14px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+                  backgroundColor: '#22c55e', color: '#fff', fontWeight: '600', fontSize: '15px'
+                }}>💾 保存する</button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* 振り返り */}
+      {mode === 'review' && (
+        <div className="card">
+          <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>📝</span> {selectedMonth} の振り返り
+          </h3>
+
+          {!selectedStaff ? (
+            <p style={{ color: '#9ca3af', textAlign: 'center', padding: '24px' }}>スタッフを選択してください</p>
+          ) : (
+            <>
+              {/* 結果サマリー */}
+              <div style={{ backgroundColor: '#f9fafb', padding: '16px', borderRadius: '10px', marginBottom: '16px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '12px' }}>
+                  <div>
+                    <div style={{ fontSize: '12px', color: '#6b7280' }}>目標</div>
+                    <div style={{ fontSize: '20px', fontWeight: 'bold' }}>{formatYen(formData.targetSales)}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '12px', color: '#6b7280' }}>実績</div>
+                    <input type="number" value={formData.actualSales} onChange={e => setFormData({...formData, actualSales: parseInt(e.target.value) || ''})} placeholder="実績を入力" className="input" style={{ fontSize: '18px', fontWeight: 'bold' }} />
+                  </div>
+                </div>
+                
+                {achievementRate !== null && (
+                  <div style={{ 
+                    textAlign: 'center', padding: '12px', borderRadius: '8px',
+                    backgroundColor: achievementRate >= 100 ? '#dcfce7' : achievementRate >= 80 ? '#fef9c3' : '#fee2e2',
+                    color: achievementRate >= 100 ? '#166534' : achievementRate >= 80 ? '#92400e' : '#dc2626'
+                  }}>
+                    <span style={{ fontSize: '14px' }}>達成率: </span>
+                    <span style={{ fontSize: '28px', fontWeight: 'bold' }}>{achievementRate}%</span>
+                    {achievementRate >= 100 && <span style={{ marginLeft: '8px' }}>🎉</span>}
+                  </div>
+                )}
+
+                {/* 新規実績 */}
+                <div style={{ marginTop: '12px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div style={{ backgroundColor: '#fff', padding: '10px', borderRadius: '8px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '11px', color: '#6b7280' }}>新規目標</div>
+                    <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#3b82f6' }}>{requiredNewCustomers}人</div>
+                  </div>
+                  <div style={{ backgroundColor: '#fff', padding: '10px', borderRadius: '8px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '11px', color: '#6b7280' }}>新規実績</div>
+                    <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#16a34a' }}>{actualNewVisits}人</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 振り返り質問 */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>
+                    💭 なぜこの結果になった？
+                  </label>
+                  <textarea 
+                    value={formData.whyResult} 
+                    onChange={e => setFormData({...formData, whyResult: e.target.value})}
+                    placeholder="良かった点、課題など..."
+                    className="input"
+                    style={{ minHeight: '80px', resize: 'vertical' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>
+                    💡 来月どうする？
+                  </label>
+                  <textarea 
+                    value={formData.nextAction} 
+                    onChange={e => setFormData({...formData, nextAction: e.target.value})}
+                    placeholder="具体的なアクション..."
+                    className="input"
+                    style={{ minHeight: '80px', resize: 'vertical' }}
+                  />
+                </div>
+
+                <button onClick={saveTarget} style={{
+                  padding: '14px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+                  backgroundColor: '#22c55e', color: '#fff', fontWeight: '600', fontSize: '15px'
+                }}>💾 保存する</button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* 履歴 */}
+      {mode === 'history' && (
+        <div className="card">
+          <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>📚</span> {selectedStaff ? staff.find(s => s.id === parseInt(selectedStaff))?.name : ''} の履歴
+          </h3>
+
+          {!selectedStaff ? (
+            <p style={{ color: '#9ca3af', textAlign: 'center', padding: '24px' }}>スタッフを選択してください</p>
+          ) : staffHistory.length === 0 ? (
+            <p style={{ color: '#9ca3af', textAlign: 'center', padding: '24px' }}>データがありません</p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {staffHistory.map(t => {
+                const rate = t.actualSales && t.targetSales > 0 ? Math.round((t.actualSales / t.targetSales) * 100) : null
+                const newActual = getActualNewVisits(t.staffId, t.yearMonth)
+                const newTarget = t.newUnitPrice > 0 ? Math.ceil((t.targetSales - (t.existingCustomers * t.existingUnitPrice)) / t.newUnitPrice) : 0
+                
+                return (
+                  <div key={t.id} style={{ border: '1px solid #e5e7eb', borderRadius: '12px', padding: '16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                      <span style={{ fontWeight: 'bold', fontSize: '16px' }}>{t.yearMonth}</span>
+                      {rate !== null && (
+                        <span style={{ 
+                          padding: '4px 12px', borderRadius: '20px', fontSize: '14px', fontWeight: 'bold',
+                          backgroundColor: rate >= 100 ? '#dcfce7' : rate >= 80 ? '#fef9c3' : '#fee2e2',
+                          color: rate >= 100 ? '#166534' : rate >= 80 ? '#92400e' : '#dc2626'
+                        }}>
+                          {rate}% {rate >= 100 && '🎉'}
+                        </span>
+                      )}
+                    </div>
+                    
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '13px', marginBottom: '12px' }}>
+                      <div>目標: {formatYen(t.targetSales)}</div>
+                      <div>実績: {formatYen(t.actualSales)}</div>
+                      <div>新規目標: {newTarget}人</div>
+                      <div>新規実績: {newActual}人</div>
+                    </div>
+                    
+                    {t.whyResult && (
+                      <div style={{ backgroundColor: '#f9fafb', padding: '10px', borderRadius: '8px', marginBottom: '8px', fontSize: '13px' }}>
+                        <div style={{ color: '#6b7280', fontSize: '11px', marginBottom: '4px' }}>💭 振り返り</div>
+                        {t.whyResult}
+                      </div>
+                    )}
+                    
+                    {t.nextAction && (
+                      <div style={{ backgroundColor: '#fef9c3', padding: '10px', borderRadius: '8px', fontSize: '13px' }}>
+                        <div style={{ color: '#92400e', fontSize: '11px', marginBottom: '4px' }}>💡 アクション</div>
+                        {t.nextAction}
+                      </div>
+                    )}
+                    
+                    <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                      <button onClick={() => { setSelectedMonth(t.yearMonth); setMode('simulator') }} style={{ color: '#3b82f6', fontSize: '13px', background: 'none', border: 'none', cursor: 'pointer' }}>編集</button>
+                      <button onClick={() => deleteTarget(t.id)} style={{ color: '#ef4444', fontSize: '13px', background: 'none', border: 'none', cursor: 'pointer' }}>削除</button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 全員（管理者のみ） */}
+      {mode === 'all' && isAdmin && (
+        <div className="card">
+          <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>👥</span> {selectedMonth} 全スタッフ
+          </h3>
+
+          {allStaffThisMonth.length === 0 ? (
+            <p style={{ color: '#9ca3af', textAlign: 'center', padding: '24px' }}>この月のデータがありません</p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {allStaffThisMonth.map(t => {
+                const rate = t.actualSales && t.targetSales > 0 ? Math.round((t.actualSales / t.targetSales) * 100) : null
+                const newActual = getActualNewVisits(t.staffId, t.yearMonth)
+                const newTarget = t.newUnitPrice > 0 ? Math.ceil((t.targetSales - (t.existingCustomers * t.existingUnitPrice)) / t.newUnitPrice) : 0
+                
+                return (
+                  <div key={t.id} style={{ border: '1px solid #e5e7eb', borderRadius: '12px', padding: '16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <span style={{ fontWeight: 'bold', fontSize: '16px' }}>{t.staffName}</span>
+                      {rate !== null ? (
+                        <span style={{ 
+                          padding: '4px 12px', borderRadius: '20px', fontSize: '14px', fontWeight: 'bold',
+                          backgroundColor: rate >= 100 ? '#dcfce7' : rate >= 80 ? '#fef9c3' : '#fee2e2',
+                          color: rate >= 100 ? '#166534' : rate >= 80 ? '#92400e' : '#dc2626'
+                        }}>
+                          {rate}%
+                        </span>
+                      ) : (
+                        <span style={{ color: '#9ca3af', fontSize: '13px' }}>未入力</span>
+                      )}
+                    </div>
+                    
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', fontSize: '12px' }}>
+                      <div style={{ textAlign: 'center', padding: '8px', backgroundColor: '#f9fafb', borderRadius: '6px' }}>
+                        <div style={{ color: '#6b7280' }}>目標</div>
+                        <div style={{ fontWeight: 'bold' }}>{(t.targetSales / 10000).toFixed(0)}万</div>
+                      </div>
+                      <div style={{ textAlign: 'center', padding: '8px', backgroundColor: '#f9fafb', borderRadius: '6px' }}>
+                        <div style={{ color: '#6b7280' }}>実績</div>
+                        <div style={{ fontWeight: 'bold' }}>{t.actualSales ? `${(t.actualSales / 10000).toFixed(0)}万` : '-'}</div>
+                      </div>
+                      <div style={{ textAlign: 'center', padding: '8px', backgroundColor: '#eff6ff', borderRadius: '6px' }}>
+                        <div style={{ color: '#6b7280' }}>新規目標</div>
+                        <div style={{ fontWeight: 'bold', color: '#2563eb' }}>{newTarget}人</div>
+                      </div>
+                      <div style={{ textAlign: 'center', padding: '8px', backgroundColor: '#f0fdf4', borderRadius: '6px' }}>
+                        <div style={{ color: '#6b7280' }}>新規実績</div>
+                        <div style={{ fontWeight: 'bold', color: '#16a34a' }}>{newActual}人</div>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ==================== アプリ設定（管理者のみ） ====================
-function AppSettings({ passwords, setPasswords }) {
   const [adminPw, setAdminPw] = useState(passwords.admin)
   const [staffPw, setStaffPw] = useState(passwords.staff)
   const [showAdmin, setShowAdmin] = useState(false)
