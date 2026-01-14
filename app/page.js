@@ -862,6 +862,7 @@ function MainApp({ userRole, onLogout, passwords, setPasswords }) {
   ]
   const staffOtherTabs = [
     { key: 'sales', label: '💰 売上目標' },
+    { key: 'newvisit', label: '✨ 新規' },
     { key: 'inventory', label: '📋 棚卸' },
     { key: 'purchase', label: '🛒 スタッフ購入' },
     { key: 'loss', label: '📉 ロス入力' },
@@ -8108,6 +8109,7 @@ function SalesTarget({ staff, salesTargets, setSalesTargets, newVisits, isAdmin 
 }
 
 // ==================== アプリ設定（管理者のみ） ====================
+function AppSettings({ passwords, setPasswords }) {
   const [adminPw, setAdminPw] = useState(passwords.admin)
   const [staffPw, setStaffPw] = useState(passwords.staff)
   const [showAdmin, setShowAdmin] = useState(false)
